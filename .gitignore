@@ -22,6 +22,9 @@ coverage/
 # Build artifacts
 *.tsbuildinfo
 
+# Vercel local link state (org/project IDs live in GitHub secrets for CI)
+.vercel/
+
 # pip temporary dirs
 pip-build-tracker-*/
 pip-ephem-wheel-cache-*/
