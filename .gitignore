@@ -10,7 +10,7 @@ build/
 .env
 *.log
 .DS_Store
-data/
+/backend/data/
 storage/
 coverage/
 .pytest_cache/
