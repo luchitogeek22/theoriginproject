@@ -42,9 +42,12 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
-      # Direct connection (port 5432): migrations require it, the pooler
-      # would break DDL. Password lives only in repository secrets.
-      SUPABASE_DB_URL: postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.lgdxwbarmsmootifbcsp.supabase.co:5432/postgres
+      # Supavisor pooler in session mode (port 5432): reachable over IPv4
+      # from GitHub runners (the direct db.* host is IPv6-only) and safe
+      # for DDL, unlike transaction mode (6543). Password lives only in
+      # repository secrets. Region us-east-1 per the project's own DNS;
+      # confirm the exact host in Supabase Dashboard > Database settings.
+      SUPABASE_DB_URL: postgresql://postgres.lgdxwbarmsmootifbcsp:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-0-us-east-1.pooler.supabase.com:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
