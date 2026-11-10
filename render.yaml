@@ -1,0 +1,31 @@
+# Render Blueprint (free plan) — FastAPI backend.
+# Deploy: Render Dashboard > New > Blueprint > select this repo.
+# Secrets (sync: false) are filled in the dashboard at deploy time.
+services:
+  - type: web
+    name: origin-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: https://theoriginproject.vercel.app
+      # Session-mode pooler (IPv4 + DDL-safe for init_db). Transaction
+      # mode (6543) would break schema creation; direct db.* is IPv6-only.
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
