@@ -46,12 +46,70 @@ vía variables de entorno del compose.
 
 ## Producción (cloud)
 
-- Backend: cualquier contenedor Python 3.11+ (2 vCPU / 4 GB mínimo por
-  worker científico); `DATABASE_URL` a Postgres gestionado; `REDIS_URL`
-  gestionado; `STORAGE_BACKEND=s3` con bucket y credenciales.
-- Frontend: `npm run build` + `npm start`, o exportar tras `next build`
-  en la plataforma elegida, con `NEXT_PUBLIC_API_URL` apuntando al backend.
-- Observabilidad: logs JSON a stdout (`LOG_LEVEL`), `X-Request-ID` en cada
+Stack actual: backend en Render, frontend en Vercel, Postgres/Auth en
+Supabase. El pipeline [deploy.yml](../.github/workflows/deploy.yml)
+despliega frontend + base de datos tras cada CI verde en `main`; el
+backend se despliega una vez vía Blueprint y luego auto-despliega con
+cada push a `main` (comportamiento por defecto de Render).
+
+### 1. Backend en Render (solo la primera vez, desde el dashboard)
+
+1. Render Dashboard > New > Blueprint > repositorio
+   `luchitogeek22/theoriginproject` (usa [render.yaml](../render.yaml)).
+2. Completar los secretos (`sync: false`):
+   - `DATABASE_URL`: pooler Supabase en **session mode** (puerto 5432),
+     formato `postgresql://postgres.<ref>:<password>@aws-0-us-east-1.pooler.supabase.com:5432/postgres`.
+     El modo transacción (6543) rompe la creación de esquema y el host
+     directo `db.*` es solo IPv6. Si la contraseña tiene caracteres
+     especiales, codificarla para URL.
+   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`: Dashboard Supabase > Settings > API.
+   - `SUPABASE_JWT_SECRET`: misma página, solo backend, secreto.
+3. Deploy. Las tablas se crean solas en el primer arranque (`init_db`
+   + migración ligera de columnas); no hay carpeta `supabase/migrations`.
+4. Verificar: `https://<servicio>.onrender.com/api/v1/health` responde
+   `{"status":"ok","version":"1.0.0","environment":"production"}`.
+
+### 2. Conectar el frontend (Vercel) al backend
+
+1. Vercel Dashboard > proyecto > Settings > Environment Variables:
+   `NEXT_PUBLIC_API_URL=https://<servicio>.onrender.com` (Production).
+2. Redeploy desde el dashboard (o cualquier push a `main`: el pipeline
+   hace `vercel pull` + build + deploy con la nueva variable).
+3. Si el dominio Vercel real difiere de
+   `https://theoriginproject.vercel.app`, actualizar `CORS_ORIGINS` en
+   [render.yaml](../render.yaml) y re-desplegar el backend.
+
+### Notas del plan gratuito
+
+- Cold starts: la primera petición tras inactividad tarda ~1 min.
+- Disco efímero: `STORAGE_BACKEND=local` pierde archivos en cada
+  despliegue; investigaciones/candidatos viven en Postgres y sí persisten.
+- El build científico (astropy, scipy, photutils…) tarda varios minutos;
+  si falla por memoria, reintentar o subir de plan.
+- Observabilidad: logs a stdout (`LOG_LEVEL`), `X-Request-ID` en cada
   respuesta, `/api/v1/health` para probes, OpenAPI en `/docs`.
-- Seguridad: `CORS_ORIGINS` restringido al dominio del frontend; límites de
-  descarga y rate-limit activos por defecto; sin credenciales en el repo.
+- Seguridad: `CORS_ORIGINS` restringido al dominio del frontend; límites
+  de descarga y rate-limit activos por defecto; sin credenciales en el repo.
+
+### Alternativa: backend en Railway (Docker)
+
+1. Railway Dashboard > New Project > Deploy from Repo >
+   `luchitogeek22/theoriginproject`; en el servicio, Settings > Root
+   Directory = `backend` (usa [Dockerfile](../backend/Dockerfile) +
+   [railway.toml](../backend/railway.toml)).
+2. Añadir plugin PostgreSQL al proyecto y referenciar su `DATABASE_URL`
+   en el servicio backend (Variables > New Variable > Add Reference).
+   Railway inyecta además `PORT` dinámico; el contenedor arranca con
+   `uvicorn app.main:app --port ${PORT:-8000}`.
+3. Variables del servicio backend:
+   - `CORS_ORIGINS=https://vercel.app` (ver nota abajo).
+   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET` (opcionales;
+     sin ellas la API funciona en modo anónimo).
+4. Deploy y verificar: `https://<servicio>.up.railway.app/api/v1/health`
+   responde `{"status":"ok","version":"1.0.0","environment":"production"}`.
+5. Apuntar el frontend: `NEXT_PUBLIC_API_URL` (Vercel) = URL de Railway.
+
+Nota CORS: la imagen trae `CORS_ORIGINS=https://vercel.app` por defecto,
+tal como se pidió. El dominio pelado `vercel.app` NO cubre subdominios:
+si el frontend vive en `theoriginproject.vercel.app`, la variable en
+Railway debe ser esa URL exacta (o ambas separadas por coma).

@@ -13,9 +13,20 @@ class Base(DeclarativeBase):
     pass
 
 
+def _normalize_postgres_url(url: str) -> str:
+    """Accept Heroku-style postgres:// URLs (SQLAlchemy wants postgresql://).
+
+    Railway provides postgresql:// natively; this only guards copy-pasted
+    variants from other providers.
+    """
+    if url.startswith("postgres://"):
+        return "postgresql://" + url[len("postgres://") :]
+    return url
+
+
 def _build_engine():
     settings = get_settings()
-    url = settings.database_url
+    url = _normalize_postgres_url(settings.database_url)
     kwargs: dict = {"future": True}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}

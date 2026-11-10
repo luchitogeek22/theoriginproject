@@ -1,0 +1,9 @@
+# Railway service config — lives next to the service (Root Directory: `backend`).
+# Docs: https://docs.railway.com/reference/config-as-code
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"

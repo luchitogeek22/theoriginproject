@@ -1,0 +1,14 @@
+# Keep the Railway/Docker build context small (also excludes the local venv,
+# which must never be shipped into the image).
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/
+.pytest_cache/
+tests/
+*.egg-info/
+pip-build-tracker-*/
+pip-ephem-wheel-cache-*/
+pip-install-*/
