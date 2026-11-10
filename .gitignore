@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.next/
+.npm-cache/
+dist/
+build/
+.env
+*.log
+.DS_Store
+data/
+storage/
+coverage/
+.pytest_cache/
+*.egg-info/
+
+# Secrets (live credentials must never be committed)
+.env*.local
+
+# Build artifacts
+*.tsbuildinfo
+
+# pip temporary dirs
+pip-build-tracker-*/
+pip-ephem-wheel-cache-*/
+pip-install-*/
+
+# Foreign VCS leftovers (this project ships on git)
+.hg/
+.sl/
+.eden/
