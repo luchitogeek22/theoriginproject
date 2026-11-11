@@ -13,7 +13,49 @@ import type {
 } from "./types";
 import { getAccessToken } from "@/lib/supabase/client";
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+export function resolveBase(value: string | undefined, production: boolean): string | null {
+  const raw = (value ?? "").trim();
+  if (!raw) return production ? null : "http://localhost:8000";
+  if (!/^https?:\/\//i.test(raw)) return null;
+  try {
+    new URL(raw);
+  } catch {
+    return null;
+  }
+  return raw.replace(/\/+$/, "");
+}
+
+export function parseErrorBody(status: number, contentType: string, body: string): string {
+  const fallback = `Request failed (${status}).`;
+  if (!contentType.toLowerCase().includes("json")) return fallback;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return fallback;
+  }
+  const detail = (parsed as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "string" && detail) return detail.slice(0, 300);
+  if (Array.isArray(detail)) {
+    const parts = detail.map(formatValidationItem).filter(Boolean);
+    if (parts.length) return parts.join("; ").slice(0, 300);
+  }
+  return fallback;
+}
+
+function formatValidationItem(item: unknown): string {
+  if (typeof item === "string") return item;
+  if (!item || typeof item !== "object") return "";
+  const { loc, msg } = item as { loc?: unknown; msg?: unknown };
+  if (typeof msg !== "string") return "";
+  const field = Array.isArray(loc) ? loc.filter((p) => p !== "body" && p !== "query").join(".") : "";
+  return field ? `${field}: ${msg}` : msg;
+}
+
+const BASE = resolveBase(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV === "production");
+
+const NOT_CONFIGURED =
+  "The API address is not configured. Set NEXT_PUBLIC_API_URL to the backend URL (https://...).";
 
 export class ApiError extends Error {
   status: number;
@@ -24,6 +66,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  if (BASE === null) throw new ApiError(0, NOT_CONFIGURED);
   let authHeader: Record<string, string> = {};
   try {
     const token = await getAccessToken();
@@ -35,29 +78,38 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${BASE}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...authHeader, ...(init?.headers ?? {}) },
+      headers: {
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...authHeader,
+        ...(init?.headers ?? {}),
+      },
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
     throw new ApiError(0, "Backend unreachable. Is the scientific service running?");
   }
+  const contentType = res.headers.get("content-type") ?? "";
   if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    let message = `Request failed (${res.status})`;
-    try {
-      const parsed = JSON.parse(detail) as { detail?: string };
-      if (parsed.detail) message = parsed.detail;
-    } catch {
-      if (detail) message = detail.slice(0, 300);
-    }
-    throw new ApiError(res.status, message);
+    const body = await res.text().catch(() => "");
+    throw new ApiError(res.status, parseErrorBody(res.status, contentType, body));
   }
   if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  if (!contentType.toLowerCase().includes("json")) {
+    throw new ApiError(
+      res.status,
+      "The server returned a non-JSON response. Check that NEXT_PUBLIC_API_URL points to the backend."
+    );
+  }
+  try {
+    return (await res.json()) as T;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    throw new ApiError(res.status, "The server returned an invalid JSON response.");
+  }
 }
 
 export const apiUrl = (path: string) =>
-  path.startsWith("http") ? path : `${BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  path.startsWith("http") ? path : BASE === null ? "" : `${BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 
 export const api = {
   health: () => request<{ status: string }>("/api/v1/health"),
