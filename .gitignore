@@ -34,3 +34,6 @@ pip-install-*/
 .hg/
 .sl/
 .eden/
+
+# Claude Code skill registry cache
+.atl/
