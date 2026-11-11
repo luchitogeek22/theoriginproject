@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     irsa_timeout_seconds: float = 30.0
     irsa_maxrec: int = 500
     download_limit_mb: int = 512
+    download_allowed_host_suffixes: str = ".ipac.caltech.edu"
     sia_cache_ttl_seconds: int = 3600
 
     simbad_timeout_seconds: float = 20.0
@@ -44,6 +45,14 @@ class Settings(BaseSettings):
     @property
     def collection_list(self) -> list[str]:
         return [c.strip() for c in self.irsa_collections.split(",") if c.strip()]
+
+    @property
+    def download_host_suffix_list(self) -> list[str]:
+        return [
+            s.strip().lower().lstrip(".")
+            for s in self.download_allowed_host_suffixes.split(",")
+            if s.strip()
+        ]
 
     @property
     def cors_origin_list(self) -> list[str]:

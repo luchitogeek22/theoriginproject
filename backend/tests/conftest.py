@@ -1,11 +1,3 @@
-"""Isolate the test suite from every configured database, cache and service.
-
-The SQLAlchemy engine is built when `app.database` is first imported, so the
-environment must be fixed here, before any test module imports the app. Values
-are assigned unconditionally: a DATABASE_URL (or REDIS_URL, SUPABASE_*) coming
-from the shell or from a .env file must never reach a test.
-"""
-
 import atexit
 import os
 import shutil
@@ -14,6 +6,7 @@ import tempfile
 _SCRATCH = tempfile.mkdtemp(prefix="origin-tests-")
 atexit.register(shutil.rmtree, _SCRATCH, ignore_errors=True)
 
+# The engine is built on first import of app.database, so this must run before any test imports the app.
 os.environ.update(
     {
         "ENVIRONMENT": "test",
@@ -29,7 +22,6 @@ os.environ.update(
 
 
 def pytest_configure(config):
-    """Abort the whole session if isolation did not take effect."""
     from app.config import get_settings
 
     get_settings.cache_clear()
