@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import UserInfo, get_current_user
+from app.auth import UserInfo, get_optional_user
 from app.database import SessionLocal, get_db
 from app.models import Candidate, Cutout, Observation
 from app.schemas import (
@@ -124,7 +124,7 @@ def _run_spectral(params: dict) -> dict:
 
 @router.post("/analysis/temporal", response_model=JobResponse)
 def analyze_temporal(payload: TemporalAnalysisRequest, tasks: BackgroundTasks,
-                     user: UserInfo | None = Depends(get_current_user)) -> JobResponse:
+                     user: UserInfo | None = Depends(get_optional_user)) -> JobResponse:
     params = payload.model_dump()
     params["user_id"] = user.user_id if user else None
     job_id = job_store.create_job("temporal", params)
@@ -135,7 +135,7 @@ def analyze_temporal(payload: TemporalAnalysisRequest, tasks: BackgroundTasks,
 
 @router.post("/analysis/differential", response_model=JobResponse)
 def analyze_differential(payload: DifferentialAnalysisRequest, tasks: BackgroundTasks,
-                         user: UserInfo | None = Depends(get_current_user)) -> JobResponse:
+                         user: UserInfo | None = Depends(get_optional_user)) -> JobResponse:
     params = payload.model_dump()
     params["user_id"] = user.user_id if user else None
     job_id = job_store.create_job("differential", params)
@@ -146,7 +146,7 @@ def analyze_differential(payload: DifferentialAnalysisRequest, tasks: Background
 
 @router.post("/analysis/spectral", response_model=JobResponse)
 def analyze_spectral(payload: SpectralAnalysisRequest, tasks: BackgroundTasks,
-                     user: UserInfo | None = Depends(get_current_user)) -> JobResponse:
+                     user: UserInfo | None = Depends(get_optional_user)) -> JobResponse:
     params = payload.model_dump()
     params["user_id"] = user.user_id if user else None
     job_id = job_store.create_job("spectral", params)

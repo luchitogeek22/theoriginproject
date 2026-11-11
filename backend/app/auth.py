@@ -155,14 +155,25 @@ def verify_supabase_jwt(token: str, secret: str) -> dict:
     return claims
 
 
+def _user_from_header(auth: str, secret: str) -> UserInfo:
+    if not auth.startswith("Bearer ") or len(auth) <= 7:
+        raise HTTPException(status_code=401, detail="Missing Bearer token. Sign in first.")
+    claims = verify_supabase_jwt(auth[7:].strip(), secret)
+    return UserInfo(user_id=str(claims["sub"]), email=str(claims.get("email", "")))
+
+
 def get_current_user(request: Request) -> UserInfo | None:
-    """FastAPI dependency. Returns None in anonymous mode; otherwise requires
-    a valid `Authorization: Bearer <supabase-jwt>` header."""
+    """Requires a valid session whenever SUPABASE_JWT_SECRET is configured."""
     secret = get_settings().supabase_jwt_secret
     if not secret:
         return None
+    return _user_from_header(request.headers.get("Authorization", ""), secret)
+
+
+def get_optional_user(request: Request) -> UserInfo | None:
+    """Anonymous callers are allowed; a token that is sent must still be valid."""
+    secret = get_settings().supabase_jwt_secret
     auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer ") or len(auth) <= 7:
-        raise HTTPException(status_code=401, detail="Missing Bearer [REDACTED] Sign in first.")
-    claims = verify_supabase_jwt(auth[7:].strip(), secret)
-    return UserInfo(user_id=str(claims["sub"]), email=str(claims.get("email", "")))
+    if not secret or not auth:
+        return None
+    return _user_from_header(auth, secret)

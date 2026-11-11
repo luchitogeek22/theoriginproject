@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Route guard: active Supabase session required for research routes.
- * When Supabase is not configured the app stays usable in anonymous mode. */
+/** Route guard: only the journal needs a Supabase session; exploration and analysis stay public. */
 export async function middleware(request: NextRequest) {
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -14,5 +13,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/time-explorer", "/journal", "/journal/:path*", "/discoveries"],
+  matcher: ["/journal", "/journal/:path*"],
 };
