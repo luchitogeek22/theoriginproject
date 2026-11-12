@@ -15,7 +15,9 @@
     "querying": "Consultando el archivo…",
     "sourceAvailable": "{name}: disponible ({latency} ms)",
     "sourceUnavailable": "{name}: no disponible — {detail}",
-    "ongoing": "Investigación en curso: <name>{target}</name> → Diario"
+    "ongoingLabel": "Investigación en curso",
+    "ongoingOpen": "Abrir diario",
+    "ongoingDismiss": "Descartar"
   },
   "livingSkyPage": {
     "archiveQueryFailed": "La consulta al archivo falló",

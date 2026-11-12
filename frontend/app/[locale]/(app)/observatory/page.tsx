@@ -5,7 +5,7 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import { Clock3, Crosshair, Orbit, Play } from "lucide-react";
+import { Clock3, Crosshair, Orbit, Play, X } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SkyBackdrop from "@/components/SkyBackdrop";
 import TargetCurve from "@/components/TargetCurve";
@@ -20,7 +20,7 @@ export default function Home() {
   const tc = useTranslations("common");
   const targetCopy = useTargetCopy();
   const router = useRouter();
-  const { target } = useResearch();
+  const { target, reset } = useResearch();
   const prefetched = useRef(new Set<string>());
   const [leaving, setLeaving] = useState(false);
 
@@ -127,15 +127,29 @@ export default function Home() {
         <div className="pointer-events-auto flex flex-wrap items-end justify-end gap-2">
           {/* Archive status moved to the sidebar (components/ArchiveStatus.tsx). */}
           {target && (
-            <Link
-              href="/journal"
-              className="rounded-xl border border-line/70 bg-deep/60 px-3 py-2.5 text-[11px] text-mutedstar backdrop-blur-md transition-colors hover:border-pulse/50 hover:bg-deep/80 hover:text-starlight"
-            >
-              {t.rich("ongoing", {
-                name: (chunks) => <span className="text-starlight">{chunks}</span>,
-                target: target.name,
-              })}
-            </Link>
+            <div className="flex items-stretch overflow-hidden rounded-xl border border-pulse/30 bg-deep/70 text-[11px] backdrop-blur-md transition-colors hover:border-pulse/60">
+              <Link href="/journal" className="flex items-center gap-2.5 py-2 pl-3 pr-2 text-mutedstar hover:text-starlight">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pulse opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-pulse" />
+                </span>
+                <span className="flex flex-col leading-tight">
+                  <span className="text-[9px] uppercase tracking-[0.16em] text-mutedstar">{t("ongoingLabel")}</span>
+                  <span className="text-xs font-semibold text-starlight">{target.name}</span>
+                </span>
+                <span className="text-pulse" aria-hidden="true">→</span>
+                <span className="sr-only">{t("ongoingOpen")}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={reset}
+                aria-label={t("ongoingDismiss")}
+                title={t("ongoingDismiss")}
+                className="border-l border-line/60 px-2 text-mutedstar transition-colors hover:bg-abyss/60 hover:text-starlight"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
         </div>
       </div>

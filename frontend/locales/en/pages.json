@@ -15,7 +15,9 @@
     "querying": "Querying the archive…",
     "sourceAvailable": "{name}: available ({latency} ms)",
     "sourceUnavailable": "{name}: unavailable — {detail}",
-    "ongoing": "Research in progress: <name>{target}</name> → Journal"
+    "ongoingLabel": "Research in progress",
+    "ongoingOpen": "Open journal",
+    "ongoingDismiss": "Dismiss"
   },
   "livingSkyPage": {
     "archiveQueryFailed": "Archive query failed",
