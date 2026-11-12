@@ -1,6 +1,6 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, type NextResponse } from "next/server";
-import { splitLocale } from "./i18n/paths";
+import { routeOf } from "./i18n/paths";
 import { routing } from "./i18n/routing";
 
 const intl = createIntlMiddleware(routing);
@@ -20,7 +20,8 @@ export async function middleware(request: NextRequest) {
   const response: NextResponse = intl(req);
   if (response.headers.has("location")) return response;
 
-  const { locale, pathname } = splitLocale(request.nextUrl.pathname);
+  // Decoded like next-intl, so encoded variants such as `/%6Aournal` are guarded too.
+  const { locale, pathname } = routeOf(request.nextUrl.pathname);
   if (
     isJournal(pathname) &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

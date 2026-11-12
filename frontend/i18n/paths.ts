@@ -15,3 +15,19 @@ export function localizedPath(locale: Locale, pathname: string): string {
   if (locale === defaultLocale) return pathname;
   return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
 }
+
+/**
+ * Locale and locale-less path of a raw request pathname, decoded exactly like next-intl does
+ * before routing (`decodeURI`, repeated slashes collapsed). Route guards must use this: the
+ * raw pathname keeps percent-encoding, so `/%6Aournal` would not look like `/journal` even
+ * though it renders the journal.
+ */
+export function routeOf(rawPathname: string): { locale: Locale; pathname: string } {
+  let pathname = rawPathname;
+  try {
+    pathname = decodeURI(rawPathname);
+  } catch {
+    // Malformed escape sequences are left as they are; next-intl does the same.
+  }
+  return splitLocale(pathname.replace(/\/+/g, "/"));
+}
