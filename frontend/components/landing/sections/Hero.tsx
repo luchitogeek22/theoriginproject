@@ -19,7 +19,7 @@ export default function Hero() {
         };
 
   return (
-    <section id="origin" data-chapter aria-labelledby="origin-title" className="relative flex min-h-[100svh] flex-col justify-end px-4 pb-10 pt-24 md:px-10 md:pb-14">
+    <section id="origin" data-chapter aria-labelledby="origin-title" className="landing-gutter relative flex min-h-[100svh] flex-col justify-end pb-10 pt-24 md:pb-14">
       <motion.p {...reveal(1.4)} className="landing-wordmark font-display" aria-hidden>
         THE ORIGIN PROJECT
       </motion.p>

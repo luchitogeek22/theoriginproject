@@ -33,7 +33,7 @@ export default function Objects() {
 
   return (
     <section id="objects" data-chapter aria-labelledby="objects-title" className="relative md:h-[190vh]">
-      <div className="flex min-h-[100svh] md:sticky md:top-0 items-center px-4 py-20 md:px-10">
+      <div className="landing-gutter flex min-h-[100svh] md:sticky md:top-0 items-center py-20">
         <div className="grid w-full gap-8 md:grid-cols-12">
           <div className="landing-scrim md:col-span-5">
             <h2 id="objects-title" className="landing-h2">{t("title")}</h2>

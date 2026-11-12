@@ -31,7 +31,7 @@ export default function Pipeline() {
 
   return (
     <section ref={ref} id="evidence" data-chapter aria-labelledby="evidence-title" className="relative md:h-[340vh]">
-      <div className="flex min-h-[100svh] md:sticky md:top-0 items-center px-4 py-20 md:px-10">
+      <div className="landing-gutter flex min-h-[100svh] md:sticky md:top-0 items-center py-20">
         <div className="grid w-full gap-10 md:grid-cols-12 md:items-center">
           <div className="landing-scrim md:col-span-5">
             <h2 id="evidence-title" className="landing-h2">{t("title")}</h2>

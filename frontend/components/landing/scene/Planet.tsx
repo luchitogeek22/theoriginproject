@@ -184,7 +184,7 @@ export default function Planet() {
         <sphereGeometry args={[2, 64, 64]} />
       </mesh>
       <OrbitRing radius={3.4} tilt={[0.08, 0.12]} speed={0.22} moonSize={0.07} color="#42D9F5" />
-      <OrbitRing radius={4.6} tilt={[-0.22, -0.3]} speed={0.12} moonSize={0.11} color="#9675FF" />
+      <OrbitRing radius={4.6} tilt={[-0.22, -0.3]} speed={0.12} moonSize={0.11} color="#6f9be8" />
       <OrbitRing radius={6.2} tilt={[0.35, 0.05]} speed={0.07} moonSize={0.05} color="#F4F6FC" />
     </group>
   );

@@ -20,7 +20,7 @@ export default function Platform() {
   };
 
   return (
-    <section id="platform" data-chapter aria-labelledby="platform-title" className="relative flex min-h-[140vh] items-center px-4 py-24 md:px-10">
+    <section id="platform" data-chapter aria-labelledby="platform-title" className="landing-gutter relative flex min-h-[140vh] items-center py-24">
       <div className="grid w-full gap-10 md:grid-cols-12">
         <div className="landing-scrim md:col-span-4">
           <h2 id="platform-title" className="landing-h2">{t("title")}</h2>

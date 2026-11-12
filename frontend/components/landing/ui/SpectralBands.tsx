@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ARRAY_FEATURES, CHANNELS_PER_ARRAY, DETECTOR_ARRAYS } from "../content";
 
 const TOTAL = DETECTOR_ARRAYS.length * CHANNELS_PER_ARRAY;
-const HUES = ["#4263FF", "#5a63ff", "#7a6cff", "#9675FF", "#6fa6f8", "#42D9F5"];
+const HUES = ["#4263FF", "#5a63ff", "#4f7fe0", "#6f9be8", "#6fa6f8", "#9dbcf2"];
 
 export default function SpectralBands() {
   const t = useTranslations("landing.bands");
@@ -79,7 +79,7 @@ export default function SpectralBands() {
           transition={{ duration: 0.25 }}
           className="mt-5 grid gap-1"
         >
-          <p className="font-mono text-xs text-ion">
+          <p className="font-mono text-xs text-pulse">
             {t("readout", {
               band,
               array: array.index,

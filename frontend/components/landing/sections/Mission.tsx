@@ -6,7 +6,7 @@ const FACTS = ["bands", "range", "cadence"] as const;
 export default function Mission() {
   const t = useTranslations("landing.mission");
   return (
-    <section id="mission" data-chapter aria-labelledby="mission-title" className="relative flex min-h-[170vh] items-center px-4 md:px-10">
+    <section id="mission" data-chapter aria-labelledby="mission-title" className="relative flex min-h-[170vh] items-center landing-gutter">
       <div className="landing-scrim w-full max-w-xl py-16">
         <h2 id="mission-title" className="landing-h2">{t("title")}</h2>
         <p className="landing-body mt-5">

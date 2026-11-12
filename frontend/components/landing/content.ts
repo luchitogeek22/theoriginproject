@@ -56,7 +56,7 @@ export const TARGETS: ChallengeTarget[] = [
     decDeg: 4.6933,
     exposures: { count: 195, approximate: false },
     span: { kind: "months", from: [2025, 8], to: [2026, 9] },
-    color: "#42D9F5",
+    color: "#6f9be8",
   },
   {
     key: "epsindi",
@@ -80,7 +80,7 @@ export const TARGETS: ChallengeTarget[] = [
     decDeg: -7.245147,
     exposures: { count: 133, approximate: false },
     span: { kind: "months", from: [2025, 5], to: [2026, 5] },
-    color: "#9675FF",
+    color: "#6f9be8",
   },
   {
     key: "rwaur",
@@ -104,7 +104,7 @@ export const TARGETS: ChallengeTarget[] = [
     decDeg: 66.755,
     exposures: { count: 1300, approximate: true },
     span: { kind: "days", days: 478, perDetector: false },
-    color: "#42D9F5",
+    color: "#6f9be8",
   },
 ];
 

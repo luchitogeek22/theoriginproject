@@ -5,7 +5,7 @@ import { APP_ENTRY, SOURCES } from "../content";
 export default function Finale() {
   const t = useTranslations("landing.finale");
   return (
-    <section id="question" data-chapter aria-labelledby="question-title" className="relative flex min-h-[100svh] flex-col px-4 pt-24 md:px-10">
+    <section id="question" data-chapter aria-labelledby="question-title" className="landing-gutter relative flex min-h-[100svh] flex-col pt-24">
       <div className="flex flex-1 flex-col items-start justify-center md:items-end md:text-right">
         <h2 id="question-title" className="max-w-xl font-display text-[2.2rem] font-light leading-[1.08] text-stellar md:text-[3.6rem]">
           {t("title")}

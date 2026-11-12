@@ -4,9 +4,9 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import type { PipelineVisualKind } from "../content";
 
-const ION = "#42D9F5";
+const ION = "#6f9be8";
 const SIGNAL = "#4263FF";
-const NEBULA = "#9675FF";
+const NEBULA = "#6f9be8";
 const STELLAR = "#F4F6FC";
 
 /** Coordinates and archive names drawn in the diagrams: identical in every language. */
@@ -110,7 +110,7 @@ function Variation() {
         const y = Math.floor(i / 12);
         const hot = (x === 5 && y === 3) || (x === 6 && y === 3);
         const cold = x === 4 && y === 3;
-        const fill = hot ? ION : cold ? NEBULA : SIGNAL;
+        const fill = hot ? "#F4F6FC" : cold ? NEBULA : SIGNAL;
         const opacity = hot || cold ? 0.85 : 0.05 + ((x * 7 + y * 3) % 5) * 0.025;
         return (
           <motion.rect key={i} x={40 + x * 27} y={20 + y * 22} width={25} height={20} fill={fill} initial={{ opacity: 0 }} animate={{ opacity }} transition={{ delay: (x + y) * 0.03 }} />

@@ -7,7 +7,10 @@
   --ink: #0b1020;
   --signal: #4263ff;
   --ion: #42d9f5;
-  --nebula: #9675ff;
+  --primary: #2456b8;
+  --primary-hi: #2f62c6;
+  --primary-soft: #6f9be8;
+  --nebula: #6f9be8;
   --stellar: #f4f6fc;
   position: relative;
   min-height: 100vh;
@@ -34,7 +37,7 @@
 
 .landing-static-sky {
   background:
-    radial-gradient(60% 50% at 75% 20%, rgba(150, 117, 255, 0.12), transparent 70%),
+    radial-gradient(60% 50% at 75% 20%, rgba(47, 98, 198, 0.12), transparent 70%),
     radial-gradient(50% 40% at 15% 80%, rgba(66, 99, 255, 0.12), transparent 70%),
     var(--void);
 }
@@ -82,6 +85,65 @@
   max-width: 34rem;
 }
 
+.landing-gutter {
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .landing-gutter {
+    padding-inline: 3.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .landing-gutter {
+    padding-inline: 5rem;
+  }
+}
+
+.landing-topbar {
+  border-bottom: 1px solid transparent;
+  background: rgba(5, 6, 10, 0);
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.6s ease-out,
+    background-color 0.4s,
+    border-color 0.4s,
+    backdrop-filter 0.4s,
+    visibility 0s linear 0s;
+}
+
+.landing-topbar[data-scrolled="true"] {
+  border-bottom-color: rgba(244, 246, 252, 0.1);
+  background: rgba(5, 6, 10, 0.45);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(244, 246, 252, 0.06), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+}
+
+.landing-topbar[data-hidden="true"]:not(:focus-within) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-45%);
+  transition:
+    transform 0.45s cubic-bezier(0.5, 0, 0.75, 0),
+    opacity 0.35s ease-in,
+    background-color 0.4s,
+    border-color 0.4s,
+    backdrop-filter 0.4s,
+    visibility 0s linear 0.45s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-topbar,
+  .landing-topbar[data-hidden="true"]:not(:focus-within) {
+    transition: none;
+  }
+}
+
 .landing-scrim {
   position: relative;
 }
@@ -103,7 +165,7 @@
 }
 
 .landing-focus:focus-visible {
-  outline: 2px solid var(--ion);
+  outline: 2px solid var(--primary-soft);
   outline-offset: 3px;
 }
 
@@ -134,19 +196,25 @@
   transition: background-color 0.25s, color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
 }
 
+.landing-button--sm {
+  height: 2.25rem;
+  padding: 0 1rem;
+  font-size: 13px;
+}
+
 .landing-button:active {
   transform: scale(0.97);
 }
 
 .landing-button--primary {
-  background: var(--stellar);
-  color: var(--void);
-  box-shadow: 0 0 0 0 rgba(66, 217, 245, 0);
+  background: var(--primary);
+  color: var(--stellar);
+  box-shadow: 0 0 0 0 rgba(47, 98, 198, 0);
 }
 
 .landing-button--primary:hover {
-  background: #ffffff;
-  box-shadow: 0 0 32px -4px rgba(66, 217, 245, 0.65);
+  background: var(--primary-hi);
+  box-shadow: 0 0 32px -4px rgba(47, 98, 198, 0.75);
 }
 
 .landing-button--ghost {
@@ -157,8 +225,9 @@
 }
 
 .landing-button--ghost:hover {
-  border-color: var(--ion);
-  color: var(--ion);
+  border-color: var(--primary-hi);
+  color: var(--stellar);
+  background: rgba(36, 86, 184, 0.22);
 }
 
 .landing-rail__label {
@@ -186,19 +255,19 @@
 
 .landing-rail[aria-current="step"] .landing-rail__tick {
   width: 28px;
-  background: var(--ion);
+  background: var(--primary-soft);
 }
 
 .landing-sky-label {
   font-size: 10px;
-  color: rgba(66, 217, 245, 0.75);
+  color: rgba(111, 155, 232, 0.8);
   white-space: nowrap;
   user-select: none;
 }
 
 .landing-sky-label--name {
   font-size: 11px;
-  color: rgba(150, 117, 255, 0.85);
+  color: rgba(47, 98, 198, 0.85);
   letter-spacing: 0.04em;
 }
 
@@ -250,10 +319,10 @@
 .landing-badge {
   display: inline-flex;
   padding: 0.3rem 0.7rem;
-  border: 1px dashed rgba(150, 117, 255, 0.7);
+  border: 1px dashed rgba(47, 98, 198, 0.7);
   border-radius: 999px;
   font-size: 12px;
-  color: var(--nebula);
+  color: var(--primary-soft);
 }
 
 .landing-chip {
@@ -267,19 +336,19 @@
 }
 
 .landing-chip:hover {
-  border-color: var(--ion);
+  border-color: var(--primary-hi);
 }
 
 .landing-chip[aria-pressed="true"] {
-  border-color: var(--ion);
-  color: var(--void);
-  background: var(--ion);
+  border-color: var(--primary-hi);
+  color: var(--stellar);
+  background: var(--primary);
 }
 
 .landing-range {
   appearance: none;
   height: 2px;
-  background: linear-gradient(to right, var(--signal), var(--ion));
+  background: linear-gradient(to right, var(--primary), var(--primary-soft));
   border-radius: 2px;
 }
 
@@ -289,7 +358,7 @@
   height: 18px;
   border-radius: 50%;
   background: var(--stellar);
-  box-shadow: 0 0 0 4px rgba(66, 217, 245, 0.25);
+  box-shadow: 0 0 0 4px rgba(47, 98, 198, 0.4);
   cursor: grab;
 }
 
@@ -299,7 +368,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--stellar);
-  box-shadow: 0 0 0 4px rgba(66, 217, 245, 0.25);
+  box-shadow: 0 0 0 4px rgba(47, 98, 198, 0.4);
   cursor: grab;
 }
 
@@ -328,12 +397,11 @@
 }
 
 .landing-switch:checked {
-  background: var(--ion);
+  background: var(--primary-hi);
 }
 
 .landing-switch:checked::after {
   transform: translateX(16px);
-  background: var(--void);
 }
 
 .landing-target-tab {
@@ -427,7 +495,7 @@
   right: 1.5rem;
   top: -1px;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--target, var(--ion)), transparent);
+  background: linear-gradient(to right, transparent, var(--target, var(--primary-soft)), transparent);
 }
 
 .landing-step {
@@ -450,7 +518,7 @@
 .landing-step[aria-current="step"],
 .landing-step[aria-selected="true"] {
   color: var(--stellar);
-  border-left-color: var(--ion);
+  border-left-color: var(--primary-soft);
 }
 
 .landing-status {
@@ -460,13 +528,13 @@
 }
 
 .landing-status--available {
-  background: rgba(66, 217, 245, 0.15);
-  color: var(--ion);
+  background: rgba(47, 98, 198, 0.2);
+  color: var(--primary-soft);
 }
 
 .landing-status--validating {
-  border: 1px dashed rgba(150, 117, 255, 0.7);
-  color: var(--nebula);
+  border: 1px dashed rgba(47, 98, 198, 0.7);
+  color: var(--primary-soft);
 }
 
 .landing-band {
@@ -481,7 +549,7 @@
   border-radius: 8px;
   background:
     radial-gradient(80% 70% at 85% 10%, rgba(66, 99, 255, 0.25), transparent 70%),
-    radial-gradient(60% 60% at 10% 100%, rgba(150, 117, 255, 0.18), transparent 70%),
+    radial-gradient(60% 60% at 10% 100%, rgba(47, 98, 198, 0.18), transparent 70%),
     rgba(11, 16, 32, 0.85);
   box-shadow: 0 40px 80px -40px rgba(66, 99, 255, 0.45);
 }

@@ -33,7 +33,7 @@ export default function Epochs() {
 
   return (
     <section ref={ref} id="epochs" data-chapter aria-labelledby="epochs-title" className="relative h-[260vh]">
-      <div className="sticky top-0 flex min-h-[100svh] items-start px-4 pt-24 md:items-center md:px-10 md:pt-0">
+      <div className="sticky top-0 flex min-h-[100svh] landing-gutter items-start pt-24 md:items-center md:pt-0">
         <div className="landing-scrim w-full max-w-md py-6">
           <p className="landing-badge">{t("badge")}</p>
           <h2 id="epochs-title" className="landing-h2 mt-4">{t("title")}</h2>
@@ -81,11 +81,11 @@ export default function Epochs() {
             </div>
             <div>
               <dt className="text-stellar/45">{t("shift")}</dt>
-              <dd className="mt-1 text-ion">{readout.shiftPx.toFixed(2)} px</dd>
+              <dd className="mt-1 text-pulse">{readout.shiftPx.toFixed(2)} px</dd>
             </div>
             <div>
               <dt className="text-stellar/45">{t("brightness")}</dt>
-              <dd className="mt-1 text-nebula">
+              <dd className="mt-1 text-stellar">
                 {readout.brightnessPct >= 0 ? "+" : ""}
                 {readout.brightnessPct.toFixed(0)}%
               </dd>

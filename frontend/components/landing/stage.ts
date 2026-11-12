@@ -27,7 +27,7 @@ export interface Keyframe {
 
 export const KEYFRAMES: Keyframe[] = [
   { cam: [0, 0.35, 7.2], look: [0, 0, 0], planet: 1, sphereScale: 2.3, sphereOpacity: 0, scan: 0, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
-  { cam: [0, 1.5, 10], look: [6, 0, -60], planet: 0, sphereScale: 60, sphereOpacity: 1, scan: 0, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
+  { cam: [0, 1.5, 10], look: [2, 0, -60], planet: 0, sphereScale: 60, sphereOpacity: 1, scan: 0, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
   { cam: [1, 5, 25], look: [-7.5, 0, 0], planet: 0, sphereScale: 10, sphereOpacity: 1, scan: 1, telescope: 1, epochPanel: 0, light: [1, 0.45, 0.65] },
   { cam: [0, 0, -42], look: [0, 0, -60], planet: 0, sphereScale: 10, sphereOpacity: 0, scan: 1, telescope: 0, epochPanel: 1, light: [1, 0.45, 0.65] },
   { cam: [0, 0, 0], look: "target", planet: 0, sphereScale: 60, sphereOpacity: 1, scan: 1, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
