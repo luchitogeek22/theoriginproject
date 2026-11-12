@@ -154,3 +154,95 @@ def test_candidates_stamped_with_user_id():
         assert rows[0].user_id == "user-1"
     finally:
         db.close()
+
+
+def test_optional_dependency_is_anonymous_without_header_when_configured(monkeypatch):
+    from app.auth import get_optional_user
+
+    _configured(monkeypatch)
+    assert get_optional_user(_request(None)) is None
+
+
+def test_optional_dependency_returns_user_with_valid_token(monkeypatch):
+    from app.auth import get_optional_user
+
+    _configured(monkeypatch)
+    user = get_optional_user(_request(_mint(sub="user-9")))
+    assert isinstance(user, UserInfo)
+    assert user.user_id == "user-9"
+
+
+def test_optional_dependency_rejects_an_invalid_token(monkeypatch):
+    from app.auth import get_optional_user
+
+    _configured(monkeypatch)
+    with pytest.raises(HTTPException) as exc:
+        get_optional_user(_request(_mint(secret="another-secret")))
+    assert exc.value.status_code == 401
+
+
+def test_optional_dependency_is_anonymous_when_unconfigured(monkeypatch):
+    from app.auth import get_optional_user
+
+    _configured(monkeypatch, secret="")
+    assert get_optional_user(_request(None)) is None
+
+
+def test_missing_token_message_is_readable(monkeypatch):
+    _configured(monkeypatch)
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(_request(None))
+    assert "REDACTED" not in exc.value.detail
+    assert "token" in exc.value.detail.lower()
+
+
+def _client():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app)
+
+
+ANALYSIS_BODY = {"cutout_a_id": 1, "cutout_b_id": 2}
+
+
+def test_analysis_is_public_even_when_auth_is_configured(monkeypatch):
+    _configured(monkeypatch)
+    for path in ("differential", "temporal"):
+        response = _client().post(f"/api/v1/analysis/{path}", json=ANALYSIS_BODY)
+        assert response.status_code == 200, (path, response.text)
+    response = _client().post(
+        "/api/v1/analysis/spectral", json={"cutout_id": 1, "ra_deg": 10.0, "dec_deg": 5.0}
+    )
+    assert response.status_code == 200, response.text
+
+
+def test_analysis_with_an_invalid_token_is_still_rejected(monkeypatch):
+    _configured(monkeypatch)
+    response = _client().post(
+        "/api/v1/analysis/differential",
+        json=ANALYSIS_BODY,
+        headers={"Authorization": f"Bearer {_mint(secret='another-secret')}"},
+    )
+    assert response.status_code == 401
+
+
+def test_analysis_accepts_a_valid_token(monkeypatch):
+    _configured(monkeypatch)
+    response = _client().post(
+        "/api/v1/analysis/differential",
+        json=ANALYSIS_BODY,
+        headers={"Authorization": f"Bearer {_mint(sub='user-42')}"},
+    )
+    assert response.status_code == 200
+
+
+def test_saving_to_the_journal_still_requires_a_session(monkeypatch):
+    _configured(monkeypatch)
+    body = {"title": "t", "target_name": "WISE 0855", "payload": {}}
+    assert _client().post("/api/v1/research", json=body).status_code == 401
+    ok = _client().post(
+        "/api/v1/research", json=body, headers={"Authorization": f"Bearer {_mint()}"}
+    )
+    assert ok.status_code == 200, ok.text

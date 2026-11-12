@@ -14,6 +14,7 @@ import io
 import time
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 
@@ -134,6 +135,26 @@ def query_hash(ra: float, dec: float, radius_arcmin: float, collections: list[st
 
 class ArchiveUnavailableError(RuntimeError):
     pass
+
+
+class DisallowedDownloadError(ValueError):
+    pass
+
+
+MAX_DOWNLOAD_REDIRECTS = 5
+
+
+def check_download_url(url: str, allowed_suffixes: list[str]) -> None:
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError as exc:
+        raise DisallowedDownloadError(f"Malformed download URL: {exc}") from exc
+    host = (parts.hostname or "").lower().rstrip(".")
+    if parts.scheme != "https" or not host or port not in (None, 443):
+        raise DisallowedDownloadError("Downloads must use https on the default port.")
+    if not any(host == s or host.endswith("." + s) for s in allowed_suffixes):
+        raise DisallowedDownloadError(f"Host not allowed for downloads: {host}")
 
 
 class SPHERExDataGateway:
@@ -313,22 +334,33 @@ class SPHERExDataGateway:
 
     def download(self, url: str, dest_hint: str = "") -> tuple[bytes, str]:
         """Download a file or cutout with size limits. Returns (bytes, final_url)."""
+        suffixes = self.settings.download_host_suffix_list
+        check_download_url(url, suffixes)
         limit = self.settings.download_limit_mb * 1024 * 1024
         try:
             with httpx.Client(
-                timeout=self.settings.irsa_timeout_seconds, follow_redirects=True
+                timeout=self.settings.irsa_timeout_seconds, follow_redirects=False
             ) as client:
-                with client.stream("GET", url) as response:
-                    response.raise_for_status()
-                    chunks: list[bytes] = []
-                    total = 0
-                    for chunk in response.iter_bytes(1024 * 256):
-                        total += len(chunk)
-                        if total > limit:
-                            raise ValueError(
-                                f"Download exceeds {self.settings.download_limit_mb} MB limit"
-                            )
-                        chunks.append(chunk)
-                    return b"".join(chunks), str(response.url)
+                current = url
+                for _ in range(MAX_DOWNLOAD_REDIRECTS + 1):
+                    with client.stream("GET", current) as response:
+                        if response.is_redirect:
+                            current = urljoin(str(response.url), response.headers["location"])
+                            check_download_url(current, suffixes)
+                            continue
+                        response.raise_for_status()
+                        chunks: list[bytes] = []
+                        total = 0
+                        for chunk in response.iter_bytes(1024 * 256):
+                            total += len(chunk)
+                            if total > limit:
+                                raise ValueError(
+                                    f"Download exceeds {self.settings.download_limit_mb} MB limit"
+                                )
+                            chunks.append(chunk)
+                        return b"".join(chunks), str(response.url)
+                raise ArchiveUnavailableError(
+                    f"Too many redirects downloading {dest_hint or url}"
+                )
         except httpx.HTTPError as exc:
             raise ArchiveUnavailableError(f"Download failed for {dest_hint or url}: {exc}") from exc

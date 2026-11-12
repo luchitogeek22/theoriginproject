@@ -82,6 +82,16 @@ def storage_root() -> str:
     return root
 
 
+def _local_path(key: str) -> str:
+    if not key or "\x00" in key or key.startswith("s3://") or os.path.isabs(key):
+        raise ValueError(f"Invalid storage key: {key!r}")
+    root = os.path.realpath(storage_root())
+    path = os.path.realpath(os.path.join(root, key))
+    if path == root or os.path.commonpath([root, path]) != root:
+        raise ValueError(f"Storage key escapes the storage root: {key!r}")
+    return path
+
+
 def storage_put(key: str, data: bytes) -> str:
     """Store bytes. Returns the storage key. S3 when configured, else local disk."""
     settings = get_settings()
@@ -100,8 +110,8 @@ def storage_put(key: str, data: bytes) -> str:
             return f"s3://{settings.s3_bucket}/{key}"
         except Exception as exc:  # noqa: BLE001
             log.warning("s3 put failed, falling back to local: %s", exc)
-    path = os.path.join(storage_root(), key)
-    os.makedirs(os.path.dirname(path) or storage_root(), exist_ok=True)
+    path = _local_path(key)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as fh:
         fh.write(data)
     return key
@@ -110,13 +120,14 @@ def storage_put(key: str, data: bytes) -> str:
 def storage_get(key: str) -> bytes:
     if key.startswith("s3://"):
         raise FileNotFoundError("S3 retrieval requires bucket access configuration")
-    path = key if os.path.isabs(key) else os.path.join(storage_root(), key)
-    with open(path, "rb") as fh:
+    with open(_local_path(key), "rb") as fh:
         return fh.read()
 
 
 def storage_exists(key: str) -> bool:
     if key.startswith("s3://"):
         return False
-    path = key if os.path.isabs(key) else os.path.join(storage_root(), key)
-    return os.path.exists(path)
+    try:
+        return os.path.exists(_local_path(key))
+    except ValueError:
+        return False

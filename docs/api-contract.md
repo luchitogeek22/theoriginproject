@@ -27,7 +27,9 @@ Base: `{backend}/api/v1`. Errores: `{ "detail": "…" }` + `X-Request-ID`.
 Contrato completo y ejecutable: `{backend}/docs` (OpenAPI).
 Tipos espejo en frontend: `frontend/lib/types.ts`.
 
-Autenticación: cuando `SUPABASE_JWT_SECRET` está configurado, los POST de
-`/research` y `/analysis/*` exigen `Authorization: Bearer <jwt-supabase>`
-(401 sin token válido) y asocian el `sub` del token como `user_id`. Sin
-configurar, la API acepta peticiones anónimas (`user_id` nulo).
+Autenticación: la exploración y el análisis son públicos. `/analysis/*` acepta
+peticiones anónimas (`user_id` nulo); si se envía `Authorization: Bearer
+<jwt-supabase>` debe ser válido (401 si no) y su `sub` se asocia como `user_id`.
+Solo guardar en el diario, `POST /research`, exige un token válido cuando
+`SUPABASE_JWT_SECRET` está configurado. Sin configurar, todo acepta peticiones
+anónimas.

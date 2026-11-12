@@ -1,0 +1,77 @@
+{
+ "provenance": {
+  "service": "SIMBAD TAP, Harvard mirror https://simbad.harvard.edu/simbad/sim-tap/sync (CDS endpoint returned 404 on 2026-11-10)",
+  "queried_on": "2026-11-11",
+  "adql": "SELECT id, main_id, ra, dec, pmra, pmdec, plx_value, sp_type, otype FROM basic JOIN ident ON oidref = oid WHERE id IN (...)",
+  "frame": "ICRS",
+  "epoch_of_ra_dec": "J2000 (SIMBAD convention; consistent with the 85 arcsec gap to the challenge position of WISE 0855)",
+  "pm_units": "mas/yr",
+  "plx_units": "mas"
+ },
+ "targets": {
+  "Barnard's Star": {
+   "simbad_id": "GJ 699",
+   "main_id": "NAME Barnard's star",
+   "ra_deg": 269.4520769586187,
+   "dec_deg": 4.693364966576667,
+   "pmra": -801.551,
+   "pmdec": 10362.394,
+   "plx": 546.9759,
+   "sp_type": "M4V"
+  },
+  "Epsilon Indi B": {
+   "simbad_id": "* eps Ind B",
+   "main_id": "* eps Ind B",
+   "ra_deg": 331.04414658852124,
+   "dec_deg": -56.782844195116105,
+   "pmra": 3981.977,
+   "pmdec": -2466.832,
+   "plx": 270.658,
+   "sp_type": "T1V+T6V"
+  },
+  "WISE 0855": {
+   "simbad_id": "WISE J085510.83-071442.5",
+   "main_id": "WISEA J085510.74-071442.5",
+   "ra_deg": 133.81890825,
+   "dec_deg": -7.247048,
+   "pmra": -8123.7,
+   "pmdec": 673.2,
+   "plx": 439.0,
+   "sp_type": "Y2",
+   "challenge_position": {
+    "ra_deg": 133.795129,
+    "dec_deg": -7.245147,
+    "note": "from the challenge text; matches AllWISE J085510.74-071442.5 (ra 133.7947597, dec -7.2451456) i.e. the WISE epoch, about 2010"
+   },
+   "allwise": {
+    "w1mpro": 16.231,
+    "w2mpro": 13.704,
+    "w2sigmpro": 0.033,
+    "w2snr": 32.4,
+    "pmra_allwise": -4188,
+    "pmdec_allwise": 226,
+    "note": "AllWISE proper motion is unreliable for this object (SIMBAD: -8123.7)"
+   }
+  },
+  "RW Aurigae": {
+   "simbad_id": "V* RW Aur",
+   "main_id": "V* RW Aur",
+   "ra_deg": 76.95652603458333,
+   "dec_deg": 30.401438173888888,
+   "pmra": 7.23,
+   "pmdec": -20.33,
+   "plx": 15.42,
+   "sp_type": "K1/5e+K5e"
+  },
+  "R Draconis": {
+   "simbad_id": "V* R Dra",
+   "main_id": "V* R Dra",
+   "ra_deg": 248.16761083295,
+   "dec_deg": 66.75497941722,
+   "pmra": -20.643,
+   "pmdec": 6.149,
+   "plx": 1.2509,
+   "sp_type": "M4.5-6+e"
+  }
+ }
+}

@@ -1,0 +1,120 @@
+{
+ "queried_on": "2026-11-11",
+ "observed": {
+  "WISE 0855": {
+   "fixture": "wise0855_d6_20250505.fits",
+   "detector": 6,
+   "date_obs": "2025-05-05T16:48:02.459",
+   "mjd_obs": 60800.700028461,
+   "shape": [
+    59,
+    59
+   ],
+   "pipeline_version": "6.4+psffix1",
+   "target_pixel": [
+    29.4,
+    29.0
+   ],
+   "wavelength_um_at_target": 4.9611,
+   "bandwidth_um_at_target": 0.0372,
+   "fraction_any_flag": 0.33,
+   "fraction_hard_mask": 0.008,
+   "fraction_source_flag": 0.307,
+   "fraction_flags_equal_zero": 0.67,
+   "zodi_median_over_image_median": 0.793,
+   "image_median_mjy_sr": 0.7684
+  },
+  "Barnard's Star": {
+   "fixture": "barnards_star_d6_20250827.fits",
+   "detector": 6,
+   "date_obs": "2025-08-27T11:37:04.954",
+   "mjd_obs": 60914.484085116,
+   "shape": [
+    58,
+    58
+   ],
+   "pipeline_version": "6.4+psffix1",
+   "target_pixel": [
+    28.5,
+    28.7
+   ],
+   "wavelength_um_at_target": 4.8825,
+   "bandwidth_um_at_target": 0.0368,
+   "fraction_any_flag": 1.0,
+   "fraction_hard_mask": 0.012,
+   "fraction_source_flag": 1.0,
+   "fraction_flags_equal_zero": 0.0,
+   "zodi_median_over_image_median": 0.697,
+   "image_median_mjy_sr": 0.5173
+  },
+  "Epsilon Indi B": {
+   "fixture": "epsilon_indi_b_d6_20251104.fits",
+   "detector": 6,
+   "date_obs": "2025-11-04T12:05:07.054",
+   "mjd_obs": 60983.503553866,
+   "shape": [
+    59,
+    59
+   ],
+   "pipeline_version": "6.4+psffix1",
+   "target_pixel": [
+    29.1,
+    29.3
+   ],
+   "wavelength_um_at_target": 4.6309,
+   "bandwidth_um_at_target": 0.0359,
+   "fraction_any_flag": 0.778,
+   "fraction_hard_mask": 0.011,
+   "fraction_source_flag": 0.773,
+   "fraction_flags_equal_zero": 0.222,
+   "zodi_median_over_image_median": 0.837,
+   "image_median_mjy_sr": 0.5028
+  },
+  "RW Aurigae": {
+   "fixture": "rw_aurigae_d1_20250904.fits",
+   "detector": 1,
+   "date_obs": "2025-09-04T01:37:57.395",
+   "mjd_obs": 60922.068025405,
+   "shape": [
+    59,
+    58
+   ],
+   "pipeline_version": "6.4+psffix1",
+   "target_pixel": [
+    28.1,
+    28.6
+   ],
+   "wavelength_um_at_target": 0.9651,
+   "bandwidth_um_at_target": 0.025,
+   "fraction_any_flag": 0.682,
+   "fraction_hard_mask": 0.013,
+   "fraction_source_flag": 0.668,
+   "fraction_flags_equal_zero": 0.318,
+   "zodi_median_over_image_median": 0.696,
+   "image_median_mjy_sr": 0.4612
+  },
+  "R Draconis": {
+   "fixture": "r_draconis_d3_20251226.fits",
+   "detector": 3,
+   "date_obs": "2025-12-26T05:13:59.785",
+   "mjd_obs": 61035.218053067,
+   "shape": [
+    59,
+    58
+   ],
+   "pipeline_version": "6.5.4+psffix1",
+   "target_pixel": [
+    28.9,
+    28.9
+   ],
+   "wavelength_um_at_target": 1.6359,
+   "bandwidth_um_at_target": 0.0392,
+   "fraction_any_flag": 1.0,
+   "fraction_hard_mask": 0.049,
+   "fraction_source_flag": 1.0,
+   "fraction_flags_equal_zero": 0.0,
+   "zodi_median_over_image_median": 0.097,
+   "image_median_mjy_sr": 1.238
+  }
+ }
+}
