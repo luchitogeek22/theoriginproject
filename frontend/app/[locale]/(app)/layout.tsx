@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </HideInEmbed>
         <div className="flex min-w-0 flex-1 flex-col">
           <HideInEmbed>
-            <header className="flex items-center justify-between gap-2 border-b border-line/70 bg-deep/50 px-3 py-1.5 backdrop-blur-xl">
+            <header className="relative z-30 flex h-11 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-deep/40 px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_-12px_rgba(0,0,0,0.6)] backdrop-blur-xl backdrop-saturate-150">
               <p className="text-[11px] text-mutedstar md:hidden">{t("common.brand")}</p>
               <p className="hidden text-[11px] text-mutedstar md:block">{t("nav.headerNote")}</p>
               <div className="flex items-center gap-2">

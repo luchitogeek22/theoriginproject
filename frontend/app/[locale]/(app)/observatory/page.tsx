@@ -31,7 +31,7 @@ export default function Home() {
   };
 
   return (
-    <div className="scroll-thin relative h-full w-full overflow-y-auto">
+    <div className="scroll-thin relative -mt-11 h-[calc(100%+2.75rem)] w-full overflow-y-auto">
       <div
         className="absolute inset-0 bg-abyss"
         style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(36,86,184,0.14), transparent 60%)" }}
@@ -48,7 +48,7 @@ export default function Home() {
       />
 
       <div
-        className={`pointer-events-none relative z-10 flex min-h-full flex-col justify-between gap-6 p-4 transition-opacity duration-700 md:p-6 ${leaving ? "opacity-0" : "opacity-100"}`}
+        className={`pointer-events-none relative z-10 flex min-h-full flex-col justify-between gap-6 p-4 pt-[3.75rem] transition-opacity duration-700 md:p-6 md:pt-[4.25rem] ${leaving ? "opacity-0" : "opacity-100"}`}
       >
         <motion.div
           initial={{ opacity: 0, y: 10 }}
