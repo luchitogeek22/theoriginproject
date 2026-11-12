@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { Download, Loader2 } from "lucide-react";
-import { ApiError, api, apiUrl } from "@/lib/api";
+import { api, apiUrl } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
 
 type ReportFormat = "json" | "markdown" | "csv" | "pdf";
 
@@ -21,6 +23,10 @@ function slugify(text: string): string {
 }
 
 export default function JournalDetail() {
+  const t = useTranslations("journalEntryPage");
+  const tc = useTranslations("common");
+  const format = useFormatter();
+  const errorText = useErrorText();
   const params = useParams<{ id: string }>();
   const id = params.id;
   const [data, setData] = useState<Record<string, unknown> | null>(null);
@@ -33,7 +39,7 @@ export default function JournalDetail() {
     api
       .getResearch(id)
       .then((d) => setData(d))
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Load failed"))
+      .catch((e) => setError(errorText(e, t("loadFailed"))))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -45,14 +51,15 @@ export default function JournalDetail() {
     try {
       const res = await fetch(apiUrl(`/api/v1/evidence/${id}/report?format=${format}`));
       if (!res.ok) {
-        let message = `Export failed (${res.status})`;
+        let message = t("exportFailedStatus", { status: res.status });
         try {
           const parsed = (await res.json()) as { detail?: string };
           if (parsed.detail) message = parsed.detail;
         } catch {
           /* keep default */
         }
-        throw new Error(message);
+        setDlError(message);
+        return;
       }
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") ?? "";
@@ -70,7 +77,7 @@ export default function JournalDetail() {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
-      setDlError(e instanceof Error ? e.message : "Export failed");
+      setDlError(errorText(e, t("exportFailed")));
     } finally {
       setDownloading(null);
     }
@@ -81,10 +88,16 @@ export default function JournalDetail() {
   const methods = (payload.methods ?? []) as string[];
   const limitations = (payload.limitations ?? []) as string[];
   const candidates = (payload.candidates ?? []) as Array<Record<string, unknown>>;
+  const createdRaw = String(data?.created_at ?? "");
+  // Timestamps without an offset are UTC on the server; do not let the browser read them as local time.
+  const createdDate = new Date(/T.*(Z|[+-]\d\d:?\d\d)$/i.test(createdRaw) || !createdRaw.includes("T") ? createdRaw : `${createdRaw}Z`);
+  const createdAt = Number.isNaN(createdDate.getTime())
+    ? createdRaw.slice(0, 19).replace("T", " ")
+    : format.dateTime(createdDate, { dateStyle: "medium", timeStyle: "medium" });
 
   return (
     <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4">
-      {loading && <p className="flex items-center gap-1 text-xs text-mutedstar"><Loader2 size={13} className="animate-spin" /> Cargando…</p>}
+      {loading && <p className="flex items-center gap-1 text-xs text-mutedstar"><Loader2 size={13} className="animate-spin" /> {tc("loading")}</p>}
       {error && <p className="text-xs text-red-300">{error}</p>}
       {data && (
         <>
@@ -110,12 +123,16 @@ export default function JournalDetail() {
             {dlError && <p className="mt-1 text-right text-[11px] text-red-300">{dlError}</p>}
           </div>
           <p className="text-xs text-mutedstar">
-            Objetivo: {String(data.target_name || "—")} · {String(data.ra_deg ?? "—")}, {String(data.dec_deg ?? "—")} ·
-            creada {String(data.created_at ?? "").slice(0, 19).replace("T", " ")}
+            {t("meta", {
+              name: String(data.target_name || "—"),
+              ra: String(data.ra_deg ?? "—"),
+              dec: String(data.dec_deg ?? "—"),
+              date: createdAt,
+            })}
           </p>
-          <p className="mt-0.5 break-all text-[11px] text-mutedstar/70">Enlace reproducible: {String(data.share_url ?? "")}</p>
+          <p className="mt-0.5 break-all text-[11px] text-mutedstar/70">{t("shareLink", { url: String(data.share_url ?? "") })}</p>
 
-          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">Observaciones ({observations.length})</h2>
+          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">{t("observations", { count: observations.length })}</h2>
           <ul className="flex flex-col gap-1">
             {observations.map((o, i) => (
               <li key={i} className="truncate rounded border border-line bg-deep p-2 text-[11px] text-mutedstar">
@@ -124,8 +141,8 @@ export default function JournalDetail() {
             ))}
           </ul>
 
-          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">Candidatos ({candidates.length})</h2>
-          {candidates.length === 0 && <p className="text-[11px] text-mutedstar">Ninguno registrado.</p>}
+          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">{t("candidates", { count: candidates.length })}</h2>
+          {candidates.length === 0 && <p className="text-[11px] text-mutedstar">{t("noCandidates")}</p>}
           <ul className="flex flex-col gap-1">
             {candidates.map((c, i) => (
               <li key={i} className="rounded border border-line bg-deep p-2 text-[11px] text-mutedstar">
@@ -134,10 +151,10 @@ export default function JournalDetail() {
             ))}
           </ul>
 
-          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">Métodos</h2>
+          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">{t("methods")}</h2>
           <ul className="flex flex-col gap-0.5">{methods.map((m, i) => (<li key={i} className="text-[11px] text-mutedstar">· {m}</li>))}</ul>
 
-          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">Limitaciones</h2>
+          <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-mutedstar">{t("limitations")}</h2>
           <ul className="flex flex-col gap-0.5">{limitations.map((m, i) => (<li key={i} className="text-[11px] text-gold">· {m}</li>))}</ul>
         </>
       )}

@@ -3,6 +3,7 @@
 /** 2D fallback (equirectangular) when WebGL is unavailable. Same data, no 3D. */
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import type { Candidate, Observation, ReferenceStar, Target } from "@/lib/types";
 
@@ -22,6 +23,7 @@ const project = (ra: number, dec: number): [number, number] => [
 ];
 
 export default function SkyFallback2D({ target, observations, referenceStars, candidates, onSelectObservation }: Props) {
+  const t = useTranslations("skyFallback");
   const grid = useMemo(() => {
     const lines: ReactNode[] = [];
     for (let ra = 0; ra < 360; ra += 30) {
@@ -37,10 +39,8 @@ export default function SkyFallback2D({ target, observations, referenceStars, ca
 
   return (
     <div className="flex h-full flex-col bg-abyss p-4">
-      <p className="mb-2 text-xs text-gold">
-        WebGL no disponible — vista 2D alternativa con los mismos datos.
-      </p>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full flex-1 rounded border border-line bg-deep" role="img" aria-label="Mapa celeste 2D">
+      <p className="mb-2 text-xs text-gold">{t("notice")}</p>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full flex-1 rounded border border-line bg-deep" role="img" aria-label={t("ariaLabel")}>
         {grid}
         {referenceStars.map((s) => {
           const [x, y] = project(s.ra_deg, s.dec_deg);
@@ -74,9 +74,7 @@ export default function SkyFallback2D({ target, observations, referenceStars, ca
           </g>
         )}
       </svg>
-      <p className="mt-2 text-[11px] text-mutedstar">
-        Proyección equirectangular. Las direcciones son las mismas que en la esfera 3D.
-      </p>
+      <p className="mt-2 text-[11px] text-mutedstar">{t("projection")}</p>
     </div>
   );
 }

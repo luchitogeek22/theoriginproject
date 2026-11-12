@@ -2,10 +2,11 @@
 
 /** Rule-based interpretation assistant.
  * Answers ONLY from the current job's measurements and loaded metadata.
- * "MEDIDO" is reserved for values computed by the scientific engine. */
+ * The "measured" label is reserved for values computed by the scientific engine. */
 
 import { useState } from "react";
 import { MessageCircleQuestion, Send } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useResearch } from "@/lib/store";
 
 interface Answer {
@@ -13,72 +14,98 @@ interface Answer {
   text: string;
 }
 
-const SUGGESTED = [
-  "¿Por qué esta estrella parece moverse?",
-  "¿Qué significa una imagen diferencial?",
-  "¿Cuántas observaciones se han encontrado?",
-  "¿Qué indican las variaciones de brillo?",
-];
+const SUGGESTED = ["motion", "difference", "count", "brightness"] as const;
 
-function badge(kind: Answer["kind"]): string {
-  if (kind === "measured") return "MEDIDO";
-  if (kind === "archive") return "ARCHIVO";
-  if (kind === "inferred") return "INFERENCIA";
-  return "EXPLICACIÓN";
-}
+/** Lower-case and strip diacritics so keywords match with or without accents. */
+const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/** Question keywords per topic, in the supported UI languages (English and Spanish). */
+const KEYWORDS = {
+  count: ["cuant", "observaciones se han", "how many", "observations have been"],
+  motion: ["muev", "moverse", "desplaz", "move", "moving", "motion", "shift", "displac"],
+  difference: ["diferencial", "difference"],
+  brightness: ["brillo", "variaci", "brightness", "variation"],
+  seeing: ["quep", "que estoy", "viendo", "what am i", "seeing", "looking at"],
+} as const;
+
+const matches = (q: string, topic: keyof typeof KEYWORDS) => KEYWORDS[topic].some((k) => q.includes(k));
 
 export default function CopilotPanel() {
+  const t = useTranslations("copilotPanel");
+  const format = useFormatter();
   const { target, search, selected, candidates, currentJobId } = useResearch();
   const jobCandidates = currentJobId ? candidates.filter((c) => c.job_id === currentJobId) : [];
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<Array<{ q: string; a: Answer[] }>>([]);
 
   const answer = (question: string): Answer[] => {
-    const q = question.toLowerCase();
-    if (q.includes("cuánt") || q.includes("observaciones se han")) {
+    const q = normalize(question);
+    if (matches(q, "count")) {
       if (!search) {
-        return [{ kind: "archive", text: "Aún no se ha consultado el archivo. Busca un objetivo para contar sus observaciones reales." }];
+        return [{ kind: "archive", text: t("answers.noSearch") }];
       }
       return [
-        { kind: "archive", text: `Se encontraron ${search.count} observaciones (consulta del ${new Date(search.queried_at).toLocaleString()}${search.cached ? ", desde caché" : ""}).` },
-        { kind: "explanatory", text: "Cada observación es una imagen real del archivo SPHEREx con su fecha y detector. Sin observaciones no hay comparación posible." },
+        {
+          kind: "archive",
+          text: t("answers.found", {
+            count: search.count,
+            date: format.dateTime(new Date(search.queried_at), { dateStyle: "short", timeStyle: "medium" }),
+            cached: search.cached ? "true" : "false",
+          }),
+        },
+        { kind: "explanatory", text: t("answers.observationExplain") },
       ];
     }
-    if (q.includes("muev") || q.includes("moverse") || q.includes("desplaz")) {
+    if (matches(q, "motion")) {
       const astro = jobCandidates.find((c) => c.kind.includes("moving"));
-      const parts: Answer[] = [
-        { kind: "explanatory", text: "Un desplazamiento aparente entre dos épocas puede ser movimiento propio real, pero también un artefacto de alineación, distinta PSF o ruido." },
-      ];
+      const parts: Answer[] = [{ kind: "explanatory", text: t("answers.motionExplain") }];
       if (astro?.separation_arcsec !== null && astro?.separation_arcsec !== undefined) {
-        parts.unshift({ kind: "measured", text: `El motor midió ${astro.separation_arcsec.toFixed(2)}″ ± ${astro.separation_err_arcsec?.toFixed(2) ?? "?"}″ entre épocas (candidato ${astro.id}, SNR ${astro.snr?.toFixed(1) ?? "—"}).` });
-        parts.push({ kind: "inferred", text: "Si el desplazamiento supera claramente su incertidumbre y se repite en más épocas, un movimiento real es una hipótesis razonable a validar." });
+        parts.unshift({
+          kind: "measured",
+          text: t("answers.motionMeasured", {
+            separation: astro.separation_arcsec.toFixed(2),
+            error: astro.separation_err_arcsec?.toFixed(2) ?? "?",
+            id: String(astro.id),
+            snr: astro.snr?.toFixed(1) ?? "—",
+          }),
+        });
+        parts.push({ kind: "inferred", text: t("answers.motionInferred") });
       } else {
-        parts.unshift({ kind: "archive", text: "No hay ninguna medición de desplazamiento del análisis actual." });
+        parts.unshift({ kind: "archive", text: t("answers.motionNone") });
       }
       return parts;
     }
-    if (q.includes("diferencial")) {
+    if (matches(q, "difference")) {
       return [
-        { kind: "explanatory", text: "La imagen diferencial es época A menos época B, tras alinear por WCS e igualar el fondo. Lo que brilla o se oscurece cambió entre ambas fechas." },
-        { kind: "inferred", text: "Residuos brillantes aislados sugieren variabilidad o movimiento; residuos extensos suelen indicar diferencias instrumentales." },
+        { kind: "explanatory", text: t("answers.differenceExplain") },
+        { kind: "inferred", text: t("answers.differenceInferred") },
       ];
     }
-    if (q.includes("brillo") || q.includes("variaci")) {
+    if (matches(q, "brightness")) {
       return [
-        { kind: "explanatory", text: "Las variaciones de brillo comparan flujo calibrado (MJy/sr) entre épocas compatibles: mismo detector y respuesta espectral comparable." },
-        { kind: "archive", text: target ? `Objetivo actual: ${target.name}. Las mediciones aparecen tras ejecutar un análisis temporal.` : "Sin objetivo seleccionado no hay mediciones que interpretar." },
+        { kind: "explanatory", text: t("answers.brightnessExplain") },
+        {
+          kind: "archive",
+          text: target ? t("answers.brightnessTarget", { name: target.name }) : t("answers.brightnessNoTarget"),
+        },
       ];
     }
-    if (q.includes("quép") || q.includes("qué estoy") || q.includes("viendo")) {
-      if (!target) return [{ kind: "archive", text: "Ningún objetivo seleccionado. Busca por nombre o coordenadas para empezar." }];
+    if (matches(q, "seeing")) {
+      if (!target) return [{ kind: "archive", text: t("answers.seeingNoTarget") }];
       return [
-        { kind: "archive", text: `Observas la región de ${target.name} (${target.ra_deg.toFixed(5)}°, ${target.dec_deg.toFixed(5)}°), resuelta por ${target.resolver || "el servicio de resolución"}.` },
-        { kind: "explanatory", text: "Los contornos cian son huellas de observaciones SPHEREx reales; la estrella dorada marca tu objetivo." },
+        {
+          kind: "archive",
+          text: t("answers.seeingTarget", {
+            name: target.name,
+            ra: target.ra_deg.toFixed(5),
+            dec: target.dec_deg.toFixed(5),
+            resolver: target.resolver || t("answers.defaultResolver"),
+          }),
+        },
+        { kind: "explanatory", text: t("answers.seeingExplain") },
       ];
     }
-    return [
-      { kind: "explanatory", text: "Solo puedo responder a partir de las mediciones y metadatos cargados en esta investigación. Prueba con una de las preguntas sugeridas." },
-    ];
+    return [{ kind: "explanatory", text: t("answers.fallback") }];
   };
 
   const ask = (question: string) => {
@@ -91,17 +118,13 @@ export default function CopilotPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-starlight">
-        <MessageCircleQuestion size={16} className="text-pulse" /> Asistente de interpretación
+        <MessageCircleQuestion size={16} className="text-pulse" /> {t("title")}
       </div>
-      <p className="mb-3 text-[11px] text-mutedstar">
-        Explica tus resultados. Etiqueta cada afirmación: medido (solo cálculos del motor), dato del archivo, inferencia o explicación.
-      </p>
+      <p className="mb-3 text-[11px] text-mutedstar">{t("intro")}</p>
       <div className="mb-3 flex flex-1 flex-col gap-3 overflow-y-auto pr-1" style={{ maxHeight: 320 }}>
         {history.length === 0 && (
           <p className="text-xs text-mutedstar">
-            {selected.length > 0
-              ? `Tienes ${selected.length} observaciones seleccionadas. Pregunta por ellas.`
-              : "Selecciona un objetivo y consulta el archivo; después pregúntame qué significan los resultados."}
+            {selected.length > 0 ? t("emptySelected", { count: selected.length }) : t("emptyNone")}
           </p>
         )}
         {history.map((h, i) => (
@@ -109,7 +132,7 @@ export default function CopilotPanel() {
             <p className="text-xs font-medium text-starlight">{h.q}</p>
             {h.a.map((part, j) => (
               <p key={j} className="text-xs text-mutedstar">
-                <span className="mr-1 rounded border border-line px-1 text-[10px] text-pulse">{badge(part.kind)}</span>
+                <span className="mr-1 rounded border border-line px-1 text-[10px] text-pulse">{t(`badges.${part.kind}`)}</span>
                 {part.text}
               </p>
             ))}
@@ -117,9 +140,9 @@ export default function CopilotPanel() {
         ))}
       </div>
       <div className="mb-2 flex flex-wrap gap-1">
-        {SUGGESTED.map((s) => (
-          <button key={s} onClick={() => ask(s)} className="rounded border border-line px-2 py-1 text-[11px] text-mutedstar hover:text-starlight">
-            {s}
+        {SUGGESTED.map((key) => (
+          <button key={key} onClick={() => ask(t(`suggested.${key}`))} className="rounded border border-line px-2 py-1 text-[11px] text-mutedstar hover:text-starlight">
+            {t(`suggested.${key}`)}
           </button>
         ))}
       </div>
@@ -128,11 +151,11 @@ export default function CopilotPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask(input)}
-          placeholder="Pregunta sobre tus resultados…"
-          aria-label="Pregunta para el asistente"
+          placeholder={t("placeholder")}
+          aria-label={t("inputLabel")}
           className="w-full rounded border border-line bg-deep px-2 py-1.5 text-xs text-starlight outline-none placeholder:text-mutedstar/60 focus:border-pulse"
         />
-        <button onClick={() => ask(input)} aria-label="Enviar pregunta" className="rounded border border-line px-2 text-pulse hover:bg-panel">
+        <button onClick={() => ask(input)} aria-label={t("send")} className="rounded border border-line px-2 text-pulse hover:bg-panel">
           <Send size={14} />
         </button>
       </div>

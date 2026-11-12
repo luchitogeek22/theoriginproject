@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import SkyMapBackdrop from "@/components/SkyMapBackdrop";
 import type { ValidationTarget } from "@/lib/targets";
 import { useReducedMotion } from "@/lib/useReducedMotion";

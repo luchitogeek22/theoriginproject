@@ -3,8 +3,11 @@
 /** Login / registration via Supabase Auth (email + password). */
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Loader2, LogIn, UserPlus } from "lucide-react";
+import { useRouter } from "@/i18n/navigation";
+import { useErrorText } from "@/lib/errors";
 import { isSupabaseConfigured, supabaseBrowser } from "@/lib/supabase/client";
 
 const DEFAULT_NEXT = "/living-sky";
@@ -17,7 +20,25 @@ function safeNext(raw: string | null): string {
   return raw;
 }
 
+const AUTH_ERROR_CODES = [
+  "invalid_credentials",
+  "email_not_confirmed",
+  "user_already_exists",
+  "weak_password",
+  "over_request_rate_limit",
+] as const;
+type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];
+
+/** Supabase auth error code (`AuthError.code`) when it is one we have a translation for. */
+function authErrorCode(e: unknown): AuthErrorCode | null {
+  const code = e && typeof e === "object" ? (e as { code?: unknown }).code : undefined;
+  return (AUTH_ERROR_CODES as readonly unknown[]).includes(code) ? (code as AuthErrorCode) : null;
+}
+
 function LoginForm() {
+  const t = useTranslations("loginPage");
+  const tc = useTranslations("common");
+  const errorText = useErrorText();
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
@@ -31,10 +52,9 @@ function LoginForm() {
   if (!isSupabaseConfigured()) {
     return (
       <div className="mx-auto mt-16 max-w-sm rounded border border-line bg-deep p-6 text-center">
-        <p className="text-sm font-semibold text-starlight">Autenticación no configurada</p>
+        <p className="text-sm font-semibold text-starlight">{t("notConfiguredTitle")}</p>
         <p className="mt-1 text-xs text-mutedstar">
-          Este despliegue no tiene Supabase configurado y funciona en modo anónimo:
-          puedes explorar, analizar y guardar investigaciones locales sin cuenta.
+          {t("notConfiguredBody")}
         </p>
       </div>
     );
@@ -44,7 +64,7 @@ function LoginForm() {
     const sb = supabaseBrowser();
     if (!sb || busy) return;
     if (!email.includes("@") || password.length < 6) {
-      setError("Indica un correo válido y una contraseña de al menos 6 caracteres.");
+      setError(t("invalidInput"));
       return;
     }
     setBusy(true);
@@ -58,14 +78,15 @@ function LoginForm() {
         const { data, error: err } = await sb.auth.signUp({ email, password });
         if (err) throw err;
         if (!data.session) {
-          setNotice("Cuenta creada. Revisa tu correo para confirmarla antes de entrar.");
+          setNotice(t("confirmEmail"));
           return;
         }
       }
       router.push(next);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Authentication failed");
+      const code = authErrorCode(e);
+      setError(code ? t(`authErrors.${code}`) : errorText(e, t("authFailed")));
     } finally {
       setBusy(false);
     }
@@ -73,12 +94,12 @@ function LoginForm() {
 
   return (
     <div className="mx-auto mt-10 w-[min(92vw,380px)] rounded border border-line bg-deep p-6">
-      <p className="text-[11px] tracking-[0.25em] text-pulse">THE ORIGIN PROJECT</p>
+      <p className="text-[11px] tracking-[0.25em] text-pulse">{tc("brand")}</p>
       <h1 className="mt-1 text-xl font-bold text-starlight">
-        {mode === "login" ? "Entrar" : "Crear cuenta"}
+        {mode === "login" ? t("signIn") : t("createAccount")}
       </h1>
       <p className="mt-1 text-xs text-mutedstar">
-        Tu bitácora de investigación y tus candidatos quedarán asociados a tu cuenta.
+        {t("intro")}
       </p>
       <div className="mt-3 flex rounded border border-line bg-abyss p-0.5 text-xs" role="tablist">
         {(["login", "register"] as const).map((m) => (
@@ -95,12 +116,12 @@ function LoginForm() {
               mode === m ? "bg-panel text-pulse" : "text-mutedstar"
             }`}
           >
-            {m === "login" ? "Entrar" : "Registrarse"}
+            {m === "login" ? t("signIn") : t("register")}
           </button>
         ))}
       </div>
       <label className="mt-3 block text-xs text-mutedstar">
-        Correo
+        {t("email")}
         <input
           type="email"
           value={email}
@@ -111,7 +132,7 @@ function LoginForm() {
         />
       </label>
       <label className="mt-2 block text-xs text-mutedstar">
-        Contraseña
+        {t("password")}
         <input
           type="password"
           value={password}
@@ -135,16 +156,17 @@ function LoginForm() {
         ) : (
           <UserPlus size={15} />
         )}
-        {mode === "login" ? "Entrar" : "Crear cuenta"}
+        {mode === "login" ? t("signIn") : t("createAccount")}
       </button>
     </div>
   );
 }
 
 export default function LoginPage() {
+  const tc = useTranslations("common");
   return (
     <div className="h-full overflow-y-auto p-4">
-      <Suspense fallback={<p className="mt-16 text-center text-xs text-mutedstar">Cargando…</p>}>
+      <Suspense fallback={<p className="mt-16 text-center text-xs text-mutedstar">{tc("loading")}</p>}>
         <LoginForm />
       </Suspense>
     </div>

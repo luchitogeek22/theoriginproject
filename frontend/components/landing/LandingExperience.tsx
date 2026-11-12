@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { hasWebGL, useStageSync } from "./hooks";
 import { ProgressRail, ScrollMeter, StaticSky, TopBar } from "./ui/Chrome";
 import Hero from "./sections/Hero";
@@ -16,6 +18,7 @@ import Finale from "./sections/Finale";
 const Experience = dynamic(() => import("./scene/Experience"), { ssr: false, loading: () => null });
 
 export default function LandingExperience() {
+  const t = useTranslations("landing");
   const { active, compact } = useStageSync();
   const [webgl, setWebgl] = useState<boolean | null>(null);
 
@@ -25,9 +28,9 @@ export default function LandingExperience() {
 
   return (
     <div className="landing">
-      <a href="/" className="landing-skip landing-focus">
-        Skip to the platform
-      </a>
+      <Link href="/" className="landing-skip landing-focus">
+        {t("skip")}
+      </Link>
       <div className="fixed inset-0 z-0" aria-hidden>
         <StaticSky />
         {webgl && (

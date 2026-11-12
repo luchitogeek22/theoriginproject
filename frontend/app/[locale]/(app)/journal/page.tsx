@@ -3,14 +3,16 @@
 /** RESEARCH JOURNAL — save reproducible investigations, export evidence. */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Download, Loader2, Save } from "lucide-react";
-import { ApiError, api, apiUrl } from "@/lib/api";
+import { Link, useRouter } from "@/i18n/navigation";
+import { api, apiUrl } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
 import { useResearch } from "@/lib/store";
 
 const LS_SAVED = "origin-saved-research";
 
+// Methods and limitations below are part of the stored evidence record (English, invariant).
 const ANALYSIS_METHODS = [
   "SIA2 cone search via SPHERExDataGateway (collections pinned per query)",
   "Spatial cutout at target position (6 arcmin default)",
@@ -19,6 +21,9 @@ const ANALYSIS_METHODS = [
 ];
 
 export default function Journal() {
+  const t = useTranslations("journalPage");
+  const tc = useTranslations("common");
+  const errorText = useErrorText();
   const router = useRouter();
   const { target, search, selected, cutouts, candidates } = useResearch();
   const [title, setTitle] = useState("");
@@ -87,7 +92,7 @@ export default function Journal() {
         },
       };
       const res = await api.saveResearch({
-        title: title || `Research — ${target?.name ?? "untargeted"}`,
+        title: title || t("defaultTitle", { name: target?.name ?? t("untargeted") }),
         target_name: target?.name ?? "",
         ra_deg: target?.ra_deg ?? null,
         dec_deg: target?.dec_deg ?? null,
@@ -98,7 +103,7 @@ export default function Journal() {
       persist([{ id, title: title || target?.name || id }, ...saved].slice(0, 30));
       router.push(`/journal/${id}`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Save failed");
+      setError(errorText(e, t("saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -106,15 +111,17 @@ export default function Journal() {
 
   return (
     <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4">
-      <h1 className="mb-2 text-lg font-bold text-starlight">Research Journal</h1>
+      <h1 className="mb-2 text-lg font-bold text-starlight">{t("title")}</h1>
       <div className="grid gap-2 lg:grid-cols-[1fr_320px]">
         <div className="rounded border border-line bg-deep p-3">
-          <h2 className="mb-1 text-sm font-semibold text-starlight">Investigación actual</h2>
-          {!target && <p className="text-xs text-mutedstar">Sin objetivo. Busca uno para empezar a registrar evidencia.</p>}
+          <h2 className="mb-1 text-sm font-semibold text-starlight">{t("currentTitle")}</h2>
+          {!target && <p className="text-xs text-mutedstar">{t("noTarget")}</p>}
           {target && (
             <div className="text-xs text-mutedstar">
               <p><b className="text-starlight">{target.name}</b> — {target.ra_deg.toFixed(5)}°, {target.dec_deg.toFixed(5)}° ({target.resolver})</p>
-              <p className="mt-1">{selected.length} observaciones seleccionadas · {cutouts.length} recortes · {currentCandidates.length} candidatos</p>
+              <p className="mt-1">
+                {t("counts", { selected: selected.length, cutouts: cutouts.length, candidates: currentCandidates.length })}
+              </p>
               <ul className="mt-1 flex max-h-40 flex-col gap-0.5 overflow-y-auto">
                 {selected.map((o, i) => (
                   <li key={i} className="truncate">· {o.obs_id} [{o.collection}] {o.date_obs}</li>
@@ -126,7 +133,7 @@ export default function Journal() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Título de la investigación (opcional)"
+              placeholder={t("titlePlaceholder")}
               className="flex-1 rounded border border-line bg-abyss px-2 py-1.5 text-xs outline-none focus:border-pulse"
             />
             <button
@@ -134,27 +141,27 @@ export default function Journal() {
               disabled={busy || (!target && selected.length === 0)}
               className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
             >
-              {busy ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Guardar
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} {tc("save")}
             </button>
           </div>
           {error && <p className="mt-1 text-xs text-red-300">{error}</p>}
           {lastSaved && (
             <p className="mt-1 text-xs text-mutedstar">
-              Guardado. Enlace reproducible:{" "}
+              {t("savedLink")}{" "}
               <Link href={`/journal/${lastSaved}`} className="text-pulse hover:underline">/journal/{lastSaved}</Link>
             </p>
           )}
         </div>
 
         <div className="rounded border border-line bg-deep p-3">
-          <h2 className="mb-1 text-sm font-semibold text-starlight">Guardadas</h2>
-          {saved.length === 0 && <p className="text-xs text-mutedstar">Nada guardado en este navegador todavía.</p>}
+          <h2 className="mb-1 text-sm font-semibold text-starlight">{t("savedTitle")}</h2>
+          {saved.length === 0 && <p className="text-xs text-mutedstar">{t("nothingSaved")}</p>}
           <ul className="flex flex-col gap-1">
             {saved.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-1 text-xs">
                 <Link href={`/journal/${s.id}`} className="truncate text-pulse hover:underline">{s.title}</Link>
                 <span className="flex gap-1">
-                  <a href={apiUrl(`/api/v1/evidence/${s.id}/report?format=pdf`)} title="Descargar PDF" className="text-mutedstar hover:text-starlight"><Download size={13} /></a>
+                  <a href={apiUrl(`/api/v1/evidence/${s.id}/report?format=pdf`)} title={t("downloadPdf")} className="text-mutedstar hover:text-starlight"><Download size={13} /></a>
                 </span>
               </li>
             ))}

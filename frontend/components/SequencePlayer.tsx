@@ -1,49 +1,28 @@
 "use client";
 
-import { translateLimitation } from "@/lib/limitations";
+import { useTranslateLimitation } from "@/lib/limitations";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { Download, Link2, Loader2, Pause, Play, SkipBack, SkipForward, TriangleAlert } from "lucide-react";
 import ResultBadge from "@/components/ResultBadge";
 import BeforeAfter, { MotionSentence } from "@/components/BeforeAfter";
 import { assetUrl } from "@/lib/api";
-import { formatArcsec, spanLabel } from "@/lib/motion";
+import { useMotionFormat } from "@/lib/motion";
+import { useErrorText } from "@/lib/errors";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import type { SequenceFrame, SequenceResult } from "@/lib/types";
 import { nextLargerFov } from "@/lib/sequenceParams";
-import { ExportError, downloadPng, exportSequence } from "@/lib/sequenceExport";
+import { downloadPng, exportSequence, type ExportLabels } from "@/lib/sequenceExport";
 
 export const FLAGGED_WARNING_THRESHOLD = 0.3;
 const SCALE_GRADIENT = "linear-gradient(to right, #000, #fff)";
 
 const SPEEDS = [
-  { label: "0,5×", ms: 1600 },
-  { label: "1×", ms: 800 },
-  { label: "2×", ms: 400 },
-  { label: "4×", ms: 200 },
+  { factor: 0.5, ms: 1600 },
+  { factor: 1, ms: 800 },
+  { factor: 2, ms: 400 },
+  { factor: 4, ms: 200 },
 ];
-
-const MODE_HELP: Record<string, string> = {
-  motion:
-    "Modo movimiento: cada cuadro se normaliza con su propio ruido (unidades de ruido por cuadro). Sirve para ver desplazamientos, pero el brillo NO es comparable entre cuadros.",
-  brightness:
-    "Modo brillo: todos los cuadros comparten la misma escala lineal, por lo que el brillo sí es comparable entre épocas.",
-};
-
-const FIELD_HELP = {
-  flagged:
-    "Fracción de píxeles marcados por el archivo como poco fiables (rayos cósmicos, saturación, píxeles muertos). Cuanto mayor, menos confiable es el cuadro.",
-  coverage:
-    "Fracción del recorte cubierta por datos reales de esta exposición. Si es baja, parte de la imagen está vacía.",
-  collection: "Colección del archivo IRSA de la que procede la exposición.",
-  wavelength:
-    "Longitud de onda efectiva en el centro del recorte. SPHEREx observa con un filtro variable: cada exposición cubre un rango distinto.",
-  detector:
-    "Detector de SPHEREx que registró el cuadro. Todos los cuadros de una secuencia comparten detector para que sean comparables.",
-};
-
-function pct(value: number): string {
-  return `${(value * 100).toFixed(1).replace(".", ",")} %`;
-}
 
 function frameUrl(f: SequenceFrame): string {
   return assetUrl(f.png_url);
@@ -89,13 +68,6 @@ function usePreload(frames: SequenceFrame[]): PreloadState {
   return state;
 }
 
-function cacheNotice(result: SequenceResult): string {
-  const queried = result.queried_at ? new Date(result.queried_at) : null;
-  if (queried && !Number.isNaN(queried.getTime())) {
-    return `Consultado el ${queried.toLocaleString("es", { dateStyle: "long", timeStyle: "short" })}, desde caché`;
-  }
-  return result.cache_label || "Resultado servido desde caché";
-}
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -139,8 +111,29 @@ export default function SequencePlayer({
   onFovChange,
   initialFrame,
   shareUrl,
-  exportName = "secuencia",
+  exportName: exportNameProp,
 }: SequencePlayerProps) {
+  const t = useTranslations("sequencePlayer");
+  const tExport = useTranslations("export");
+  const format = useFormatter();
+  const motion = useMotionFormat();
+  const errorText = useErrorText();
+  const translateLimitation = useTranslateLimitation();
+  const exportName = exportNameProp ?? t("defaultExportName");
+  const exportLabels: ExportLabels = {
+    attribution: tExport("attribution"),
+    noWavelength: tExport("noWavelength"),
+    frameFile: tExport("frameFile"),
+  };
+  const pct = (value: number) =>
+    format.number(value, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const cacheNotice = (): string => {
+    const queried = result.queried_at ? new Date(result.queried_at) : null;
+    if (queried && !Number.isNaN(queried.getTime())) {
+      return t("cache.queried", { date: format.dateTime(queried, { dateStyle: "long", timeStyle: "short" }) });
+    }
+    return result.cache_label || t("cache.fallback");
+  };
   const { frames, scale, grid, overlay, reference } = result;
   const total = frames.length;
   const preload = usePreload(frames);
@@ -214,18 +207,17 @@ export default function SequencePlayer({
   const copyLink = async () => {
     if (!shareUrl) return;
     const url = `${window.location.origin}${shareUrl(index)}`;
-    setShareMessage((await copyText(url)) ? "Enlace copiado al portapapeles." : `No se pudo copiar. Copia este enlace a mano: ${url}`);
+    setShareMessage((await copyText(url)) ? t("share.copied") : t("share.failed", { url }));
   };
 
-  const exportMessageFor = (e: unknown) =>
-    e instanceof ExportError ? e.message : "La exportación falló. Inténtalo de nuevo.";
+  const exportMessageFor = (e: unknown) => errorText(e, t("export.failed"));
 
   const exportPng = async () => {
     setExporting(true);
-    setExportMessage("Preparando el cuadro…");
+    setExportMessage(t("export.preparingFrame"));
     try {
-      await downloadPng(frames[Math.min(index, total - 1)], total, exportName);
-      setExportMessage("Cuadro descargado como PNG.");
+      await downloadPng(frames[Math.min(index, total - 1)], total, exportName, exportLabels);
+      setExportMessage(t("export.frameDownloaded"));
     } catch (e) {
       setExportMessage(exportMessageFor(e));
     } finally {
@@ -236,21 +228,19 @@ export default function SequencePlayer({
   const exportVideo = async () => {
     setPlaying(false);
     setExporting(true);
-    setExportMessage("Cargando cuadros…");
+    setExportMessage(t("export.loadingFrames"));
     try {
-      const path = await exportSequence(frames, exportName, (done, all, phase) =>
+      const path = await exportSequence(frames, exportName, exportLabels, (done, all, phase) =>
         setExportMessage(
           phase === "loading"
-            ? `Cargando cuadros ${done} / ${all}…`
+            ? t("export.loadingProgress", { done, total: all })
             : phase === "recording"
-              ? `Grabando video: cuadro ${done} / ${all}…`
-              : `Descargando PNG ${done} / ${all}…`
+              ? t("export.recordingProgress", { done, total: all })
+              : t("export.pngProgress", { done, total: all })
         )
       );
       setExportMessage(
-        path === "webm"
-          ? `Video WebM descargado con ${total} segmentos, uno por cuadro.`
-          : `Este navegador no puede grabar WebM: se descargaron ${total} imágenes PNG, una por cuadro, cada una con fecha, detector y atribución. Si faltan, permite descargas múltiples.`
+        path === "webm" ? t("export.webmDone", { count: total }) : t("export.pngFallback", { count: total })
       );
     } catch (e) {
       setExportMessage(exportMessageFor(e));
@@ -285,10 +275,13 @@ export default function SequencePlayer({
   const targetNow = overlay?.target.find((p) => p.index === frameIndex);
   const targetFirst = overlay?.target[0];
   const targetLast = overlay?.target[overlay.target.length - 1];
-  const trailSpan = spanLabel(frames[0].date_iso, frames[total - 1].date_iso);
+  const trailSpan = motion.span(frames[0].date_iso, frames[total - 1].date_iso);
+  const trailArcsec = overlay?.displacement_arcsec !== undefined ? motion.arcsec(overlay.displacement_arcsec) : "";
   const trailLabel =
     overlay?.proper_motion_applied && overlay.displacement_arcsec !== undefined && total > 1
-      ? `${formatArcsec(overlay.displacement_arcsec)}″${trailSpan ? ` en ${trailSpan}` : ""}`
+      ? trailSpan
+        ? t("trailWithSpan", { arcsec: trailArcsec, span: trailSpan })
+        : `${trailArcsec}″`
       : null;
   const overlayVisible = overlay !== undefined && ((showGaia && gaiaEnabled) || showTrack);
 
@@ -298,7 +291,7 @@ export default function SequencePlayer({
       onKeyDown={onKeyDown}
       tabIndex={0}
       role="group"
-      aria-label="Reproductor de secuencia. Espacio reproduce o pausa; flechas cambian de cuadro."
+      aria-label={t("playerLabel")}
     >
       <div className="min-w-0">
         <MotionSentence result={result} />
@@ -307,8 +300,7 @@ export default function SequencePlayer({
             role="status"
             className="mx-auto mb-2 max-w-[560px] rounded border border-gold/60 bg-deep p-2 text-xs font-semibold text-gold"
           >
-            {cacheNotice(result)}. IRSA no respondió; este es el último resultado real de la misma petición, no uno
-            reciente.
+            {t("cache.notice", { notice: cacheNotice() })}
           </p>
         )}
         <div className="mx-auto mb-1 max-w-[560px]">
@@ -316,11 +308,11 @@ export default function SequencePlayer({
         </div>
         {total > 1 && (
           <div className="mx-auto mb-2 flex max-w-[560px] flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-mutedstar">
-            <div className="flex rounded border border-line bg-deep p-0.5" role="group" aria-label="Vista">
+            <div className="flex rounded border border-line bg-deep p-0.5" role="group" aria-label={t("view.label")}>
               {(
                 [
-                  ["sequence", "Secuencia"],
-                  ["compare", "Antes / después"],
+                  ["sequence", t("view.sequence")],
+                  ["compare", t("view.compare")],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -348,7 +340,7 @@ export default function SequencePlayer({
                   onChange={(e) => setSmooth(e.target.checked)}
                   data-testid="smooth-toggle"
                 />
-                Suavizar imagen
+                {t("smooth")}
               </label>
             )}
           </div>
@@ -359,7 +351,7 @@ export default function SequencePlayer({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={frameUrl(frame)}
-            alt={`Cuadro ${frame.index + 1} de ${total}, ${frame.date_iso}, detector ${frame.detector}`}
+            alt={t("frameAlt", { number: frame.index + 1, total, date: frame.date_iso, detector: frame.detector })}
             className="h-full w-full"
             style={{ imageRendering: smooth ? "auto" : "pixelated" }}
             draggable={false}
@@ -433,14 +425,12 @@ export default function SequencePlayer({
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-abyss/80 text-xs text-mutedstar">
               {preload.done ? (
                 <p className="px-4 text-center text-red-300">
-                  No se pudo cargar ningún cuadro de la secuencia. Reintenta en unos segundos.
+                  {t("loadFailed")}
                 </p>
               ) : (
                 <>
                   <Loader2 size={18} className="animate-spin text-pulse" />
-                  <p>
-                    Decodificando cuadros {preload.loaded + preload.failed} / {total}
-                  </p>
+                  <p>{t("decoding", { done: preload.loaded + preload.failed, total })}</p>
                 </>
               )}
             </div>
@@ -449,7 +439,7 @@ export default function SequencePlayer({
             {shownIndex + 1} / {total}
           </div>
           <div className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[10px] text-mutedstar">
-            Norte arriba · Este a la izquierda
+            {t("orientation")}
           </div>
           {showTrack && trailLabel && (
             <div
@@ -466,21 +456,24 @@ export default function SequencePlayer({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={assetUrl(reference.png_url)}
-                alt={`Cuadro de referencia WISE, banda ${reference.band}, época ${reference.epoch_iso}`}
+                alt={t("reference.alt", { band: reference.band, epoch: reference.epoch_iso })}
                 className="h-full w-full"
                 draggable={false}
               />
             </div>
             <figcaption className="mt-1 text-[10px] leading-snug text-gold">
-              Otra misión, otra resolución. {reference.label} · banda {reference.band} · época{" "}
-              {reference.epoch_iso || "no disponible"}
+              {t("reference.caption", {
+                label: reference.label,
+                band: reference.band,
+                epoch: reference.epoch_iso || t("reference.notAvailable"),
+              })}
             </figcaption>
           </figure>
         )}
         </div>
         {overlay && (
           <fieldset className="mx-auto mt-2 max-w-[560px] rounded border border-line bg-deep p-2 text-[11px] text-mutedstar">
-            <legend className="px-1 font-semibold text-starlight">Capas sobre la imagen</legend>
+            <legend className="px-1 font-semibold text-starlight">{t("layers.legend")}</legend>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <label className={`flex items-center gap-1 ${gaiaEnabled ? "" : "opacity-60"}`}>
                 <input
@@ -489,7 +482,7 @@ export default function SequencePlayer({
                   disabled={!gaiaEnabled}
                   onChange={(e) => setShowGaia(e.target.checked)}
                 />
-                Marcas Gaia
+                {t("layers.gaia")}
               </label>
               <label className="flex items-center gap-1">
                 <input
@@ -498,7 +491,7 @@ export default function SequencePlayer({
                   onChange={(e) => setShowTrack(e.target.checked)}
                   data-testid="trajectory-toggle"
                 />
-                Cola de trayectoria
+                {t("layers.trajectory")}
               </label>
               {reference && (
                 <label className="flex items-center gap-1">
@@ -507,7 +500,7 @@ export default function SequencePlayer({
                     checked={showReference}
                     onChange={(e) => setShowReference(e.target.checked)}
                   />
-                  Cuadro WISE de referencia
+                  {t("layers.wiseReference")}
                 </label>
               )}
             </div>
@@ -515,24 +508,25 @@ export default function SequencePlayer({
             {showTrack && (
               <p className="mt-1">
                 {overlay.proper_motion_applied
-                  ? `La trayectoria usa el movimiento propio conocido${
-                      overlay.displacement_arcsec !== undefined
-                        ? ` (desplazamiento ${overlay.displacement_arcsec.toFixed(1).replace(".", ",")}″ en la ventana)`
-                        : ""
-                    }. Círculo azul: posición prevista en la primera visita; cruz naranja: en la última; anillo blanco: posición prevista en este cuadro (radio = incertidumbre).`
-                  : "Sin movimiento propio conocido: el objetivo se marca en posición fija."}
+                  ? t("track.known", {
+                      detail:
+                        overlay.displacement_arcsec !== undefined
+                          ? t("track.displacement", { arcsec: motion.arcsec(overlay.displacement_arcsec) })
+                          : "",
+                    })
+                  : t("track.fixed")}
               </p>
             )}
             {overlay.fov_hint && (
               <p className="mt-1 text-gold" role="status">
-                Sugerencia: {overlay.fov_hint}
+                {t("suggestion", { hint: overlay.fov_hint })}
                 {biggerFov !== null && onFovChange && (
                   <button
                     type="button"
                     onClick={() => onFovChange(biggerFov)}
                     className="ml-2 rounded border border-gold/60 px-2 py-0.5 text-starlight hover:border-pulse"
                   >
-                    Usar campo de {biggerFov}′
+                    {t("useFov", { fov: biggerFov })}
                   </button>
                 )}
               </p>
@@ -541,14 +535,13 @@ export default function SequencePlayer({
         )}
         {preload.failed > 0 && preload.done && preload.loaded > 0 && (
           <p className="mt-1 text-[11px] text-gold">
-            {preload.failed} de {total} cuadros no se pudieron cargar; esos pasos pueden mostrarse vacíos.
+            {t("framesFailed", { failed: preload.failed, total })}
           </p>
         )}
 
         {total === 1 ? (
           <p className="mt-2 rounded border border-line bg-deep p-2 text-xs text-mutedstar">
-            Solo existe una época con cobertura de este campo en el archivo. No hay secuencia que reproducir:
-            se muestra la única imagen disponible.
+            {t("singleEpoch")}
           </p>
         ) : (
           <div className="mx-auto mt-2 max-w-[560px]">
@@ -557,7 +550,7 @@ export default function SequencePlayer({
                 type="button"
                 onClick={() => step(-1)}
                 disabled={!canAnimate}
-                aria-label="Cuadro anterior"
+                aria-label={t("controls.previous")}
                 className="rounded border border-line p-1.5 hover:text-starlight disabled:opacity-40"
               >
                 <SkipBack size={14} />
@@ -566,22 +559,22 @@ export default function SequencePlayer({
                 type="button"
                 onClick={() => setPlaying((p) => !p)}
                 disabled={!canAnimate}
-                aria-label={playing ? "Pausar" : "Reproducir"}
+                aria-label={playing ? t("controls.pause") : t("controls.play")}
                 className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 font-bold text-abyss hover:brightness-110 disabled:opacity-40"
               >
-                {playing ? <Pause size={13} /> : <Play size={13} />} {playing ? "Pausar" : "Reproducir"}
+                {playing ? <Pause size={13} /> : <Play size={13} />} {playing ? t("controls.pause") : t("controls.play")}
               </button>
               <button
                 type="button"
                 onClick={() => step(1)}
                 disabled={!canAnimate}
-                aria-label="Cuadro siguiente"
+                aria-label={t("controls.next")}
                 className="rounded border border-line p-1.5 hover:text-starlight disabled:opacity-40"
               >
                 <SkipForward size={14} />
               </button>
               <label className="ml-auto flex items-center gap-1">
-                Velocidad
+                {t("controls.speed")}
                 <select
                   value={speedMs}
                   onChange={(e) => setSpeedMs(Number(e.target.value))}
@@ -589,7 +582,7 @@ export default function SequencePlayer({
                 >
                   {SPEEDS.map((s) => (
                     <option key={s.ms} value={s.ms}>
-                      {s.label}
+                      {`${format.number(s.factor)}×`}
                     </option>
                   ))}
                 </select>
@@ -606,17 +599,17 @@ export default function SequencePlayer({
                 setBlink(false);
                 setIndex(Number(e.target.value));
               }}
-              aria-label="Posición en la secuencia"
+              aria-label={t("controls.position")}
               className="mt-2 w-full accent-[#46d8ff]"
             />
             {reducedMotion && (
               <p className="mt-1 text-[10px] text-mutedstar/80">
-                Tu sistema pide movimiento reducido: la secuencia no se reproduce sola.
+                {t("controls.reducedMotion")}
               </p>
             )}
 
             <fieldset className="mt-2 rounded border border-line bg-deep p-2 text-[11px] text-mutedstar">
-              <legend className="px-1 font-semibold text-starlight">Parpadeo entre dos cuadros</legend>
+              <legend className="px-1 font-semibold text-starlight">{t("blink.legend")}</legend>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
                   A
@@ -657,7 +650,7 @@ export default function SequencePlayer({
                   }}
                   className={`rounded border px-2 py-1 ${blink ? "border-pulse text-pulse" : "border-line"} disabled:opacity-40`}
                 >
-                  {blink ? "Volver a la secuencia" : "Parpadear A/B"}
+                  {blink ? t("blink.stop") : t("blink.start")}
                 </button>
               </div>
             </fieldset>
@@ -672,7 +665,7 @@ export default function SequencePlayer({
                 onClick={() => void copyLink()}
                 className="flex items-center gap-1 rounded border border-line px-2 py-1 text-starlight hover:border-pulse"
               >
-                <Link2 size={13} /> Copiar enlace
+                <Link2 size={13} /> {t("actions.copyLink")}
               </button>
             )}
             <button
@@ -681,7 +674,7 @@ export default function SequencePlayer({
               disabled={!usable || exporting}
               className="flex items-center gap-1 rounded border border-line px-2 py-1 text-starlight hover:border-pulse disabled:opacity-40"
             >
-              <Download size={13} /> Descargar cuadro actual (PNG)
+              <Download size={13} /> {t("actions.downloadPng")}
             </button>
             {total > 1 && (
               <button
@@ -690,7 +683,7 @@ export default function SequencePlayer({
                 disabled={!usable || exporting}
                 className="flex items-center gap-1 rounded border border-line px-2 py-1 text-starlight hover:border-pulse disabled:opacity-40"
               >
-                <Download size={13} /> Exportar video (WebM)
+                <Download size={13} /> {t("actions.exportVideo")}
               </button>
             )}
           </div>
@@ -710,48 +703,54 @@ export default function SequencePlayer({
             </span>
           </div>
           <p className="mt-1 text-[10px] leading-snug text-gold">
-            {MODE_HELP[result.mode] ?? `Modo ${result.mode}.`}
+            {result.mode === "motion" || result.mode === "brightness"
+              ? t(`modeHelp.${result.mode}`)
+              : t("modeHelp.other", { mode: result.mode })}
           </p>
         </div>
       </div>
 
-      <aside className="flex flex-col gap-2 text-[11px]" aria-label="Metadatos del cuadro">
+      <aside className="flex flex-col gap-2 text-[11px]" aria-label={t("meta.label")}>
         <div className="rounded border border-line bg-deep p-2">
-          <p className="text-xs font-semibold text-starlight">
-            Cuadro {shownIndex + 1} / {total}
-          </p>
+          <p className="text-xs font-semibold text-starlight">{t("meta.frame", { number: shownIndex + 1, total })}</p>
           <dl className="mt-1 flex flex-col gap-1.5 text-mutedstar">
             <div>
-              <dt className="font-semibold text-starlight">Fecha</dt>
+              <dt className="font-semibold text-starlight">{t("meta.date")}</dt>
               <dd>{frame.date_iso}</dd>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Detector</dt>
+              <dt className="font-semibold text-starlight">{t("meta.detector")}</dt>
               <dd>{frame.detector}</dd>
-              <HelpText>{FIELD_HELP.detector}</HelpText>
+              <HelpText>{t("fieldHelp.detector")}</HelpText>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Longitud de onda</dt>
-              <dd>{frame.wavelength_um === null ? "no disponible" : `${frame.wavelength_um.toFixed(3).replace(".", ",")} µm`}</dd>
-              <HelpText>{FIELD_HELP.wavelength}</HelpText>
+              <dt className="font-semibold text-starlight">{t("meta.wavelength")}</dt>
+              <dd>
+                {frame.wavelength_um === null
+                  ? t("reference.notAvailable")
+                  : t("meta.wavelengthValue", {
+                      value: format.number(frame.wavelength_um, { minimumFractionDigits: 3, maximumFractionDigits: 3 }),
+                    })}
+              </dd>
+              <HelpText>{t("fieldHelp.wavelength")}</HelpText>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Píxeles con bandera</dt>
+              <dt className="font-semibold text-starlight">{t("meta.flagged")}</dt>
               <dd className={flaggedHigh ? "font-semibold text-gold" : ""}>{pct(frame.flagged_fraction)}</dd>
-              <HelpText>{FIELD_HELP.flagged}</HelpText>
+              <HelpText>{t("fieldHelp.flagged")}</HelpText>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Cobertura</dt>
+              <dt className="font-semibold text-starlight">{t("meta.coverage")}</dt>
               <dd>{pct(frame.coverage_fraction)}</dd>
-              <HelpText>{FIELD_HELP.coverage}</HelpText>
+              <HelpText>{t("fieldHelp.coverage")}</HelpText>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Colección</dt>
+              <dt className="font-semibold text-starlight">{t("meta.collection")}</dt>
               <dd>{frame.collection}</dd>
-              <HelpText>{FIELD_HELP.collection}</HelpText>
+              <HelpText>{t("fieldHelp.collection")}</HelpText>
             </div>
             <div>
-              <dt className="font-semibold text-starlight">Identificador</dt>
+              <dt className="font-semibold text-starlight">{t("meta.identifier")}</dt>
               <dd className="break-all">{frame.obs_id}</dd>
             </div>
           </dl>
@@ -762,27 +761,33 @@ export default function SequencePlayer({
             >
               <TriangleAlert size={13} className="mt-0.5 shrink-0" />
               <span>
-                Advertencia: el {pct(frame.flagged_fraction)} de los píxeles de este cuadro tiene bandera
-                (umbral {Math.round(FLAGGED_WARNING_THRESHOLD * 100)} %). Interpreta con cautela cualquier cambio.
+                {t("meta.flaggedWarning", {
+                  percent: pct(frame.flagged_fraction),
+                  threshold: format.number(FLAGGED_WARNING_THRESHOLD, { style: "percent", maximumFractionDigits: 0 }),
+                })}
               </span>
             </p>
           )}
         </div>
 
         <div className="rounded border border-line bg-deep p-2 text-mutedstar">
-          <p className="font-semibold text-starlight">Rejilla común</p>
+          <p className="font-semibold text-starlight">{t("grid.title")}</p>
           <p className="mt-0.5">
-            {grid.size_px} × {grid.size_px} px · {grid.pixel_scale_arcsec.toFixed(2).replace(".", ",")} ″/px ·{" "}
-            {grid.orientation === "north up, east left" ? "norte arriba, este a la izquierda" : grid.orientation}
+            {t("grid.summary", {
+              size: grid.size_px,
+              scale: format.number(grid.pixel_scale_arcsec, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              orientation: grid.orientation === "north up, east left" ? t("grid.northUp") : grid.orientation,
+            })}
           </p>
           <p className="mt-0.5">
-            {result.n_used} cuadros usados de {result.n_available} disponibles
-            {result.n_used < result.n_available ? " (se aplica el límite de cuadros solicitado)" : ""}.
+            {result.n_used < result.n_available
+              ? t("grid.framesUsedLimited", { used: result.n_used, available: result.n_available })
+              : t("grid.framesUsed", { used: result.n_used, available: result.n_available })}
           </p>
-          <p className="mt-0.5 text-mutedstar/70">Versión de procesamiento {result.processing_version}</p>
+          <p className="mt-0.5 text-mutedstar/70">{t("grid.processingVersion", { version: result.processing_version })}</p>
           {motionMode && (
             <p className="mt-1 text-gold">
-              Estas imágenes son una vista de secuencia, no una medición de movimiento.
+              {t("grid.notMeasurement")}
             </p>
           )}
         </div>
@@ -790,7 +795,7 @@ export default function SequencePlayer({
         {result.limitations.length > 0 && (
           <div className="rounded border border-line bg-deep p-2">
             <p className="flex items-center gap-1 font-semibold text-gold">
-              <TriangleAlert size={12} /> Limitaciones
+              <TriangleAlert size={12} /> {t("limitations")}
             </p>
             <ul className="mt-0.5 flex flex-col gap-0.5 text-mutedstar">
               {result.limitations.map((l, i) => (

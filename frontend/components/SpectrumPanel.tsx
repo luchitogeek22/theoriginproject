@@ -1,6 +1,7 @@
 "use client";
 
-import { translateLimitation } from "@/lib/limitations";
+import { useFormatter, useTranslations } from "next-intl";
+import { useTranslateLimitation } from "@/lib/limitations";
 import { useId, useMemo, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { api } from "@/lib/api";
@@ -13,15 +14,20 @@ const W = 600;
 const H = 280;
 const PAD = { l: 58, r: 14, t: 14, b: 42 };
 
-const STAGE_LABELS: Record<string, string> = {
-  queued: "En cola",
-  searching: "Buscando observaciones en el archivo",
-  downloading: "Descargando recortes",
-  measuring: "Midiendo el flujo",
-};
+const STAGES = ["queued", "searching", "downloading", "measuring"] as const;
+type KnownStage = (typeof STAGES)[number];
 
-function fmt(value: number, digits = 2): string {
-  return value.toFixed(digits).replace(".", ",");
+const isKnownStage = (stage: string): stage is KnownStage => (STAGES as readonly string[]).includes(stage);
+
+/** Human-facing number with fixed fraction digits, in the active locale. */
+function useNumbers() {
+  const format = useFormatter();
+  return {
+    fmt: (value: number, digits = 2) =>
+      format.number(value, { minimumFractionDigits: digits, maximumFractionDigits: digits }),
+    sig: (value: number) => format.number(value, { minimumSignificantDigits: 3, maximumSignificantDigits: 3 }),
+    date: (iso: string) => format.dateTime(new Date(iso), { year: "numeric", month: "short", day: "numeric" }),
+  };
 }
 
 function dateKey(p: SpectrumPoint): string {
@@ -30,6 +36,8 @@ function dateKey(p: SpectrumPoint): string {
 
 function Plot({ points }: { points: SpectrumPoint[] }) {
   const uid = useId();
+  const t = useTranslations("spectrumPanel");
+  const { fmt, sig, date } = useNumbers();
   const dates = useMemo(() => Array.from(new Set(points.map(dateKey))).sort(), [points]);
   const colorOf = (p: SpectrumPoint) => PALETTE[dates.indexOf(dateKey(p)) % PALETTE.length];
   if (points.length === 0) return null;
@@ -57,31 +65,35 @@ function Plot({ points }: { points: SpectrumPoint[] }) {
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby={`${uid}-t ${uid}-d`} className="h-auto w-full max-w-[680px]">
-        <title id={`${uid}-t`}>Espectrofotometría relativa de {points.length} medidas</title>
+        <title id={`${uid}-t`}>{t("plotTitle", { count: points.length })}</title>
         <desc id={`${uid}-d`}>
-          {`${points.length} medidas entre ${fmt(Math.min(...xs))} y ${fmt(Math.max(...xs))} micras, en ${dates.length} fechas.${
-            flaggedCount ? ` ${flaggedCount} con bandera, dibujadas huecas.` : ""
-          } Flujo entre ${fmt(Math.min(...lows), 4)} y ${fmt(Math.max(...highs), 4)} Jy.`}
+          {[
+            t("plotDesc", { count: points.length, min: fmt(Math.min(...xs)), max: fmt(Math.max(...xs)), dates: dates.length }),
+            flaggedCount ? t("plotDescFlagged", { count: flaggedCount }) : null,
+            t("plotDescFlux", { min: fmt(Math.min(...lows), 4), max: fmt(Math.max(...highs), 4) }),
+          ]
+            .filter(Boolean)
+            .join(" ")}
         </desc>
-        {yTicks.map((t) => (
-          <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={sy(t)} y2={sy(t)} stroke="#1c2946" />
-            <text x={PAD.l - 6} y={sy(t) + 3} textAnchor="end" fontSize={10} fill="#93a1c0">
-              {t.toPrecision(3).replace(".", ",")}
+        {yTicks.map((tick) => (
+          <g key={tick}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={sy(tick)} y2={sy(tick)} stroke="#1c2946" />
+            <text x={PAD.l - 6} y={sy(tick) + 3} textAnchor="end" fontSize={10} fill="#93a1c0">
+              {sig(tick)}
             </text>
           </g>
         ))}
-        {xTicks.map((t) => (
-          <text key={t} x={sx(t)} y={H - PAD.b + 14} textAnchor="middle" fontSize={10} fill="#93a1c0">
-            {fmt(t, 1)}
+        {xTicks.map((tick) => (
+          <text key={tick} x={sx(tick)} y={H - PAD.b + 14} textAnchor="middle" fontSize={10} fill="#93a1c0">
+            {fmt(tick, 1)}
           </text>
         ))}
         <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} stroke="#93a1c0" />
         <text x={(PAD.l + W - PAD.r) / 2} y={H - 6} textAnchor="middle" fontSize={10} fill="#93a1c0">
-          longitud de onda (µm)
+          {t("axisX")}
         </text>
         <text transform={`translate(12 ${(PAD.t + H - PAD.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize={10} fill="#93a1c0">
-          flujo (Jy)
+          {t("axisY")}
         </text>
         {points.map((p, i) => {
           const c = colorOf(p);
@@ -99,22 +111,30 @@ function Plot({ points }: { points: SpectrumPoint[] }) {
                 stroke={c}
                 strokeWidth={1.5}
               >
-                <title>{`${p.date_iso.slice(0, 10)} · detector ${p.detector ?? "—"} · ${fmt(p.wavelength_um, 3)} µm · ${p.flux_jy.toPrecision(3)} Jy${p.flagged ? " · con bandera" : ""}`}</title>
+                <title>
+                  {t("pointTitle", {
+                    date: date(p.date_iso),
+                    detector: p.detector ?? "—",
+                    wavelength: fmt(p.wavelength_um, 3),
+                    flux: sig(p.flux_jy),
+                  }) + (p.flagged ? ` · ${t("pointFlagged")}` : "")}
+                </title>
               </circle>
             </g>
           );
         })}
       </svg>
-      <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-mutedstar" aria-label="Leyenda por fecha">
+      <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-mutedstar" aria-label={t("legendLabel")}>
         {dates.map((d, i) => (
           <li key={d} className="flex items-center gap-1">
             <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} aria-hidden="true" />
-            {d}
+            {date(d)}
           </li>
         ))}
         {flaggedCount > 0 && (
           <li className="flex items-center gap-1">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-mutedstar" aria-hidden="true" /> hueco = con bandera ({flaggedCount})
+            <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-mutedstar" aria-hidden="true" />{" "}
+            {t("legendFlagged", { count: flaggedCount })}
           </li>
         )}
       </ul>
@@ -124,10 +144,12 @@ function Plot({ points }: { points: SpectrumPoint[] }) {
 
 function ColorGauge({ color }: { color: SpectrumColor }) {
   const uid = useId();
+  const t = useTranslations("spectrumPanel");
+  const { fmt } = useNumbers();
   if (!color.available || color.index === undefined) {
     return (
       <p className="text-[11px] text-mutedstar">
-        Termómetro de color no disponible: {color.reason ?? "sin motivo informado"}
+        {t("colorUnavailable", { reason: color.reason ?? t("colorNoReason") })}
       </p>
     );
   }
@@ -137,7 +159,7 @@ function ColorGauge({ color }: { color: SpectrumColor }) {
   return (
     <div>
       <p id={`${uid}-l`} className="text-xs font-semibold text-starlight">
-        Termómetro de color: {fmt(color.index)} ± {fmt(err)}
+        {t("colorTitle", { index: fmt(color.index), err: fmt(err) })}
       </p>
       <div
         className="relative mt-2 h-4 max-w-md rounded border border-line"
@@ -156,9 +178,9 @@ function ColorGauge({ color }: { color: SpectrumColor }) {
         <div className="absolute -top-1 h-6 w-1 bg-abyss ring-1 ring-starlight" style={{ left: `calc(${pos(idx)}% - 2px)` }} aria-hidden="true" />
       </div>
       <div className="flex max-w-md justify-between text-[10px] text-mutedstar">
-        <span>−1 (más azul)</span>
+        <span>{t("bluer")}</span>
         <span>0</span>
-        <span>+1 (más rojo)</span>
+        <span>{t("redder")}</span>
       </div>
       {color.reading && <p className="mt-1 text-[11px] text-starlight">{color.reading}</p>}
       {color.reference_note && <p className="text-[11px] text-mutedstar">{color.reference_note}</p>}
@@ -167,22 +189,25 @@ function ColorGauge({ color }: { color: SpectrumColor }) {
 }
 
 export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) {
+  const t = useTranslations("spectrumPanel");
+  const tc = useTranslations("common");
+  const translateLimitation = useTranslateLimitation();
   const posKey = `${ra.toFixed(6)}|${dec.toFixed(6)}`;
   const [started, setStarted] = useState<string | null>(null);
   const key = started === posKey ? `spectrum|${posKey}` : null;
   const job = useJob<SpectrumResult>(key, (signal) => api.createSpectrum({ ra_deg: ra, dec_deg: dec }, { signal }));
   const busy = job.phase === "creating" || job.phase === "running";
   const result = job.phase === "completed" ? job.result : null;
-  const stage = job.job?.stage ? (STAGE_LABELS[job.job.stage] ?? job.job.stage) : "Enviando la petición";
+  const rawStage = job.job?.stage;
+  const stage = rawStage ? (isKnownStage(rawStage) ? t(`stages.${rawStage}`) : rawStage) : t("stages.sending");
 
   return (
-    <section className="mt-4 rounded border border-line bg-deep p-3" aria-label="Espectro al vuelo">
+    <section className="mt-4 rounded border border-line bg-deep p-3" aria-label={t("title")}>
       <h2 className="text-sm font-semibold text-starlight">
-        Espectro al vuelo <ResultBadge kind="calculation" />
+        {t("title")} <ResultBadge kind="calculation" />
       </h2>
       <p className="mt-1 max-w-2xl text-[11px] text-mutedstar">
-        Mide el flujo del objetivo en exposiciones de los seis detectores de SPHEREx y lo ordena por longitud de onda.
-        Es espectrofotometría relativa, sin corrección de apertura.
+        {t("intro")}
       </p>
       <button
         type="button"
@@ -190,7 +215,7 @@ export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) 
         onClick={() => (key === null ? setStarted(posKey) : job.retry())}
         className="mt-2 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
       >
-        {result ? "Repetir la medida" : "Medir espectro del objetivo"}
+        {result ? t("remeasure") : t("measure")}
       </button>
 
       <div aria-live="polite">
@@ -202,11 +227,11 @@ export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) 
               {job.job && (job.job.total ?? 0) > 0 ? ` (${job.job.done} / ${job.job.total})` : ""}
             </p>
             <button type="button" onClick={job.cancel} className="mt-1 rounded border border-line px-3 py-1 text-mutedstar hover:border-pulse">
-              Cancelar
+              {tc("cancel")}
             </button>
           </div>
         )}
-        {job.phase === "cancelled" && <p className="mt-2 text-xs text-mutedstar">Dejaste de esperar esta medida.</p>}
+        {job.phase === "cancelled" && <p className="mt-2 text-xs text-mutedstar">{t("cancelled")}</p>}
         {job.phase === "failed" && (
           <p role="alert" className="mt-2 flex items-center gap-1 text-xs text-red-300">
             <TriangleAlert size={13} /> {job.error}
@@ -217,12 +242,12 @@ export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) 
       {result && (
         <div className="mt-3 flex flex-col gap-3">
           {result.points.length === 0 ? (
-            <p className="text-xs text-mutedstar">No hay medidas utilizables para esta posición.</p>
+            <p className="text-xs text-mutedstar">{t("noPoints")}</p>
           ) : (
             <figure>
               <Plot points={result.points} />
               <figcaption className="mt-1 text-[11px] text-gold">
-                Espectrofotometría relativa, sin corrección de apertura. <span className="text-mutedstar">({result.label})</span>
+                {t("caption")} <span className="text-mutedstar">({result.label})</span>
               </figcaption>
             </figure>
           )}

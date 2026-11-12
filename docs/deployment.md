@@ -43,6 +43,7 @@ vía variables de entorno del compose.
 | `STORAGE_BACKEND` | `local` (defecto) o `s3` (MinIO o compatible) |
 | `IRSA_*` | endpoint SIA2, colecciones, timeouts, MAXREC, límite de descarga |
 | `NEXT_PUBLIC_API_URL` | URL del backend vista desde el navegador (en Docker es un argumento de build) |
+| `NEXT_PUBLIC_SITE_URL` | Opcional. Origen público del frontend para `canonical`, `hreflang` y `sitemap.xml` (en Vercel se usa `VERCEL_PROJECT_PRODUCTION_URL` si falta) |
 | `TRUSTED_PROXY_HOPS` | saltos de proxy confiables para `X-Forwarded-For` (defecto 1: se usa el último valor; 0 usa la IP del socket) |
 | `RATE_LIMIT_PER_MINUTE` | peticiones por minuto y cliente (defecto 120) |
 | `SUPABASE_JWT_AUDIENCE` | `aud` exigido en los tokens (defecto `authenticated`) |

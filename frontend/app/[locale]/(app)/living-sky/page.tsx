@@ -3,17 +3,22 @@
 /** LIVING SKY — celestial exploration wired to live archive queries. */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { ChevronRight, Loader2, PanelRightClose, PanelRightOpen, Search } from "lucide-react";
 import SkyView from "@/components/SkyView";
 import SearchBar from "@/components/SearchBar";
 import CopilotPanel from "@/components/CopilotPanel";
-import { ApiError, api } from "@/lib/api";
+import { useRouter } from "@/i18n/navigation";
+import { api } from "@/lib/api";
 import { mjdToDate } from "@/lib/coords";
+import { useErrorText } from "@/lib/errors";
 import { useResearch } from "@/lib/store";
 import type { Observation } from "@/lib/types";
 
 export default function LivingSky() {
+  const t = useTranslations("livingSkyPage");
+  const format = useFormatter();
+  const errorText = useErrorText();
   const router = useRouter();
   const { mode, target, search, setSearch, selected, toggleSelected, requestFocus } = useResearch();
   const [radius, setRadius] = useState(12);
@@ -35,7 +40,7 @@ export default function LivingSky() {
       });
       setSearch(res);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Archive query failed");
+      setError(errorText(e, t("archiveQueryFailed")));
     } finally {
       setBusy(false);
     }
@@ -57,16 +62,16 @@ export default function LivingSky() {
                 onClick={() => setTab("results")}
                 className={`rounded px-2 py-1 ${tab === "results" ? "bg-panel text-pulse" : "text-mutedstar"}`}
               >
-                Resultados
+                {t("tabResults")}
               </button>
               <button
                 onClick={() => setTab("copilot")}
                 className={`rounded px-2 py-1 ${tab === "copilot" ? "bg-panel text-pulse" : "text-mutedstar"}`}
               >
-                Copilot
+                {t("tabCopilot")}
               </button>
             </div>
-            <button onClick={() => setPanelOpen(false)} aria-label="Ocultar panel" className="text-mutedstar hover:text-starlight">
+            <button onClick={() => setPanelOpen(false)} aria-label={t("hidePanel")} className="text-mutedstar hover:text-starlight">
               <PanelRightClose size={15} />
             </button>
           </div>
@@ -82,21 +87,21 @@ export default function LivingSky() {
                   <p className="text-mutedstar">
                     {target.ra_deg.toFixed(5)}°, {target.dec_deg.toFixed(5)}° · {target.frame}/{target.epoch}
                   </p>
-                  <p className="text-mutedstar/70">Resuelto por {target.resolver || "—"}{target.catalog_id ? ` · ${target.catalog_id}` : ""}</p>
+                  <p className="text-mutedstar/70">{t("resolvedBy", { resolver: target.resolver || "—" })}{target.catalog_id ? ` · ${target.catalog_id}` : ""}</p>
                   {target.warning && <p className="text-gold">{target.warning}</p>}
                   <button
                     onClick={() => requestFocus(target.ra_deg, target.dec_deg)}
                     className="mt-1 text-pulse hover:underline"
                   >
-                    Centrar en la esfera
+                    {t("centerSphere")}
                   </button>
                 </div>
               )}
 
               <div className="mt-2 flex items-center gap-2 text-[11px] text-mutedstar">
                 <label className="flex items-center gap-1">
-                  Radio
-                  <input type="range" min={2} max={60} value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="w-20" aria-label="Radio de búsqueda" />
+                  {t("radius")}
+                  <input type="range" min={2} max={60} value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="w-20" aria-label={t("radiusAria")} />
                   {radius}′
                 </label>
                 <button
@@ -105,7 +110,7 @@ export default function LivingSky() {
                   className="flex items-center gap-1 rounded border border-line px-2 py-1 hover:border-pulse disabled:opacity-40"
                 >
                   {busy ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-                  Consultar
+                  {t("query")}
                 </button>
               </div>
               {error && <p className="mt-1 text-[11px] text-red-300">{error}</p>}
@@ -113,8 +118,12 @@ export default function LivingSky() {
               {search && (
                 <p className="mt-2 text-[11px] text-mutedstar">
                   {search.count === 0
-                    ? "Sin observaciones en esta región y colecciones."
-                    : `${search.count} observaciones · ${new Date(search.queried_at).toLocaleString()}${search.cached ? " (caché)" : ""}`}
+                    ? t("noObservations")
+                    : t("summary", {
+                        count: search.count,
+                        date: format.dateTime(new Date(search.queried_at), { dateStyle: "medium", timeStyle: "medium" }),
+                        cached: search.cached ? "yes" : "no",
+                      })}
                 </p>
               )}
               {search?.warnings.map((w, i) => (
@@ -132,7 +141,7 @@ export default function LivingSky() {
                           isSel ? "border-pulse bg-panel" : "border-line bg-deep hover:border-pulse/50"
                         }`}
                       >
-                        <p className="truncate font-medium text-starlight">{o.obs_id || "(sin obs_id)"}</p>
+                        <p className="truncate font-medium text-starlight">{o.obs_id || t("noObsId")}</p>
                         <p className="text-mutedstar">
                           {o.collection} · {o.date_obs || mjdToDate(o.t_min_mjd)}
                           {mode === "investigate" && ` · det ${o.detector || "—"} · ${o.band || "—"}`}
@@ -148,16 +157,22 @@ export default function LivingSky() {
 
               {detail && (
                 <div className="mt-2 rounded border border-gold/50 bg-panel/60 p-2 text-[11px]">
-                  <p className="font-semibold text-starlight">Detalle de observación</p>
+                  <p className="font-semibold text-starlight">{t("detailTitle")}</p>
                   <p className="text-mutedstar">{detail.obs_id}</p>
                   <p className="text-mutedstar">{detail.collection} · {detail.date_obs || mjdToDate(detail.t_min_mjd)}</p>
-                  <p className="text-mutedstar">det {detail.detector || "—"} · banda {detail.band || "—"} · {detail.dataproduct_type || "—"}</p>
+                  <p className="text-mutedstar">
+                    {t("detailMeta", {
+                      detector: detail.detector || "—",
+                      band: detail.band || "—",
+                      type: detail.dataproduct_type || "—",
+                    })}
+                  </p>
                   {detail.ra_deg !== null && (
                     <button
                       onClick={() => requestFocus(detail.ra_deg as number, detail.dec_deg as number)}
                       className="mt-1 text-pulse hover:underline"
                     >
-                      Centrar esta huella
+                      {t("centerFootprint")}
                     </button>
                   )}
                 </div>
@@ -171,17 +186,17 @@ export default function LivingSky() {
               disabled={selected.length === 0}
               className="flex w-full items-center justify-center gap-1 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
             >
-              Iniciar investigación temporal ({selected.length}) <ChevronRight size={14} />
+              {t("startInvestigation", { count: selected.length })} <ChevronRight size={14} />
             </button>
             {selected.length === 1 && (
-              <p className="mt-1 text-center text-[10px] text-mutedstar">Con 2+ observaciones podrás comparar épocas.</p>
+              <p className="mt-1 text-center text-[10px] text-mutedstar">{t("compareHint")}</p>
             )}
           </div>
         </aside>
       ) : (
         <button
           onClick={() => setPanelOpen(true)}
-          aria-label="Mostrar panel"
+          aria-label={t("showPanel")}
           className="border-l border-line bg-deep/70 px-1.5 text-mutedstar hover:text-starlight"
         >
           <PanelRightOpen size={15} />

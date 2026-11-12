@@ -1,1 +1,269 @@
-{}
+{
+  "landing": {
+    "skip": "Ir a la plataforma",
+    "topBar": {
+      "enterShort": "Entrar",
+      "enter": "Entrar a la plataforma"
+    },
+    "rail": {
+      "label": "Escenas"
+    },
+    "chapters": {
+      "origin": "El universo te espera",
+      "explore": "Una nueva forma de explorar el cielo",
+      "mission": "El poder de SPHEREx",
+      "epochs": "El universo no es estático",
+      "objects": "Objetos que vale la pena explorar",
+      "evidence": "De la observación a la evidencia",
+      "platform": "Explora el origen",
+      "question": "Todo descubrimiento comienza con una pregunta"
+    },
+    "hero": {
+      "srTitle": "The Origin Project. ",
+      "title": "Explora el universo. Descubre lo que cambia.",
+      "lead": "Una plataforma científica interactiva para explorar observaciones reales de SPHEREx e investigar el universo dinámico.",
+      "start": "Comenzar a explorar",
+      "discover": "Descubrir la misión",
+      "disclaimer": "El planeta y las órbitas son una ilustración. Cada número de esta página tiene una fuente o está indicado como simulado."
+    },
+    "explore": {
+      "title": "Cada región del cielo cuenta una historia.",
+      "body": "Señala cualquier zona del cielo por sus coordenadas — ascensión recta y declinación — y The Origin Project consulta al archivo de SPHEREx qué observó allí y cuándo.",
+      "grid": {
+        "term": "Cuadrícula RA / Dec",
+        "detail": "El sistema de coordenadas que usan los astrónomos para ubicar cualquier punto del cielo."
+      },
+      "constellations": {
+        "term": "Líneas de constelaciones",
+        "detail": "Referencias para orientarse: Orion, Ursa Major, Cassiopeia y Crux."
+      },
+      "markers": {
+        "term": "Marcadores con nombre",
+        "detail": "Los cinco objetivos del desafío, ubicados en sus posiciones de catálogo."
+      }
+    },
+    "mission": {
+      "title": "El poder de SPHEREx",
+      "body": "El observatorio SPHEREx de la NASA fotografía todo el cielo una y otra vez, separando su luz en colores que no podemos ver. Cada repetición es una nueva oportunidad para notar qué se movió o cambió.",
+      "facts": {
+        "bands": {
+          "value": "102",
+          "label": "bandas espectrales, de seis matrices de detectores con 17 canales cada una"
+        },
+        "range": {
+          "value": "0.75–5.0 µm",
+          "label": "infrarrojo cercano, más allá de lo que puede ver el ojo humano"
+        },
+        "cadence": {
+          "value": "6 meses",
+          "label": "para cartografiar todo el cielo, repetido desde mayo de 2025"
+        }
+      },
+      "bandsPrompt": "Recorre las bandas para ver qué revela cada parte del espectro.",
+      "disclaimer": "Las franjas luminosas sobre la esfera ilustran un relevamiento de todo el cielo que se completa con el tiempo. No son el calendario de apuntado real de SPHEREx."
+    },
+    "bands": {
+      "sliderLabel": "Banda espectral de SPHEREx",
+      "valueText": "Banda {band}: matriz de detectores {array}, {from}–{to} micrómetros",
+      "wavelength": "longitud de onda →",
+      "readout": "Banda {band} · matriz {array}, canal {channel} de {channels} · {from}–{to} µm",
+      "note": "Rangos por matriz de detectores, según la publicación de NASA/IPAC IRSA. La altura de las barras es decorativa.",
+      "arrays": {
+        "a1": {
+          "f1": "Luz de estrellas frías",
+          "f2": "Límite del rojo visible"
+        },
+        "a2": {
+          "f1": "Fotosferas estelares",
+          "f2": "Luz estelar de galaxias"
+        },
+        "a3": {
+          "f1": "Línea Paschen-α del hidrógeno (1.87 µm)",
+          "f2": "Estrellas ocultas por polvo"
+        },
+        "a4": {
+          "f1": "Hielo de agua (≈ 3.0 µm)",
+          "f2": "Emisión de polvo aromático (3.3 µm)"
+        },
+        "a5": {
+          "f1": "Línea Brackett-α del hidrógeno (4.05 µm)",
+          "f2": "Hielo de dióxido de carbono (4.27 µm)"
+        },
+        "a6": {
+          "f1": "Hielo de monóxido de carbono (4.67 µm)",
+          "f2": "Aquí las enanas marrones frías brillan más"
+        }
+      }
+    },
+    "epochs": {
+      "badge": "Simulación · no es una medición",
+      "title": "El universo cambia. Te ayudamos a investigarlo.",
+      "body": "La misma zona del cielo, vista en distintos momentos. Una estrella se desplaza, otra aumenta su brillo. Recorre las épocas y luego activa la vista de diferencia para conservar solo lo que cambió.",
+      "legend": "Elige una época",
+      "epoch": "Época {number}",
+      "range": "Tiempo entre épocas",
+      "difference": "Mostrar diferencia (época posterior menos Época 01)",
+      "date": "Fecha de observación",
+      "dateValue": "ninguna (simulada)",
+      "shift": "Variación de posición",
+      "brightness": "Variación de brillo",
+      "why": "¿Por qué comparar épocas? Un píxel de SPHEREx abarca unos 6″ de cielo, y los objetivos móviles del desafío se desplazan aproximadamente 5–10″ por año: a menudo menos de un píxel entre visitas. Verlos requiere fotogramas alineados en una misma escala de brillo."
+    },
+    "objects": {
+      "title": "Objetos que vale la pena explorar",
+      "body": "El desafío propone cinco objetivos de prueba: tres que se mueven por el cielo y dos cuya luz cambia. Elige uno para orientar el cielo hacia él.",
+      "tabsLabel": "Objetivos del desafío",
+      "badge": {
+        "motion": "se mueve",
+        "brightness": "varía"
+      },
+      "lookFor": {
+        "motion": "Busca: movimiento",
+        "brightness": "Busca: cambio de brillo"
+      },
+      "ra": "RA (J2000)",
+      "dec": "Dec (J2000)",
+      "archive": "Archivo de SPHEREx",
+      "timeSpan": "Intervalo de tiempo",
+      "exposures": "{count} exposiciones",
+      "exposuresApprox": "≈ {count} exposiciones",
+      "spanMonths": "{from} – {to}",
+      "spanDays": "{days} días",
+      "spanDaysPerDetector": "{days} días por detector",
+      "auditNote": "Cobertura del archivo según la auditoría de datos del proyecto (11 nov 2026). La plataforma aún no ha medido ninguna variación; las secuencias de este objetivo se están validando.",
+      "cta": "Explorar observaciones",
+      "targets": {
+        "barnard": {
+          "kind": "Enana roja · alto movimiento propio",
+          "summary": "Una enana roja a unos 6 años luz, con el mayor movimiento propio de todas las estrellas conocidas.",
+          "note": "Desplazamiento esperado en el intervalo: hasta 1.9 píxeles de SPHEREx."
+        },
+        "epsindi": {
+          "kind": "Par de enanas marrones",
+          "summary": "Dos enanas marrones que orbitan entre sí, ambas ligadas a la estrella cercana Epsilon Indi A.",
+          "note": "Desplazamiento esperado en el intervalo: hasta 1.1 píxeles de SPHEREx."
+        },
+        "wise0855": {
+          "kind": "Enana marrón fría y de movimiento rápido",
+          "summary": "La enana marrón más fría que se conoce. Es tenue en el infrarrojo cercano, por lo que un solo fotograma podría no mostrarla.",
+          "note": "Desplazamiento esperado en el intervalo: hasta 1.35 píxeles de SPHEREx."
+        },
+        "rwaur": {
+          "kind": "Estrella variable joven",
+          "summary": "Un sistema estelar joven todavía rodeado de gas y polvo, conocido por sus cambios irregulares de brillo.",
+          "note": "Comparar el brillo requiere una misma escala de intensidad en todos los fotogramas."
+        },
+        "rdra": {
+          "kind": "Variable de período largo tipo Mira",
+          "summary": "Una gigante roja pulsante cuyo brillo sube y baja en un ciclo de meses.",
+          "note": "Distribuida en tres colecciones del archivo (qr2, qr2_deep, qr3_deep)."
+        }
+      }
+    },
+    "pipeline": {
+      "title": "De la observación a la evidencia",
+      "status": {
+        "available": "Disponible",
+        "validating": "En validación"
+      },
+      "stepOf": "Paso {current} de {total}",
+      "note": "Los diagramas explican cada paso; no son datos reales. “Disponible” significa que ya se puede usar en la aplicación. “En validación” significa que está construido y todavía se está comprobando con datos reales de SPHEREx.",
+      "steps": {
+        "region": {
+          "title": "Seleccionar una región del cielo",
+          "detail": "Busca un objeto por su nombre o escribe su RA/Dec. La vista del cielo se centra en él."
+        },
+        "query": {
+          "title": "Obtener observaciones astronómicas",
+          "detail": "La plataforma consulta a NASA/IPAC IRSA qué exposiciones de SPHEREx cubren ese punto."
+        },
+        "fits": {
+          "title": "Procesar datos FITS",
+          "detail": "Cada exposición se recorta alrededor del objetivo y se enmascaran los píxeles defectuosos. Una escala de brillo común para todos los fotogramas aún está en desarrollo."
+        },
+        "epochs": {
+          "title": "Comparar distintas épocas",
+          "detail": "Los fotogramas de una misma banda se reproducen en orden, lado a lado o parpadeando, para que el cambio sea visible a simple vista."
+        },
+        "variation": {
+          "title": "Analizar posibles variaciones",
+          "detail": "Las diferencias alineadas señalan qué se movió o cambió. Ayudan a tu ojo; nunca lo reemplazan."
+        },
+        "journal": {
+          "title": "Generar evidencia reproducible",
+          "detail": "Guarda el objetivo, la consulta y los fotogramas en tu diario para que cualquiera pueda repetir la investigación."
+        }
+      },
+      "diagram": {
+        "region": "Diagrama: región",
+        "query": "Diagrama: consulta",
+        "fits": "Diagrama: FITS",
+        "epochs": "Diagrama: épocas",
+        "variation": "Diagrama: variación",
+        "journal": "Diagrama: diario"
+      },
+      "visual": {
+        "exposure": "exposición",
+        "cutout": "recorte alrededor del objetivo, píxeles defectuosos enmascarados",
+        "epochA": "Época A",
+        "epochB": "Época B",
+        "differenceMap": "mapa de diferencia: cian ganó luz, violeta perdió luz",
+        "journalRows": {
+          "target": "Objetivo",
+          "coordinates": "Coordenadas",
+          "observations": "Observaciones",
+          "notes": "Notas",
+          "export": "Exportar"
+        }
+      }
+    },
+    "platform": {
+      "title": "Explora el origen",
+      "body": "Seis herramientas, una investigación. Cada una es una parte real de la plataforma que puedes abrir ahora mismo.",
+      "tabsLabel": "Módulos de la plataforma",
+      "start": "Comenzar tu exploración",
+      "science": "Explorar la ciencia",
+      "loadPreview": "Cargar vista previa en vivo",
+      "previewTitle": "Vista previa en vivo de {name}",
+      "open": "Abrir {name}",
+      "previewNote": "La vista previa en vivo carga la propia aplicación en ejecución, no una maqueta.",
+      "modules": {
+        "observatory": {
+          "name": "Observatorio",
+          "purpose": "Empieza aquí: un cielo en vivo, un buscador y el estado real de las fuentes de datos."
+        },
+        "livingSky": {
+          "name": "Cielo vivo",
+          "purpose": "Navega por la esfera celeste y descubre qué exposiciones del archivo cubren cada región."
+        },
+        "timeExplorer": {
+          "name": "Explorador temporal",
+          "purpose": "Recorre épocas reales, compara fotogramas A/B y calcula diferencias alineadas."
+        },
+        "spectralLab": {
+          "name": "Laboratorio espectral",
+          "purpose": "Solo perfiles espectrales medidos. No se dibuja ninguna curva sin muestras reales."
+        },
+        "discoveries": {
+          "name": "Descubrimientos",
+          "purpose": "Sigue posibles candidatos. Cada fila enlaza con su trabajo y sus observaciones."
+        },
+        "journal": {
+          "name": "Diario",
+          "purpose": "Guarda investigaciones reproducibles y exporta la evidencia."
+        }
+      }
+    },
+    "finale": {
+      "title": "Todo descubrimiento comienza con una pregunta.",
+      "cta": "Entrar a la plataforma",
+      "credit": "Creado para el NASA Space Apps Challenge 2026 · Planet X and SPHEREx. Datos de SPHEREx: NASA/JPL-Caltech, NASA/IPAC IRSA.",
+      "sources": {
+        "irsa": "Datos de SPHEREx en NASA/IPAC IRSA",
+        "jpl": "Misión SPHEREx en NASA JPL",
+        "spaceApps": "NASA Space Apps Challenge",
+        "docs": "Documentación del proyecto"
+      }
+    }
+  }
+}

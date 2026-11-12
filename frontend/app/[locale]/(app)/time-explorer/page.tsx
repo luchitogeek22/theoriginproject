@@ -1,9 +1,9 @@
 "use client";
 
-import { translateLimitation } from "@/lib/limitations";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Loader2, TriangleAlert } from "lucide-react";
 import JobProgress from "@/components/JobProgress";
 import CutoutComparison from "@/components/CutoutComparison";
@@ -13,7 +13,10 @@ import LightCurve from "@/components/LightCurve";
 import SearchBar from "@/components/SearchBar";
 import SequencePlayer from "@/components/SequencePlayer";
 import ShiftStackPanel from "@/components/ShiftStackPanel";
-import { ApiError, api } from "@/lib/api";
+import { useRouter } from "@/i18n/navigation";
+import { api } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
+import { useTranslateLimitation } from "@/lib/limitations";
 import {
   FOV_OPTIONS_ARCMIN,
   freeTextQuery,
@@ -28,24 +31,23 @@ import { useJob } from "@/lib/useJob";
 
 const AladinViewer = dynamic(() => import("@/components/AladinViewer"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center text-xs text-mutedstar">Cargando mapa del cielo…</div>
-  ),
+  loading: () => <MapLoading />,
 });
 
-const MODES: Array<{ value: SequenceMode; label: string; help: string }> = [
-  { value: "motion", label: "Movimiento", help: "Cada cuadro se normaliza por separado: realza desplazamientos." },
-  { value: "brightness", label: "Brillo", help: "Escala común a todos los cuadros: el brillo es comparable." },
-];
-
-function friendlyError(status: number | null, message: string): string {
-  if (status === 429) {
-    return "El servicio está procesando otras secuencias y no admite más por ahora. Espera unos segundos y reintenta.";
-  }
-  return message;
+function MapLoading() {
+  const t = useTranslations("timeExplorerPage");
+  return <div className="flex h-full items-center justify-center text-xs text-mutedstar">{t("loadingMap")}</div>;
 }
 
+const MODES: SequenceMode[] = ["motion", "brightness"];
+
 function Explorer() {
+  const t = useTranslations("timeExplorerPage");
+  const tc = useTranslations("common");
+  const errorText = useErrorText();
+  const translateLimitation = useTranslateLimitation();
+  const friendlyError = (status: number | null, message: string): string =>
+    status === 429 ? t("rateLimited") : message;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { target, setTarget } = useResearch();
@@ -70,28 +72,28 @@ function Explorer() {
     setResolveError("");
     api
       .resolveTarget({ query })
-      .then((t) => {
+      .then((resolved) => {
         if (cancelled) return;
-        setTarget(t);
+        setTarget(resolved);
         const current = new URLSearchParams(window.location.search);
         const probe = new URLSearchParams(current);
-        probe.set("ra", String(t.propagated_ra_deg ?? t.ra_deg));
-        probe.set("dec", String(t.propagated_dec_deg ?? t.dec_deg));
+        probe.set("ra", String(resolved.propagated_ra_deg ?? resolved.ra_deg));
+        probe.set("dec", String(resolved.propagated_dec_deg ?? resolved.dec_deg));
         const state = parseSequenceState(probe);
         if (!state) {
-          setResolveError("Las coordenadas resueltas no son válidas.");
+          setResolveError(t("invalidResolved"));
           return;
         }
         router.replace(
           sequenceStateUrl(
-            { ...state, name: t.name.slice(0, 80) },
+            { ...state, name: resolved.name.slice(0, 80) },
             { frame: parseFrameParam(current.get("frame")), embed: current.get("embed") === "1" }
           ),
           { scroll: false }
         );
       })
       .catch((e) => {
-        if (!cancelled) setResolveError(e instanceof ApiError ? e.message : "No se pudo interpretar la búsqueda.");
+        if (!cancelled) setResolveError(errorText(e, t("resolveFailed")));
       })
       .finally(() => {
         if (!cancelled) setResolving(false);
@@ -117,7 +119,7 @@ function Explorer() {
   const key = request ? sequenceJobKey(request) : null;
 
   const job = useJob<SequenceResult>(key, (signal) => {
-    if (!request) throw new Error("Faltan coordenadas.");
+    if (!request) throw new Error("Missing coordinates.");
     return api.createSequence(request, { signal });
   });
 
@@ -137,37 +139,37 @@ function Explorer() {
       target &&
       Math.abs((target.propagated_ra_deg ?? target.ra_deg) - params.ra) < 1e-4 &&
       Math.abs((target.propagated_dec_deg ?? target.dec_deg) - params.dec) < 1e-4;
-    const name = (matches ? target?.name : params.name) || "objetivo";
+    const name = (matches ? target?.name : params.name) || t("targetFallback");
     const propagated = matches && target?.propagated_ra_deg != null;
     return {
       name,
       ra: params.ra,
       dec: params.dec,
       label: propagated
-        ? `${name}: posición propagada a ${target?.propagated_epoch ?? "la época de observación"}`
-        : `${name}: posición pedida`,
+        ? t("markerPropagated", { name, epoch: target?.propagated_epoch ?? t("markerEpochFallback") })
+        : t("markerRequested", { name }),
     };
-  }, [params, target]);
+  }, [params, target, t]);
 
   if (!params || !request) {
     return (
       <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4">
-        <h1 className="text-lg font-bold text-starlight">Explorador temporal</h1>
+        <h1 className="text-lg font-bold text-starlight">{t("title")}</h1>
         {resolving && (
           <p role="status" className="mt-1 flex items-center gap-2 text-sm text-mutedstar">
-            <Loader2 size={14} className="animate-spin text-pulse" /> Interpretando «{query}»…
+            <Loader2 size={14} className="animate-spin text-pulse" /> {t("resolving", { query: query ?? "" })}
           </p>
         )}
         {resolveError && (
           <p role="alert" className="mt-1 max-w-xl text-sm text-red-300">
-            No se pudo interpretar «{query}»: {resolveError} Escribe un nombre conocido o coordenadas como «08h55m10.831s -7d14m42.53s».
+            {t("resolveError", { query: query ?? "", error: resolveError })}
           </p>
         )}
         <p className="mt-1 max-w-xl text-sm text-mutedstar">
           {!query && (searchParams.get("ra") || searchParams.get("dec"))
-            ? "Las coordenadas de la dirección no son válidas (RA entre 0 y 360°, Dec entre −90 y 90°). "
+            ? `${t("invalidUrlCoords")} `
             : ""}
-          Busca un objetivo o elige uno de prueba para ver cómo cambia su campo entre exposiciones de SPHEREx.
+          {t("searchPrompt")}
         </p>
         <div className="mt-3">
           <SearchBar />
@@ -176,19 +178,22 @@ function Explorer() {
     );
   }
 
-  const title = marker?.name ?? "objetivo";
+  const title = marker?.name ?? t("targetFallback");
   const result = job.phase === "completed" ? job.result : null;
   const busy = job.phase === "creating" || job.phase === "running";
   const shareUrl = (frame: number) => sequenceStateUrl(params, { frame });
-  const exportName = `origin-${title.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "objetivo"}`;
+  const exportName = `origin-${title.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "target"}`;
 
   return (
     <div className={`scroll-thin h-full overflow-y-auto ${embed ? "p-2" : "p-3 md:p-4"}`}>
       {embed && (
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-mutedstar">
           <p>
-            <span className="font-semibold text-starlight">{title}</span> · campo de {params.fov}′ · exposiciones
-            reales de SPHEREx
+            {t.rich("embedSummary", {
+              b: (chunks) => <span className="font-semibold text-starlight">{chunks}</span>,
+              title,
+              fov: params.fov,
+            })}
           </p>
           <a
             href={sequenceStateUrl(params)}
@@ -196,7 +201,7 @@ function Explorer() {
             rel="noopener"
             className="rounded border border-line px-2 py-1 text-pulse hover:border-pulse"
           >
-            Abrir en THE ORIGIN PROJECT
+            {t("openInApp")}
           </a>
         </div>
       )}
@@ -204,16 +209,16 @@ function Explorer() {
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-starlight">
-            Explorador temporal <span className="text-sm font-normal text-mutedstar">— {title}</span>
+            {t("title")} <span className="text-sm font-normal text-mutedstar">— {title}</span>
           </h1>
           <p className="text-[11px] text-mutedstar">
             {params.ra.toFixed(5)}°, {params.dec >= 0 ? "+" : ""}
-            {params.dec.toFixed(5)}° · campo de {params.fov}′ · exposiciones reales de SPHEREx ordenadas por fecha
+            {params.dec.toFixed(5)}° · {t("fieldSorted", { fov: params.fov })}
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3 text-[11px] text-mutedstar">
           <label className="flex flex-col gap-0.5">
-            Campo de visión
+            {t("fov")}
             <select
               value={FOV_OPTIONS_ARCMIN.includes(params.fov) ? params.fov : ""}
               onChange={(e) => update({ fov: e.target.value })}
@@ -228,25 +233,25 @@ function Explorer() {
             </select>
           </label>
           <fieldset>
-            <legend className="mb-0.5">Modo</legend>
+            <legend className="mb-0.5">{t("mode")}</legend>
             <div className="flex rounded border border-line bg-deep p-0.5">
               {MODES.map((m) => (
                 <button
-                  key={m.value}
+                  key={m}
                   type="button"
-                  aria-pressed={params.mode === m.value}
-                  title={m.help}
-                  onClick={() => update({ mode: m.value })}
+                  aria-pressed={params.mode === m}
+                  title={t(`modes.${m}.help`)}
+                  onClick={() => update({ mode: m })}
                   className={`rounded px-2.5 py-1 text-xs ${
-                    params.mode === m.value ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
+                    params.mode === m ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
                   }`}
                 >
-                  {m.label}
+                  {t(`modes.${m}.label`)}
                 </button>
               ))}
             </div>
           </fieldset>
-          <label className="flex items-center gap-1.5 pb-1.5" title="Pide además un cuadro de WISE de otra época, solo como contexto visual.">
+          <label className="flex items-center gap-1.5 pb-1.5" title={t("referenceHelp")}>
             <input
               type="checkbox"
               checked={params.reference}
@@ -258,7 +263,7 @@ function Explorer() {
                 router.replace(`/time-explorer?${next.toString()}`, { scroll: false });
               }}
             />
-            Incluir cuadro WISE de referencia
+            {t("includeReference")}
           </label>
         </div>
       </div>
@@ -269,13 +274,13 @@ function Explorer() {
 
         {job.phase === "cancelled" && (
           <section className="mb-3 max-w-xl rounded border border-line bg-deep p-3 text-xs text-mutedstar">
-            <p>Dejaste de esperar esta secuencia. El servicio puede seguir procesándola, pero no se mostrará.</p>
+            <p>{t("cancelled")}</p>
             <button
               type="button"
               onClick={job.retry}
               className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-abyss hover:brightness-110"
             >
-              Volver a pedirla
+              {t("requestAgain")}
             </button>
           </section>
         )}
@@ -283,7 +288,7 @@ function Explorer() {
         {job.phase === "failed" && (
           <section role="alert" className="mb-3 max-w-xl rounded border border-red-400/40 bg-deep p-3 text-xs">
             <p className="flex items-center gap-1 font-semibold text-red-300">
-              <TriangleAlert size={13} /> No se pudo preparar la secuencia
+              <TriangleAlert size={13} /> {t("failedTitle")}
             </p>
             <p className="mt-1 text-mutedstar">{friendlyError(job.errorStatus, job.error)}</p>
             <button
@@ -291,18 +296,16 @@ function Explorer() {
               onClick={job.retry}
               className="mt-2 rounded border border-line px-3 py-1 text-starlight hover:border-pulse"
             >
-              Reintentar
+              {tc("retry")}
             </button>
           </section>
         )}
 
         {result && result.frames.length === 0 && (
           <section className="mb-3 max-w-xl rounded border border-line bg-deep p-3 text-xs text-mutedstar">
-            <p className="font-semibold text-starlight">Sin cobertura en este campo</p>
+            <p className="font-semibold text-starlight">{t("noCoverageTitle")}</p>
             <p className="mt-1">
-              El archivo no tiene exposiciones de SPHEREx que cubran esta posición con el campo elegido
-              {result.n_available > 0 ? ` (${result.n_available} candidatas descartadas por cobertura o detector)` : ""}.
-              Prueba un campo mayor o otro objetivo.
+              {t("noCoverage", { discarded: Math.max(0, result.n_available) })}
             </p>
             {result.limitations.length > 0 && (
               <ul className="mt-1">
@@ -315,7 +318,7 @@ function Explorer() {
         )}
       </div>
 
-      <section aria-label="Secuencia de imágenes" className="min-w-0">
+      <section aria-label={t("sequenceLabel")} className="min-w-0">
         {result && result.frames.length > 0 && (
           <SequencePlayer
             key={job.job?.job_id ?? key}
@@ -331,7 +334,7 @@ function Explorer() {
 
       {embed && (
         <p className="mt-2 text-center text-[10px] text-mutedstar">
-          Datos: NASA/IPAC IRSA, SPHEREx · THE ORIGIN PROJECT
+          {t("embedCredit")}
         </p>
       )}
 
@@ -342,8 +345,8 @@ function Explorer() {
             className="rounded border border-line bg-deep/60"
             onToggle={(e) => setMapOpen(e.currentTarget.open)}
           >
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">Mapa del cielo</summary>
-            <section aria-label="Mapa del cielo" className="h-[360px] overflow-hidden border-t border-line">
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("skyMap")}</summary>
+            <section aria-label={t("skyMap")} className="h-[360px] overflow-hidden border-t border-line">
               {mapOpen && <AladinViewer ra={params.ra} dec={params.dec} fovArcmin={params.fov} marker={marker} />}
             </section>
           </details>
@@ -352,7 +355,7 @@ function Explorer() {
               {result.lightcurve && (
                 <details className="rounded border border-line bg-deep/60" open={params.mode === "brightness"}>
                   <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                    Curva de luz
+                    {t("lightCurve")}
                   </summary>
                   <div className="p-3">
                     <LightCurve curve={result.lightcurve} />
@@ -361,7 +364,7 @@ function Explorer() {
               )}
               <details className="rounded border border-line bg-deep/60">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                  Apilado y búsqueda de un Planeta X (avanzado)
+                  {t("shiftStack")}
                 </summary>
                 <div className="p-3">
                   <ShiftStackPanel ra={params.ra} dec={params.dec} detector={params.detector} />
@@ -372,7 +375,7 @@ function Explorer() {
           <Glossary />
           <details className="rounded border border-line bg-deep/60">
             <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-              Comparación manual A/B y análisis diferencial (avanzado)
+              {t("manualCompare")}
             </summary>
             <div className="p-3">
               <CutoutComparison />
@@ -385,9 +388,10 @@ function Explorer() {
 }
 
 export default function TimeExplorerPage() {
+  const t = useTranslations("timeExplorerPage");
   return (
     <Suspense
-      fallback={<div className="p-4 text-xs text-mutedstar">Cargando el explorador temporal…</div>}
+      fallback={<div className="p-4 text-xs text-mutedstar">{t("loadingExplorer")}</div>}
     >
       <Explorer />
     </Suspense>

@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
+import { useTranslations } from "next-intl";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { DEG, parsePolygonRegion, radecToVec3 } from "@/lib/coords";
@@ -350,7 +351,13 @@ function CameraRig({
   return null;
 }
 
-function Scene(props: SkyProps) {
+/** Drift button text, resolved outside the Canvas because drei's <Html> has no intl context. */
+interface DriftLabels {
+  start: string;
+  stop: string;
+}
+
+function Scene(props: SkyProps & { driftLabels: DriftLabels }) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const [autoRotate, setAutoRotate] = useState(false);
   const invalidate = useThree((s) => s.invalidate);
@@ -405,7 +412,7 @@ function Scene(props: SkyProps) {
             onClick={() => setAutoRotate((v) => !v)}
             className="rounded border border-line bg-abyss/80 px-2 py-1 text-[11px] text-mutedstar hover:text-starlight"
           >
-            {autoRotate ? "Detener deriva" : "Deriva lenta"}
+            {autoRotate ? props.driftLabels.stop : props.driftLabels.start}
           </button>
         </Html>
       )}
@@ -427,6 +434,7 @@ class SkyErrorBoundary extends React.Component<
 }
 
 export default function CelestialSphere(props: SkyProps & { fallback: React.ReactNode }) {
+  const t = useTranslations("celestialSphere");
   const [glFailed, setGlFailed] = useState(false);
   if (glFailed) return <>{props.fallback}</>;
   return (
@@ -434,7 +442,7 @@ export default function CelestialSphere(props: SkyProps & { fallback: React.Reac
       <Canvas
         dpr={[1, 2]}
         frameloop="demand"
-        aria-label="Esfera celeste interactiva: arrastra para girar y usa la rueda para acercar"
+        aria-label={t("canvasLabel")}
         role="group"
         camera={{ fov: props.fov, near: 0.1, far: 2000, position: [0, 12, 42] }}
         gl={{ antialias: true, alpha: false }}
@@ -442,7 +450,7 @@ export default function CelestialSphere(props: SkyProps & { fallback: React.Reac
           if (!gl.getContext()) setGlFailed(true);
         }}
       >
-        <Scene {...props} />
+        <Scene {...props} driftLabels={{ start: t("driftStart"), stop: t("driftStop") }} />
       </Canvas>
     </SkyErrorBoundary>
   );

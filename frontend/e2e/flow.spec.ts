@@ -19,20 +19,20 @@ test("a free-text coordinate in the URL is resolved and replaced by numbers", as
 test("an invalid query shows a clear message and no crash", async ({ page }) => {
   await skipTutorial(page);
   await page.goto("/time-explorer?q=zzzz-not-a-place-12345&fov=6&mode=motion");
-  await expect(page.getByText(/No se pudo|no se encontr/i).first()).toBeVisible({ timeout: 40_000 });
+  await expect(page.getByText(/Could not|not found/i).first()).toBeVisible({ timeout: 40_000 });
 });
 
 test("the guided demo walks through three steps with the keyboard", async ({ page }) => {
   await skipTutorial(page);
   await page.goto("/demo");
   const title = page.getByTestId("demo-step-title");
-  await expect(title).toHaveText("Mira cómo se mueve");
+  await expect(title).toHaveText("Watch it move");
   await page.getByTestId("demo-next").click();
-  await expect(title).toHaveText("Mira cómo late");
+  await expect(title).toHaveText("Watch it pulse");
   await page.keyboard.press("ArrowRight");
-  await expect(title).toHaveText("Así se buscaría un Planeta X");
+  await expect(title).toHaveText("This is how a Planet X would be searched for");
   await page.keyboard.press("ArrowLeft");
-  await expect(title).toHaveText("Mira cómo late");
+  await expect(title).toHaveText("Watch it pulse");
 });
 
 test("the home sky shows the five targets and each point opens its video", async ({ page }) => {

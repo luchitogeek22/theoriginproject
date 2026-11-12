@@ -31,7 +31,7 @@
     "lint": "next lint",
     "start": "next start",
     "test:e2e": "playwright test",
-    "test:i18n": "node --test tests/i18n/"
+    "test:i18n": "node --test tests/i18n/messages.test.mjs tests/i18n/hardcoded-text.test.mjs"
   },
   "version": "0.1.0"
 }

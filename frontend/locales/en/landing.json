@@ -1,1 +1,269 @@
-{}
+{
+  "landing": {
+    "skip": "Skip to the platform",
+    "topBar": {
+      "enterShort": "Enter",
+      "enter": "Enter the platform"
+    },
+    "rail": {
+      "label": "Scenes"
+    },
+    "chapters": {
+      "origin": "The universe is waiting",
+      "explore": "A new way to explore the sky",
+      "mission": "The power of SPHEREx",
+      "epochs": "The universe is not static",
+      "objects": "Objects worth exploring",
+      "evidence": "From observation to evidence",
+      "platform": "Explore the origin",
+      "question": "Every discovery begins with a question"
+    },
+    "hero": {
+      "srTitle": "The Origin Project. ",
+      "title": "Explore the universe. Discover what changes.",
+      "lead": "An interactive scientific platform to explore real SPHEREx observations and investigate the dynamic universe.",
+      "start": "Start Exploring",
+      "discover": "Discover the Mission",
+      "disclaimer": "Planet and orbits are an illustration. Every number on this page is either sourced or labelled as simulated."
+    },
+    "explore": {
+      "title": "Every region of the sky tells a story.",
+      "body": "Point at any patch of sky by its coordinates — right ascension and declination — and The Origin Project asks the SPHEREx archive what it saw there, and when.",
+      "grid": {
+        "term": "RA / Dec grid",
+        "detail": "The coordinate system astronomers use to address any point on the sky."
+      },
+      "constellations": {
+        "term": "Constellation lines",
+        "detail": "Landmarks for orientation: Orion, Ursa Major, Cassiopeia and Crux."
+      },
+      "markers": {
+        "term": "Named markers",
+        "detail": "The five challenge targets, placed at their catalogue positions."
+      }
+    },
+    "mission": {
+      "title": "The power of SPHEREx",
+      "body": "NASA's SPHEREx observatory photographs the entire sky again and again, splitting its light into colours we cannot see. Each repeat is a new chance to notice what moved or changed.",
+      "facts": {
+        "bands": {
+          "value": "102",
+          "label": "spectral bands, from six detector arrays of 17 channels each"
+        },
+        "range": {
+          "value": "0.75–5.0 µm",
+          "label": "near-infrared, beyond what the human eye can see"
+        },
+        "cadence": {
+          "value": "6 months",
+          "label": "to map the whole sky, repeated since May 2025"
+        }
+      },
+      "bandsPrompt": "Move across the bands to see what each part of the spectrum reveals.",
+      "disclaimer": "The glowing strips on the sphere illustrate an all-sky survey filling in over time. They are not SPHEREx's real pointing schedule."
+    },
+    "bands": {
+      "sliderLabel": "SPHEREx spectral band",
+      "valueText": "Band {band}: detector array {array}, {from}–{to} micrometres",
+      "wavelength": "wavelength →",
+      "readout": "Band {band} · array {array}, channel {channel} of {channels} · {from}–{to} µm",
+      "note": "Ranges per detector array, as published by NASA/IPAC IRSA. Bar heights are decorative.",
+      "arrays": {
+        "a1": {
+          "f1": "Starlight from cool stars",
+          "f2": "Edge of visible red"
+        },
+        "a2": {
+          "f1": "Stellar photospheres",
+          "f2": "Galaxy starlight"
+        },
+        "a3": {
+          "f1": "Hydrogen Paschen-α line (1.87 µm)",
+          "f2": "Dust-obscured stars"
+        },
+        "a4": {
+          "f1": "Water ice (≈ 3.0 µm)",
+          "f2": "Aromatic dust emission (3.3 µm)"
+        },
+        "a5": {
+          "f1": "Hydrogen Brackett-α line (4.05 µm)",
+          "f2": "Carbon dioxide ice (4.27 µm)"
+        },
+        "a6": {
+          "f1": "Carbon monoxide ice (4.67 µm)",
+          "f2": "Cold brown dwarfs glow brightest here"
+        }
+      }
+    },
+    "epochs": {
+      "badge": "Simulation · not a measurement",
+      "title": "The universe changes. We help you investigate.",
+      "body": "The same patch of sky, seen at different times. One star drifts, another brightens. Drag through the epochs, then switch on the difference view to keep only what changed.",
+      "legend": "Choose an epoch",
+      "epoch": "Epoch {number}",
+      "range": "Time between epochs",
+      "difference": "Show difference (later epoch minus Epoch 01)",
+      "date": "Observation date",
+      "dateValue": "none (simulated)",
+      "shift": "Positional variation",
+      "brightness": "Brightness variation",
+      "why": "Why compare epochs? A SPHEREx pixel spans about 6″ of sky, and the challenge's moving targets drift roughly 5–10″ per year: often less than a pixel between visits. Seeing them takes aligned frames on one shared brightness scale."
+    },
+    "objects": {
+      "title": "Objects worth exploring",
+      "body": "The challenge names five test targets: three that move across the sky and two whose light changes. Choose one to turn the sky towards it.",
+      "tabsLabel": "Challenge targets",
+      "badge": {
+        "motion": "moves",
+        "brightness": "varies"
+      },
+      "lookFor": {
+        "motion": "Look for: motion",
+        "brightness": "Look for: brightness change"
+      },
+      "ra": "RA (J2000)",
+      "dec": "Dec (J2000)",
+      "archive": "SPHEREx archive",
+      "timeSpan": "Time span",
+      "exposures": "{count} exposures",
+      "exposuresApprox": "≈ {count} exposures",
+      "spanMonths": "{from} – {to}",
+      "spanDays": "{days} days",
+      "spanDaysPerDetector": "{days} days per detector",
+      "auditNote": "Archive coverage from the project's data audit (11 Nov 2026). No variation has been measured by the platform yet; sequences for this target are being validated.",
+      "cta": "Explore observations",
+      "targets": {
+        "barnard": {
+          "kind": "Red dwarf · high proper motion",
+          "summary": "A red dwarf about 6 light-years away, with the largest proper motion of any known star.",
+          "note": "Expected shift across the span: up to 1.9 SPHEREx pixels."
+        },
+        "epsindi": {
+          "kind": "Pair of brown dwarfs",
+          "summary": "Two brown dwarfs orbiting each other, both bound to the nearby star Epsilon Indi A.",
+          "note": "Expected shift across the span: up to 1.1 SPHEREx pixels."
+        },
+        "wise0855": {
+          "kind": "Cold, fast-moving brown dwarf",
+          "summary": "The coldest brown dwarf known. Faint in the near-infrared, so a single frame may not show it.",
+          "note": "Expected shift across the span: up to 1.35 SPHEREx pixels."
+        },
+        "rwaur": {
+          "kind": "Young variable star",
+          "summary": "A young star system still surrounded by gas and dust, known for irregular changes in brightness.",
+          "note": "Brightness comparisons need one shared intensity scale across frames."
+        },
+        "rdra": {
+          "kind": "Mira-type long-period variable",
+          "summary": "A pulsating red giant whose brightness rises and falls over a cycle of months.",
+          "note": "Spread across three archive collections (qr2, qr2_deep, qr3_deep)."
+        }
+      }
+    },
+    "pipeline": {
+      "title": "From observation to evidence",
+      "status": {
+        "available": "Available",
+        "validating": "Being validated"
+      },
+      "stepOf": "Step {current} of {total}",
+      "note": "Diagrams explain each step; they are not real data. “Available” means usable in the app today. “Being validated” means built and still being checked against real SPHEREx data.",
+      "steps": {
+        "region": {
+          "title": "Select a region of the sky",
+          "detail": "Search an object by name or type its RA/Dec. The sky view centres on it."
+        },
+        "query": {
+          "title": "Retrieve astronomical observations",
+          "detail": "The platform asks NASA/IPAC IRSA which SPHEREx exposures cover that point."
+        },
+        "fits": {
+          "title": "Process FITS data",
+          "detail": "Each exposure is cut around the target and bad pixels are masked. A shared brightness scale across frames is still in development."
+        },
+        "epochs": {
+          "title": "Compare different epochs",
+          "detail": "Frames from the same band play in order, side by side or blinking, so change is visible to the eye."
+        },
+        "variation": {
+          "title": "Analyze possible variations",
+          "detail": "Aligned differences point to what moved or changed. They assist your eye; they never replace it."
+        },
+        "journal": {
+          "title": "Generate reproducible evidence",
+          "detail": "Save the target, query and frames to your journal so anyone can repeat the investigation."
+        }
+      },
+      "diagram": {
+        "region": "Diagram: region",
+        "query": "Diagram: query",
+        "fits": "Diagram: fits",
+        "epochs": "Diagram: epochs",
+        "variation": "Diagram: variation",
+        "journal": "Diagram: journal"
+      },
+      "visual": {
+        "exposure": "exposure",
+        "cutout": "cutout around the target, bad pixels masked",
+        "epochA": "Epoch A",
+        "epochB": "Epoch B",
+        "differenceMap": "difference map: cyan gained light, violet lost light",
+        "journalRows": {
+          "target": "Target",
+          "coordinates": "Coordinates",
+          "observations": "Observations",
+          "notes": "Notes",
+          "export": "Export"
+        }
+      }
+    },
+    "platform": {
+      "title": "Explore the origin",
+      "body": "Six tools, one investigation. Each is a real part of the platform you can open right now.",
+      "tabsLabel": "Platform modules",
+      "start": "Start Your Exploration",
+      "science": "Explore the Science",
+      "loadPreview": "Load live preview",
+      "previewTitle": "Live preview of {name}",
+      "open": "Open {name}",
+      "previewNote": "The live preview loads the running application itself, not a mock-up.",
+      "modules": {
+        "observatory": {
+          "name": "Observatory",
+          "purpose": "Start here: a live sky, a search box and the real status of the data sources."
+        },
+        "livingSky": {
+          "name": "Living Sky",
+          "purpose": "Navigate the celestial sphere and see which archive exposures cover each region."
+        },
+        "timeExplorer": {
+          "name": "Time Explorer",
+          "purpose": "Step through real epochs, compare A/B frames and run aligned differences."
+        },
+        "spectralLab": {
+          "name": "Spectral Lab",
+          "purpose": "Measured spectral profiles only. No curve is drawn without real samples."
+        },
+        "discoveries": {
+          "name": "Discoveries",
+          "purpose": "Track possible candidates. Every row links back to its job and observations."
+        },
+        "journal": {
+          "name": "Journal",
+          "purpose": "Save reproducible investigations and export the evidence."
+        }
+      }
+    },
+    "finale": {
+      "title": "Every discovery begins with a question.",
+      "cta": "Enter the platform",
+      "credit": "Built for the 2026 NASA Space Apps Challenge · Planet X and SPHEREx. SPHEREx data: NASA/JPL-Caltech, NASA/IPAC IRSA.",
+      "sources": {
+        "irsa": "SPHEREx data at NASA/IPAC IRSA",
+        "jpl": "SPHEREx mission at NASA JPL",
+        "spaceApps": "NASA Space Apps Challenge",
+        "docs": "Project documentation"
+      }
+    }
+  }
+}

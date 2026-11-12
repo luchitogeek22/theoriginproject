@@ -1,1 +1,232 @@
-{}
+{
+  "sequencePlayer": {
+    "defaultExportName": "secuencia",
+    "modeHelp": {
+      "motion": "Modo movimiento: cada cuadro se normaliza con su propio ruido (unidades de ruido por cuadro). Sirve para ver desplazamientos, pero el brillo NO es comparable entre cuadros.",
+      "brightness": "Modo brillo: todos los cuadros comparten la misma escala lineal, por lo que el brillo sí es comparable entre épocas.",
+      "other": "Modo {mode}."
+    },
+    "fieldHelp": {
+      "flagged": "Fracción de píxeles marcados por el archivo como poco fiables (rayos cósmicos, saturación, píxeles muertos). Cuanto mayor, menos confiable es el cuadro.",
+      "coverage": "Fracción del recorte cubierta por datos reales de esta exposición. Si es baja, parte de la imagen está vacía.",
+      "collection": "Colección del archivo IRSA de la que procede la exposición.",
+      "wavelength": "Longitud de onda efectiva en el centro del recorte. SPHEREx observa con un filtro variable: cada exposición cubre un rango distinto.",
+      "detector": "Detector de SPHEREx que registró el cuadro. Todos los cuadros de una secuencia comparten detector para que sean comparables."
+    },
+    "cache": {
+      "queried": "Consultado el {date}, desde caché",
+      "fallback": "Resultado servido desde caché",
+      "notice": "{notice}. IRSA no respondió; este es el último resultado real de la misma petición, no uno reciente."
+    },
+    "share": {
+      "copied": "Enlace copiado al portapapeles.",
+      "failed": "No se pudo copiar. Copia este enlace a mano: {url}"
+    },
+    "export": {
+      "failed": "La exportación falló. Inténtalo de nuevo.",
+      "preparingFrame": "Preparando el cuadro…",
+      "frameDownloaded": "Cuadro descargado como PNG.",
+      "loadingFrames": "Cargando cuadros…",
+      "loadingProgress": "Cargando cuadros {done} / {total}…",
+      "recordingProgress": "Grabando video: cuadro {done} / {total}…",
+      "pngProgress": "Descargando PNG {done} / {total}…",
+      "webmDone": "Video WebM descargado con {count, plural, one {# segmento} other {# segmentos}}, uno por cuadro.",
+      "pngFallback": "Este navegador no puede grabar WebM: se {count, plural, one {descargó # imagen PNG} other {descargaron # imágenes PNG}}, una por cuadro, cada una con fecha, detector y atribución. Si faltan, permite descargas múltiples."
+    },
+    "playerLabel": "Reproductor de secuencia. Espacio reproduce o pausa; flechas cambian de cuadro.",
+    "view": {
+      "label": "Vista",
+      "sequence": "Secuencia",
+      "compare": "Antes / después"
+    },
+    "smooth": "Suavizar imagen",
+    "frameAlt": "Cuadro {number} de {total}, {date}, detector {detector}",
+    "loadFailed": "No se pudo cargar ningún cuadro de la secuencia. Reintenta en unos segundos.",
+    "decoding": "Decodificando cuadros {done} / {total}",
+    "orientation": "Norte arriba · Este a la izquierda",
+    "trailWithSpan": "{arcsec}″ en {span}",
+    "reference": {
+      "alt": "Cuadro de referencia WISE, banda {band}, época {epoch}",
+      "caption": "Otra misión, otra resolución. {label} · banda {band} · época {epoch}",
+      "notAvailable": "no disponible"
+    },
+    "layers": {
+      "legend": "Capas sobre la imagen",
+      "gaia": "Marcas Gaia",
+      "trajectory": "Cola de trayectoria",
+      "wiseReference": "Cuadro WISE de referencia"
+    },
+    "track": {
+      "known": "La trayectoria usa el movimiento propio conocido{detail}. Círculo azul: posición prevista en la primera visita; cruz naranja: en la última; anillo blanco: posición prevista en este cuadro (radio = incertidumbre).",
+      "displacement": " (desplazamiento {arcsec}″ en la ventana)",
+      "fixed": "Sin movimiento propio conocido: el objetivo se marca en posición fija."
+    },
+    "suggestion": "Sugerencia: {hint}",
+    "useFov": "Usar campo de {fov}′",
+    "framesFailed": "{failed} de {total} cuadros no se pudieron cargar; esos pasos pueden mostrarse vacíos.",
+    "singleEpoch": "Solo existe una época con cobertura de este campo en el archivo. No hay secuencia que reproducir: se muestra la única imagen disponible.",
+    "controls": {
+      "previous": "Cuadro anterior",
+      "next": "Cuadro siguiente",
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "speed": "Velocidad",
+      "position": "Posición en la secuencia",
+      "reducedMotion": "Tu sistema pide movimiento reducido: la secuencia no se reproduce sola."
+    },
+    "blink": {
+      "legend": "Parpadeo entre dos cuadros",
+      "start": "Parpadear A/B",
+      "stop": "Volver a la secuencia"
+    },
+    "actions": {
+      "copyLink": "Copiar enlace",
+      "downloadPng": "Descargar cuadro actual (PNG)",
+      "exportVideo": "Exportar video (WebM)"
+    },
+    "meta": {
+      "label": "Metadatos del cuadro",
+      "frame": "Cuadro {number} / {total}",
+      "date": "Fecha",
+      "detector": "Detector",
+      "wavelength": "Longitud de onda",
+      "wavelengthValue": "{value} µm",
+      "flagged": "Píxeles con bandera",
+      "coverage": "Cobertura",
+      "collection": "Colección",
+      "identifier": "Identificador",
+      "flaggedWarning": "Advertencia: el {percent} de los píxeles de este cuadro tiene bandera (umbral {threshold}). Interpreta con cautela cualquier cambio."
+    },
+    "grid": {
+      "title": "Rejilla común",
+      "summary": "{size} × {size} px · {scale} ″/px · {orientation}",
+      "northUp": "norte arriba, este a la izquierda",
+      "framesUsed": "{used} cuadros usados de {available} disponibles.",
+      "framesUsedLimited": "{used} cuadros usados de {available} disponibles (se aplica el límite de cuadros solicitado).",
+      "processingVersion": "Versión de procesamiento {version}",
+      "notMeasurement": "Estas imágenes son una vista de secuencia, no una medición de movimiento."
+    },
+    "limitations": "Limitaciones"
+  },
+  "beforeAfter": {
+    "motionSentence": "Se movió {arcsec}″ hacia el {direction} entre {from} y {to}, igual que predice el catálogo.",
+    "motionNote": "Es el movimiento propio catalogado que usa la trayectoria superpuesta; no es una medición hecha sobre estas imágenes.",
+    "afterAlt": "Después: cuadro {number}, {date}",
+    "beforeAlt": "Antes: cuadro {number}, {date}",
+    "beforeTag": "Antes · {date}",
+    "afterTag": "Después · {date}",
+    "orientation": "Norte arriba · Este a la izquierda",
+    "curtain": "Cortina",
+    "curtainLabel": "Cortina antes y después",
+    "curtainValue": "{position} % muestra el antes",
+    "blink": "Parpadeo",
+    "reducedMotion": "Tu sistema pide movimiento reducido: el parpadeo automático está desactivado; usa la cortina.",
+    "skippedEnds": "Se comparan las épocas extremas con buena cobertura (al menos 80 % del recorte), tras alinear las imágenes.",
+    "ends": "Primera y última época de la secuencia, tras alinear las imágenes.",
+    "ring": " El círculo blanco marca dónde debería estar el objetivo en cada época.",
+    "faint": "Este objetivo es demasiado débil para verlo a simple vista en cada cuadro: el círculo marca dónde debería estar. Para comprobarlo, usa el apilado de visitas (Planeta X) en las opciones avanzadas."
+  },
+  "cutoutComparison": {
+    "progress": "Recorte {current}/{total}: {obsId}",
+    "timeout": "Tiempo agotado ({seconds}s) esperando a IRSA",
+    "cutoutFailed": "No se pudo preparar el recorte",
+    "someFailed": "{failed} de {total} recortes fallaron. Reintenta; ningún dato fue inventado.",
+    "differentialFailed": "El análisis diferencial falló",
+    "title": "Comparación manual A/B",
+    "prepare": "Preparar recortes ({done}/{total})",
+    "differential": "Análisis diferencial",
+    "failedTitle": "Recortes fallidos ({count})",
+    "retryFailed": "Reintentar fallidos",
+    "noSelection": "Selecciona observaciones en el Cielo vivo para preparar recortes y compararlos.",
+    "epochs": "Épocas reales",
+    "epochObservations": "{count} obs · {collection}",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "speed": "Velocidad",
+    "previewBlink": "Parpadeo de previsualizaciones (sin alinear — solo visual).",
+    "views": {
+      "ab": "Antes / Después",
+      "overlay": "Superposición",
+      "diff": "Diferencia (medida)"
+    },
+    "tagA": "Antes · A",
+    "tagB": "Después · B",
+    "chooseCutout": "Elegir recorte {tag}",
+    "previewAlt": "Previsualización {tag}",
+    "noPreview": "Sin previsualización.",
+    "detectorBand": "det {detector} · {band}",
+    "epochA": "Época A",
+    "epochBOverlay": "Época B superpuesta",
+    "blend": "Mezcla A/B",
+    "overlayNote": "Superposición visual sin alineación: no es una medición.",
+    "artifacts": {
+      "a_png": "A (alineada)",
+      "b_png": "B (realineada)",
+      "diff_png": "Diferencia A−B"
+    },
+    "artifactMissing": "Artefacto no disponible.",
+    "diffLegend": "Diferencia: rojo = más brillo en A, azul = más brillo en B (tras alinear y igualar fondo).",
+    "whatChanged": "Qué cambió",
+    "runPrompt": "Ejecuta el análisis diferencial para medir cambios reales.",
+    "noChanges": "No se detectaron cambios significativos entre ambas imágenes.",
+    "possibleChanges": "{count, plural, one {Se marca # posible cambio} other {Se marcan # posibles cambios}}. Cada marca es un candidato por validar.",
+    "detectionsSummary": "{count} detecciones ≥ umbral · fracción válida {fraction} · alineado: {aligned}",
+    "notAligned": "NO (solo visual)",
+    "displacement": "Desplazamiento: {separation}″ ± {error}″",
+    "mark": "Marca #{label}",
+    "centroid": "centroide ({x}, {y}) · {classification}",
+    "limitations": "Limitaciones"
+  },
+  "shiftStack": {
+    "stage": {
+      "sending": "Enviando la petición",
+      "queued": "En cola",
+      "searching": "Buscando observaciones en el archivo",
+      "downloading": "Descargando recortes",
+      "processing": "Procesando cuadros",
+      "rendering": "Generando imágenes"
+    },
+    "heatmap": {
+      "label": "Mapa de significancia por velocidad. Usa las flechas para elegir una velocidad.",
+      "title": "Significancia sin corregir por velocidad este y norte",
+      "cell": "Este {east} ″/año, norte {north} ″/año: {value}",
+      "noData": "sin dato",
+      "sigma": "{value} σ",
+      "eastAxis": "velocidad hacia el este (″/año)",
+      "northAxis": "velocidad hacia el norte (″/año)",
+      "selected": "Velocidad elegida: este {east} ″/año, norte {north} ″/año; significancia sin corregir {value}.",
+      "bestBox": "Recuadro blanco: la mejor velocidad de la búsqueda."
+    },
+    "targeted": {
+      "title": "Comprobación con el movimiento conocido del objetivo",
+      "found": "Hay señal en la posición prevista por su movimiento propio: es compatible con el objeto, pero requiere verificación.",
+      "notFound": "No hay señal significativa en la posición prevista por su movimiento propio.",
+      "sigma": "Significancia en la posición prevista",
+      "pValue": "Probabilidad de que el azar iguale ese pico (p)",
+      "nNull": "Posiciones de comparación",
+      "offset": "Desfase del pico respecto de lo previsto",
+      "predicted": "Movimiento previsto en la ventana",
+      "stackAlt": "Imagen apilada siguiendo el movimiento propio del objetivo",
+      "stackCaption": "Apilado siguiendo su movimiento propio."
+    },
+    "sectionLabel": "Modo Planeta X",
+    "title": "Modo Planeta X: búsqueda por apilado",
+    "intro": "Desplaza y suma las exposiciones probando muchas velocidades en el cielo. Una fuente tenue que se mueve aparece como un pico a su velocidad. Es una búsqueda con muchos intentos: la significancia corregida descuenta ese efecto.",
+    "repeat": "Repetir la búsqueda",
+    "start": "Buscar objetos en movimiento",
+    "cancel": "Cancelar",
+    "cancelled": "Dejaste de esperar esta búsqueda.",
+    "notRun": "Búsqueda no realizada: hay {visits} visitas y se necesitan al menos 3.",
+    "detected": "Señal compatible con un objeto en movimiento, requiere verificación.",
+    "notDetected": "Sin señal significativa tras corregir por búsqueda múltiple.",
+    "sigmaRaw": "Significancia sin corregir",
+    "sigmaCorrected": "Significancia corregida",
+    "trials": "Intentos (velocidades × posiciones)",
+    "threshold": "Umbral",
+    "bestVelocity": "Mejor velocidad",
+    "bestVelocityValue": "E {east} · N {north} ″/año",
+    "visits": "Visitas",
+    "stackAlt": "Imagen apilada a la mejor velocidad de la búsqueda",
+    "stackCaption": "Imagen apilada a la mejor velocidad."
+  }
+}

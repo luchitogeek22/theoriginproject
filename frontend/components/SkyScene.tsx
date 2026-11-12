@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
+import { useLocale, useTranslations } from "next-intl";
 import * as THREE from "three";
 import { radecToVec3 } from "@/lib/coords";
 import { galacticToEquatorial, seededRandom } from "@/lib/skyProjection";
+import { getPathname } from "@/i18n/navigation";
 import { sequenceUrl } from "@/lib/sequenceParams";
 import type { ValidationTarget } from "@/lib/targets";
 
 const RADIUS = 100;
 const FORWARD = new THREE.Vector3(0, 0, -1);
-const ROLE = { motion: "se mueve", brightness: "cambia de brillo" } as const;
 const COLORS = { motion: "#46d8ff", brightness: "#ffb64a" } as const;
 
 function glowTexture(): THREE.Texture {
@@ -114,15 +115,27 @@ interface FlightRequest {
   href: string;
 }
 
+/**
+ * Text for the target labels, resolved outside the Canvas: drei's <Html> renders into a
+ * separate React root, so the intl context is not available inside it.
+ */
+interface MarkerCopy {
+  role: (target: ValidationTarget) => string;
+  ariaLabel: (target: ValidationTarget) => string;
+  localHref: (href: string) => string;
+}
+
 function TargetMarker({
   target,
   texture,
   reducedMotion,
+  copy,
   onActivate,
 }: {
   target: ValidationTarget;
   texture: THREE.Texture;
   reducedMotion: boolean;
+  copy: MarkerCopy;
   onActivate: (request: FlightRequest) => void;
 }) {
   const position = useMemo(() => new THREE.Vector3(...radecToVec3(target.ra_deg, target.dec_deg, RADIUS * 0.97)), [target]);
@@ -168,9 +181,9 @@ function TargetMarker({
       <Html position={[0, -3.4, 0]} center zIndexRange={[6, 0]}>
         <div ref={label} style={{ transition: "opacity 0.3s" }}>
           <a
-            href={href}
+            href={copy.localHref(href)}
             data-testid={`sky-target-${target.key}`}
-            aria-label={`${target.name}: ${ROLE[target.mode]}. Abrir su secuencia.`}
+            aria-label={copy.ariaLabel(target)}
             onClick={(e) => {
               if (e.metaKey || e.ctrlKey || e.shiftKey) return;
               e.preventDefault();
@@ -180,7 +193,7 @@ function TargetMarker({
           >
             <span className="text-[13px] font-semibold text-starlight">{target.name}</span>
             <span className="text-[10px]" style={{ color }}>
-              {ROLE[target.mode]}
+              {copy.role(target)}
             </span>
           </a>
         </div>
@@ -192,11 +205,13 @@ function TargetMarker({
 function Scene({
   targets,
   reducedMotion,
+  copy,
   onFlightStart,
   onArrive,
 }: {
   targets: ValidationTarget[];
   reducedMotion: boolean;
+  copy: MarkerCopy;
   onFlightStart: (request: FlightRequest) => void;
   onArrive: (request: FlightRequest) => void;
 }) {
@@ -328,7 +343,7 @@ function Scene({
         <PointCloud data={stars.band} size={4.5} opacity={0.6} map={glow} />
         <PointCloud data={stars.haze} size={70} opacity={0.12} map={glow} />
         {targets.map((t) => (
-          <TargetMarker key={t.key} target={t} texture={glow} reducedMotion={reducedMotion} onActivate={startFlight} />
+          <TargetMarker key={t.key} target={t} texture={glow} reducedMotion={reducedMotion} copy={copy} onActivate={startFlight} />
         ))}
       </group>
     </>
@@ -348,6 +363,13 @@ export default function SkyScene({
   onFlightStart: (request: FlightRequest) => void;
   onArrive: (request: FlightRequest) => void;
 }) {
+  const t = useTranslations("skyScene");
+  const locale = useLocale();
+  const copy: MarkerCopy = {
+    role: (target) => t(`role.${target.mode}`),
+    ariaLabel: (target) => t("openSequence", { name: target.name, role: t(`role.${target.mode}`) }),
+    localHref: (href) => getPathname({ href, locale }),
+  };
   return (
     <Canvas
       frameloop={paused ? "never" : "always"}
@@ -356,7 +378,7 @@ export default function SkyScene({
       gl={{ antialias: false, powerPreference: "high-performance", alpha: true }}
       aria-hidden="true"
     >
-      <Scene targets={targets} reducedMotion={reducedMotion} onFlightStart={onFlightStart} onArrive={onArrive} />
+      <Scene targets={targets} reducedMotion={reducedMotion} copy={copy} onFlightStart={onFlightStart} onArrive={onArrive} />
     </Canvas>
   );
 }

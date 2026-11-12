@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 export const ALADIN_VERSION = "3.6.1";
@@ -9,12 +10,29 @@ export const ALADIN_BASE_SURVEY = "P/2MASS/color";
 const SCRIPT_TIMEOUT_MS = 15000;
 const POLL_TIMEOUT_MS = 8000;
 
+/** HiPS overlays; their visible names live in the `aladinViewer.layers` messages. */
 export const CATALOG_LAYERS = {
-  gaia: { label: "Gaia DR3 (flujo G)", hips: "CDS/P/DM/flux-G/I/355/gaiadr3" },
-  wise: { label: "WISE (color)", hips: "P/allWISE/color" },
+  gaia: { hips: "CDS/P/DM/flux-G/I/355/gaiadr3" },
+  wise: { hips: "P/allWISE/color" },
 } as const;
 
 export type CatalogLayerKey = keyof typeof CATALOG_LAYERS;
+
+type LoadFailureReason = "timeout" | "download" | "noApi";
+
+/** Loader failure with a translatable reason; `message` stays in English for logs. */
+class AladinLoadError extends Error {
+  constructor(
+    readonly reason: LoadFailureReason,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+type LayerIssue =
+  | { kind: "recenter" | "marker" }
+  | { kind: "enable" | "disable"; layer: CatalogLayerKey };
 
 interface AladinLayer {
   setOpacity?: (value: number) => void;
@@ -65,7 +83,7 @@ function injectScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    const timer = window.setTimeout(() => reject(new Error("tiempo agotado al cargar el script")), SCRIPT_TIMEOUT_MS);
+    const timer = window.setTimeout(() => reject(new AladinLoadError("timeout", "timed out while loading the script")), SCRIPT_TIMEOUT_MS);
     script.onload = () => {
       window.clearTimeout(timer);
       resolve();
@@ -73,7 +91,7 @@ function injectScript(src: string): Promise<void> {
     script.onerror = () => {
       window.clearTimeout(timer);
       script.remove();
-      reject(new Error("no se pudo descargar el script"));
+      reject(new AladinLoadError("download", "the script could not be downloaded"));
     };
     document.head.appendChild(script);
   });
@@ -88,7 +106,7 @@ function waitForGlobal(): Promise<AladinGlobal> {
         resolve(window.A);
       } else if (Date.now() - started > POLL_TIMEOUT_MS) {
         window.clearInterval(poller);
-        reject(new Error("el script cargó pero no expuso la API"));
+        reject(new AladinLoadError("noApi", "the script loaded but did not expose the API"));
       }
     }, 100);
   });
@@ -132,14 +150,16 @@ export default function AladinViewer({
   containerId = "aladin-lite-div",
   className = "",
 }: Props) {
+  const t = useTranslations("aladinViewer");
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<AladinInstance | null>(null);
   const apiRef = useRef<AladinGlobal | null>(null);
   const markerCatalogRef = useRef<AladinCatalog | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [error, setError] = useState("");
+  // A coded reason is translated at render; any other loader error keeps its own message.
+  const [error, setError] = useState<{ reason: LoadFailureReason | "unknown"; detail?: string } | null>(null);
   const [active, setActive] = useState<Record<CatalogLayerKey, boolean>>({ gaia: false, wise: false });
-  const [layerError, setLayerError] = useState("");
+  const [layerError, setLayerError] = useState<LayerIssue | null>(null);
   const initial = useRef({ ra, dec, fovArcmin });
   initial.current = { ra, dec, fovArcmin };
 
@@ -148,7 +168,7 @@ export default function AladinViewer({
     const container = containerRef.current;
     if (!container) return;
     setStatus("loading");
-    setError("");
+    setError(null);
     loadAladin()
       .then((api) => {
         if (cancelled || !containerRef.current) return;
@@ -175,7 +195,8 @@ export default function AladinViewer({
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "fallo desconocido");
+        if (e instanceof AladinLoadError) setError({ reason: e.reason });
+        else setError({ reason: "unknown", detail: e instanceof Error && e.message ? e.message : undefined });
         setStatus("error");
       });
     return () => {
@@ -193,7 +214,7 @@ export default function AladinViewer({
       instance.gotoRaDec(ra, dec);
       instance.setFoV(fovArcmin / 60);
     } catch {
-      setLayerError("El visor no pudo recentrarse en la posición pedida.");
+      setLayerError({ kind: "recenter" });
     }
   }, [ra, dec, fovArcmin, status]);
 
@@ -203,7 +224,7 @@ export default function AladinViewer({
     if (status !== "ready" || !instance || !api) return;
     try {
       if (!markerCatalogRef.current) {
-        const catalog = api.catalog({ name: "Objetivo", shape: "circle", sourceSize: 22, color: "#ffd166" });
+        const catalog = api.catalog({ name: t("markerCatalog"), shape: "circle", sourceSize: 22, color: "#ffd166" });
         instance.addCatalog(catalog);
         markerCatalogRef.current = catalog;
       }
@@ -212,7 +233,7 @@ export default function AladinViewer({
         markerCatalogRef.current.addSources([api.source(marker.ra, marker.dec, { name: marker.label })]);
       }
     } catch {
-      setLayerError("No se pudo dibujar el marcador del objetivo.");
+      setLayerError({ kind: "marker" });
     }
   }, [marker?.ra, marker?.dec, marker?.label, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -221,10 +242,10 @@ export default function AladinViewer({
     const api = apiRef.current;
     if (!instance || !api) return;
     const next = !active[key];
-    setLayerError("");
+    setLayerError(null);
     try {
       if (next) {
-        const layer = api.imageHiPS(CATALOG_LAYERS[key].hips, { name: CATALOG_LAYERS[key].label });
+        const layer = api.imageHiPS(CATALOG_LAYERS[key].hips, { name: t(`layers.${key}`) });
         instance.setOverlayImageLayer(layer, key);
         layer.setOpacity?.(0.65);
       } else {
@@ -232,29 +253,33 @@ export default function AladinViewer({
       }
       setActive((a) => ({ ...a, [key]: next }));
     } catch {
-      setLayerError(`No se pudo ${next ? "activar" : "desactivar"} la capa ${CATALOG_LAYERS[key].label}.`);
+      setLayerError({ kind: next ? "enable" : "disable", layer: key });
     }
   };
+
+  const layerErrorText = !layerError
+    ? ""
+    : layerError.kind === "enable" || layerError.kind === "disable"
+      ? t(`issues.${layerError.kind}`, { layer: t(`layers.${layerError.layer}`) })
+      : t(`issues.${layerError.kind}`);
+  const errorReason = error ? (error.detail ?? t(`reason.${error.reason}`)) : "";
 
   return (
     <div className={`flex h-full w-full flex-col ${className}`}>
       <div className="relative min-h-0 flex-1 bg-abyss">
-        <div id={containerId} ref={containerRef} className="h-full w-full" aria-label="Mapa del cielo Aladin Lite" />
+        <div id={containerId} ref={containerRef} className="h-full w-full" aria-label={t("ariaLabel")} />
         {status === "loading" && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <p className="rounded border border-line bg-abyss/85 px-3 py-1.5 text-xs text-mutedstar">
-              Cargando el mapa del cielo (Aladin Lite {ALADIN_VERSION})…
+              {t("loading", { version: ALADIN_VERSION })}
             </p>
           </div>
         )}
         {status === "error" && (
           <div className="absolute inset-0 flex items-center justify-center p-4" role="alert">
             <div className="max-w-sm rounded border border-line bg-deep p-4 text-center">
-              <p className="text-sm font-semibold text-starlight">Mapa del cielo no disponible</p>
-              <p className="mt-1 text-xs text-mutedstar">
-                No se pudo cargar Aladin Lite ({error}). La secuencia de imágenes sigue funcionando; revisa tu
-                conexión con aladin.cds.unistra.fr y recarga la página.
-              </p>
+              <p className="text-sm font-semibold text-starlight">{t("errorTitle")}</p>
+              <p className="mt-1 text-xs text-mutedstar">{t("errorBody", { reason: errorReason })}</p>
             </div>
           </div>
         )}
@@ -269,11 +294,11 @@ export default function AladinViewer({
               onChange={() => toggle(key)}
               className="accent-[#46d8ff]"
             />
-            {CATALOG_LAYERS[key].label}
+            {t(`layers.${key}`)}
           </label>
         ))}
         {marker && <span className="text-gold">● {marker.label}</span>}
-        {layerError && <span className="text-red-300">{layerError}</span>}
+        {layerErrorText && <span className="text-red-300">{layerErrorText}</span>}
       </div>
     </div>
   );

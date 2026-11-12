@@ -5,8 +5,8 @@ test("the before/after view compares the first and the last epoch", async ({ pag
   await skipTutorial(page);
   await page.goto(linkFor(TARGETS[2]));
   await waitForSequence(page);
-  await page.getByRole("button", { name: "Antes / después" }).click();
-  const slider = page.getByRole("slider", { name: "Cortina antes y después" });
+  await page.getByRole("button", { name: "Before / after" }).click();
+  const slider = page.getByRole("slider", { name: "Before and after curtain" });
   await expect(slider).toBeVisible();
   await slider.fill("30");
   await expect(slider).toHaveValue("30");

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { assetUrl } from "@/lib/api";
-import { formatArcsec, formatDate, motionSummary } from "@/lib/motion";
+import { motionSummary, useMotionFormat } from "@/lib/motion";
 import type { SequenceResult } from "@/lib/types";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -19,6 +20,8 @@ function Ring({ at, size, radius }: { at: { x: number; y: number } | null; size:
 }
 
 export function MotionSentence({ result }: { result: SequenceResult }) {
+  const t = useTranslations("beforeAfter");
+  const motion = useMotionFormat();
   const summary = motionSummary(result.overlay, result.frames);
   if (!summary) return null;
   return (
@@ -27,18 +30,23 @@ export function MotionSentence({ result }: { result: SequenceResult }) {
       data-testid="motion-sentence"
     >
       <p className="text-sm font-semibold text-starlight">
-        Se movió {formatArcsec(summary.arcsec)}″ hacia el {summary.direction} entre {formatDate(summary.from)} y{" "}
-        {formatDate(summary.to)}, igual que predice el catálogo.
+        {t("motionSentence", {
+          arcsec: motion.arcsec(summary.arcsec),
+          direction: motion.direction(summary.direction),
+          from: motion.date(summary.from),
+          to: motion.date(summary.to),
+        })}
       </p>
       <p className="mt-0.5 text-[10px] text-mutedstar">
-        Es el movimiento propio catalogado que usa la trayectoria superpuesta; no es una medición hecha sobre estas
-        imágenes.
+        {t("motionNote")}
       </p>
     </div>
   );
 }
 
 export default function BeforeAfter({ result }: { result: SequenceResult }) {
+  const t = useTranslations("beforeAfter");
+  const motion = useMotionFormat();
   const { frames } = result;
   const reducedMotion = useReducedMotion();
   const [position, setPosition] = useState(50);
@@ -73,7 +81,7 @@ export default function BeforeAfter({ result }: { result: SequenceResult }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={assetUrl(after.png_url)}
-          alt={`Después: cuadro ${after.index + 1}, ${after.date_iso}`}
+          alt={t("afterAlt", { number: after.index + 1, date: after.date_iso })}
           className="absolute inset-0 h-full w-full"
           style={imgStyle}
           draggable={false}
@@ -81,7 +89,7 @@ export default function BeforeAfter({ result }: { result: SequenceResult }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={assetUrl(before.png_url)}
-          alt={`Antes: cuadro ${before.index + 1}, ${before.date_iso}`}
+          alt={t("beforeAlt", { number: before.index + 1, date: before.date_iso })}
           className="absolute inset-0 h-full w-full"
           style={{ ...imgStyle, clipPath: `inset(0 ${100 - cut}% 0 0)` }}
           draggable={false}
@@ -98,18 +106,18 @@ export default function BeforeAfter({ result }: { result: SequenceResult }) {
           />
         )}
         <div className="pointer-events-none absolute left-1.5 top-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[11px] text-starlight">
-          Antes · {formatDate(before.date_iso)}
+          {t("beforeTag", { date: motion.date(before.date_iso) })}
         </div>
         <div className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[11px] text-starlight">
-          Después · {formatDate(after.date_iso)}
+          {t("afterTag", { date: motion.date(after.date_iso) })}
         </div>
         <div className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[10px] text-mutedstar">
-          Norte arriba · Este a la izquierda
+          {t("orientation")}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-mutedstar">
         <label className="flex min-w-[200px] flex-1 items-center gap-2">
-          Cortina
+          {t("curtain")}
           <input
             type="range"
             min={0}
@@ -117,8 +125,8 @@ export default function BeforeAfter({ result }: { result: SequenceResult }) {
             value={position}
             disabled={blink}
             onChange={(e) => setPosition(Number(e.target.value))}
-            aria-label="Cortina antes y después"
-            aria-valuetext={`${position} % muestra el antes`}
+            aria-label={t("curtainLabel")}
+            aria-valuetext={t("curtainValue", { position })}
             data-testid="before-after-slider"
             className="w-full accent-[#46d8ff]"
           />
@@ -131,24 +139,21 @@ export default function BeforeAfter({ result }: { result: SequenceResult }) {
           data-testid="before-after-blink"
           className={`rounded border px-2 py-1 disabled:opacity-40 ${blink ? "border-pulse text-pulse" : "border-line"}`}
         >
-          Parpadeo
+          {t("blink")}
         </button>
       </div>
       {reducedMotion && (
         <p className="mt-1 text-[10px] text-mutedstar/80">
-          Tu sistema pide movimiento reducido: el parpadeo automático está desactivado; usa la cortina.
+          {t("reducedMotion")}
         </p>
       )}
       <p className="mt-1 text-[10px] text-mutedstar/80">
-        {skippedEnds
-          ? "Se comparan las épocas extremas con buena cobertura (al menos 80 % del recorte), tras alinear las imágenes."
-          : "Primera y última época de la secuencia, tras alinear las imágenes."}
-        {beforeRing ? " El círculo blanco marca dónde debería estar el objetivo en cada época." : ""}
+        {skippedEnds ? t("skippedEnds") : t("ends")}
+        {beforeRing ? t("ring") : ""}
       </p>
       {faint && (
         <p className="mt-1 rounded border border-gold/60 bg-abyss p-1.5 text-[11px] text-gold" role="status">
-          Este objetivo es demasiado débil para verlo a simple vista en cada cuadro: el círculo marca dónde debería
-          estar. Para comprobarlo, usa el apilado de visitas (Planeta X) en las opciones avanzadas.
+          {t("faint")}
         </p>
       )}
     </div>

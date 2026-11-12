@@ -17,7 +17,12 @@ const ALLOWED = [
   /^[A-Z]$/,
 ];
 
-const isAllowed = (text) => ALLOWED.some((re) => re.test(text.trim()));
+/** Allowed when every part (split on separators such as "·") is an official name or symbol. */
+const isAllowed = (text) =>
+  text
+    .split(/\s*[·|/]\s*/)
+    .filter(Boolean)
+    .every((part) => ALLOWED.some((re) => re.test(part.trim())));
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -36,7 +41,8 @@ function findings(source) {
   const found = [];
   const code = source.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   // JSX text between tags: >Some text<
-  for (const m of code.matchAll(/>([^<>{}`]*[A-Za-zÀ-ÿ]{2,}[^<>{}`]*)</g)) {
+  // `(?<!=)` skips arrow functions (`=> Promise<void>`), which are code, not JSX text.
+  for (const m of code.matchAll(/(?<!=)>([^<>{}`]*[A-Za-zÀ-ÿ]{2,}[^<>{}`]*)</g)) {
     const text = m[1].trim();
     if (text && !/[=;]|=>|&&|\|\|/.test(text) && !isAllowed(text)) found.push(text);
   }

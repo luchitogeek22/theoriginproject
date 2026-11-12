@@ -5,8 +5,11 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Download, Loader2, TriangleAlert } from "lucide-react";
-import { ApiError, SpectralResult, api, pollJob } from "@/lib/api";
+import { SpectralResult, api, pollJob } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
+import { useTranslateLimitation } from "@/lib/limitations";
 
 /** plotly.js-dist-min touches `self` at import time, so it is loaded
  * dynamically inside the effect (browser only), never during SSR. */
@@ -20,6 +23,9 @@ import SpectrumPanel from "@/components/SpectrumPanel";
 import { useResearch } from "@/lib/store";
 
 export default function SpectralLab() {
+  const t = useTranslations("spectralLabPage");
+  const errorText = useErrorText();
+  const translateLimitation = useTranslateLimitation();
   const { mode, target, selected, cutouts } = useResearch();
   const [cutoutId, setCutoutId] = useState<number | "">("");
   const [busy, setBusy] = useState(false);
@@ -75,7 +81,7 @@ export default function SpectralLab() {
           mode: "lines+markers",
           marker: { size: 4, color: "#46d8ff" },
           line: { color: "#46d8ff", width: 1.5 },
-          name: "perfil espacial",
+          name: t("traceName"),
         },
       ],
       {
@@ -84,11 +90,11 @@ export default function SpectralLab() {
         font: { color: "#93a1c0", size: 11 },
         margin: { l: 60, r: 16, t: 12, b: 48 },
         xaxis: {
-          title: useWave ? "longitud de onda (µm)" : "fila del detector",
+          title: useWave ? t("axisWavelength") : t("axisRow"),
           gridcolor: "#1c2946",
           zerolinecolor: "#1c2946",
         },
-        yaxis: { title: `flujo (${res.flux_unit})`, gridcolor: "#1c2946", zerolinecolor: "#1c2946" },
+        yaxis: { title: t("axisFlux", { unit: res.flux_unit }), gridcolor: "#1c2946", zerolinecolor: "#1c2946" },
         showlegend: false,
       },
       { responsive: true, displayModeBar: true, displaylogo: false }
@@ -109,7 +115,7 @@ export default function SpectralLab() {
       const res = await pollJob<SpectralResult>(job.job_id);
       setResult(res);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "La extracción del perfil falló");
+      setError(errorText(e, t("extractFailed")));
     } finally {
       setBusy(false);
     }
@@ -137,9 +143,9 @@ export default function SpectralLab() {
     <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-bold text-starlight">
-          Laboratorio espectral{" "}
+          {t("title")}{" "}
           <span className="text-xs font-normal text-mutedstar">
-            perfil espacial de una exposición SPHEREx · no es un espectro completo
+            {t("subtitle")}
           </span>
         </h1>
         <div className="flex items-center gap-1.5">
@@ -147,9 +153,9 @@ export default function SpectralLab() {
             value={cutoutId}
             onChange={(e) => setCutoutId(e.target.value === "" ? "" : Number(e.target.value))}
             className="rounded border border-line bg-deep px-2 py-1.5 text-xs"
-            aria-label="Elegir recorte"
+            aria-label={t("chooseCutout")}
           >
-            <option value="">— recorte —</option>
+            <option value="">{t("cutoutPlaceholder")}</option>
             {cutouts.map((c) => {
               const o = obsOfCutout(c.cutout_id);
               return (
@@ -164,32 +170,32 @@ export default function SpectralLab() {
             disabled={!target || cutoutId === "" || busy}
             className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : null} Extraer perfil espacial
+            {busy ? <Loader2 size={13} className="animate-spin" /> : null} {t("extract")}
           </button>
           <button
             onClick={exportCsv}
             disabled={!result}
             className="flex items-center gap-1.5 rounded border border-line px-3 py-1.5 text-xs disabled:opacity-40"
           >
-            <Download size={13} /> CSV
+            <Download size={13} /> {t("csv")}
           </button>
         </div>
       </div>
       {error && <p className="text-xs text-red-300">{error}</p>}
       {cutouts.length === 0 && (
         <p className="mt-4 text-sm text-mutedstar">
-          Prepara recortes (Explorador temporal, comparación manual) para extraer el perfil espacial de una exposición.
+          {t("noCutouts")}
         </p>
       )}
 
       {result && (
         <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-mutedstar">
-          <span>Detector <b className="text-starlight">{result.detector || "—"}</b></span>
-          <span>Banda <b className="text-starlight">{result.band || "—"}</b></span>
-          <span>Fecha <b className="text-starlight">{result.date_obs || "—"}</b></span>
-          <span>Muestras <b className="text-starlight">{result.n_samples}</b></span>
+          <span>{t("detector")} <b className="text-starlight">{result.detector || "—"}</b></span>
+          <span>{t("band")} <b className="text-starlight">{result.band || "—"}</b></span>
+          <span>{t("date")} <b className="text-starlight">{result.date_obs || "—"}</b></span>
+          <span>{t("samples")} <b className="text-starlight">{result.n_samples}</b></span>
           {mode === "investigate" && (
-            <span>Clase <b className="text-starlight">{result.data_class}</b></span>
+            <span>{t("dataClass")} <b className="text-starlight">{result.data_class}</b></span>
           )}
         </div>
       )}
@@ -198,7 +204,7 @@ export default function SpectralLab() {
         <div ref={plotRef} style={{ width: "100%", height: 420 }} />
         {(!result || result.samples.length === 0) && (
           <p className="p-4 text-center text-xs text-mutedstar">
-            Sin muestras no hay curva. Ejecuta una extracción sobre un recorte real. El resultado es un perfil espacial de una sola exposición, no un espectro de 102 canales.
+            {t("noSamples")}
           </p>
         )}
       </div>
@@ -206,16 +212,15 @@ export default function SpectralLab() {
       {result && result.limitations.length > 0 && (
         <div className="mt-2 rounded border border-line bg-deep p-2 text-[11px]">
           <p className="flex items-center gap-1 font-semibold text-gold">
-            <TriangleAlert size={12} /> Calidad y limitaciones
+            <TriangleAlert size={12} /> {t("qualityTitle")}
           </p>
           <ul className="mt-1 flex flex-col gap-0.5">
             {result.limitations.map((l, i) => (
-              <li key={i} className="text-mutedstar">· {l}</li>
+              <li key={i} className="text-mutedstar">· {translateLimitation(l)}</li>
             ))}
           </ul>
           <p className="mt-1 text-mutedstar/70">
-            Este laboratorio no identifica moléculas: cualquier interpretación física requiere
-            modelos y referencias apropiadas.
+            {t("noMolecules")}
           </p>
         </div>
       )}
@@ -224,7 +229,7 @@ export default function SpectralLab() {
         <SpectrumPanel ra={target.propagated_ra_deg ?? target.ra_deg} dec={target.propagated_dec_deg ?? target.dec_deg} />
       ) : (
         <p className="mt-4 text-xs text-mutedstar">
-          Elige un objetivo para medir su espectro al vuelo (espectrofotometría relativa, distinta del perfil espacial de arriba).
+          {t("chooseTarget")}
         </p>
       )}
     </div>

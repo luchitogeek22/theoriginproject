@@ -1,1 +1,232 @@
-{}
+{
+  "sequencePlayer": {
+    "defaultExportName": "sequence",
+    "modeHelp": {
+      "motion": "Motion mode: each frame is normalized by its own noise (noise units per frame). It is useful to see displacements, but brightness is NOT comparable between frames.",
+      "brightness": "Brightness mode: all frames share the same linear scale, so brightness is comparable between epochs.",
+      "other": "{mode} mode."
+    },
+    "fieldHelp": {
+      "flagged": "Fraction of pixels flagged by the archive as unreliable (cosmic rays, saturation, dead pixels). The higher it is, the less reliable the frame.",
+      "coverage": "Fraction of the cutout covered by real data from this exposure. If it is low, part of the image is empty.",
+      "collection": "IRSA archive collection the exposure comes from.",
+      "wavelength": "Effective wavelength at the center of the cutout. SPHEREx observes with a variable filter: each exposure covers a different range.",
+      "detector": "SPHEREx detector that recorded the frame. All frames in a sequence share a detector so they are comparable."
+    },
+    "cache": {
+      "queried": "Queried on {date}, from cache",
+      "fallback": "Result served from cache",
+      "notice": "{notice}. IRSA did not respond; this is the latest real result for the same request, not a recent one."
+    },
+    "share": {
+      "copied": "Link copied to the clipboard.",
+      "failed": "Could not copy. Copy this link by hand: {url}"
+    },
+    "export": {
+      "failed": "The export failed. Please try again.",
+      "preparingFrame": "Preparing the frame…",
+      "frameDownloaded": "Frame downloaded as PNG.",
+      "loadingFrames": "Loading frames…",
+      "loadingProgress": "Loading frames {done} / {total}…",
+      "recordingProgress": "Recording video: frame {done} / {total}…",
+      "pngProgress": "Downloading PNG {done} / {total}…",
+      "webmDone": "WebM video downloaded with {count, plural, one {# segment} other {# segments}}, one per frame.",
+      "pngFallback": "This browser cannot record WebM: {count, plural, one {# PNG image was} other {# PNG images were}} downloaded, one per frame, each with date, detector and attribution. If any are missing, allow multiple downloads."
+    },
+    "playerLabel": "Sequence player. Space plays or pauses; arrows change the frame.",
+    "view": {
+      "label": "View",
+      "sequence": "Sequence",
+      "compare": "Before / after"
+    },
+    "smooth": "Smooth image",
+    "frameAlt": "Frame {number} of {total}, {date}, detector {detector}",
+    "loadFailed": "No frame of the sequence could be loaded. Try again in a few seconds.",
+    "decoding": "Decoding frames {done} / {total}",
+    "orientation": "North up · East left",
+    "trailWithSpan": "{arcsec}″ in {span}",
+    "reference": {
+      "alt": "WISE reference frame, band {band}, epoch {epoch}",
+      "caption": "Another mission, another resolution. {label} · band {band} · epoch {epoch}",
+      "notAvailable": "not available"
+    },
+    "layers": {
+      "legend": "Image layers",
+      "gaia": "Gaia marks",
+      "trajectory": "Trajectory tail",
+      "wiseReference": "WISE reference frame"
+    },
+    "track": {
+      "known": "The trajectory uses the known proper motion{detail}. Blue circle: predicted position at the first visit; orange cross: at the last; white ring: predicted position in this frame (radius = uncertainty).",
+      "displacement": " (displacement {arcsec}″ in the window)",
+      "fixed": "No known proper motion: the target is marked at a fixed position."
+    },
+    "suggestion": "Suggestion: {hint}",
+    "useFov": "Use {fov}′ field",
+    "framesFailed": "{failed} of {total} frames could not be loaded; those steps may appear empty.",
+    "singleEpoch": "The archive has only one epoch covering this field. There is no sequence to play: the only available image is shown.",
+    "controls": {
+      "previous": "Previous frame",
+      "next": "Next frame",
+      "play": "Play",
+      "pause": "Pause",
+      "speed": "Speed",
+      "position": "Position in the sequence",
+      "reducedMotion": "Your system asks for reduced motion: the sequence does not play on its own."
+    },
+    "blink": {
+      "legend": "Blink between two frames",
+      "start": "Blink A/B",
+      "stop": "Back to the sequence"
+    },
+    "actions": {
+      "copyLink": "Copy link",
+      "downloadPng": "Download current frame (PNG)",
+      "exportVideo": "Export video (WebM)"
+    },
+    "meta": {
+      "label": "Frame metadata",
+      "frame": "Frame {number} / {total}",
+      "date": "Date",
+      "detector": "Detector",
+      "wavelength": "Wavelength",
+      "wavelengthValue": "{value} µm",
+      "flagged": "Flagged pixels",
+      "coverage": "Coverage",
+      "collection": "Collection",
+      "identifier": "Identifier",
+      "flaggedWarning": "Warning: {percent} of the pixels in this frame are flagged (threshold {threshold}). Interpret any change with caution."
+    },
+    "grid": {
+      "title": "Common grid",
+      "summary": "{size} × {size} px · {scale} ″/px · {orientation}",
+      "northUp": "north up, east left",
+      "framesUsed": "{used} frames used out of {available} available.",
+      "framesUsedLimited": "{used} frames used out of {available} available (the requested frame limit applies).",
+      "processingVersion": "Processing version {version}",
+      "notMeasurement": "These images are a sequence view, not a motion measurement."
+    },
+    "limitations": "Limitations"
+  },
+  "beforeAfter": {
+    "motionSentence": "Moved {arcsec}″ to the {direction} between {from} and {to}, as the catalogue predicts.",
+    "motionNote": "This is the catalogued proper motion used by the overlaid trajectory; it is not a measurement made on these images.",
+    "afterAlt": "After: frame {number}, {date}",
+    "beforeAlt": "Before: frame {number}, {date}",
+    "beforeTag": "Before · {date}",
+    "afterTag": "After · {date}",
+    "orientation": "North up · East left",
+    "curtain": "Curtain",
+    "curtainLabel": "Before and after curtain",
+    "curtainValue": "{position} % shows the before",
+    "blink": "Blink",
+    "reducedMotion": "Your system asks for reduced motion: automatic blinking is off; use the curtain.",
+    "skippedEnds": "The extreme epochs with good coverage (at least 80 % of the cutout) are compared, after aligning the images.",
+    "ends": "First and last epoch of the sequence, after aligning the images.",
+    "ring": " The white circle marks where the target should be in each epoch.",
+    "faint": "This target is too faint to see by eye in each frame: the circle marks where it should be. To check it, use visit stacking (Planet X) in the advanced options."
+  },
+  "cutoutComparison": {
+    "progress": "Cutout {current}/{total}: {obsId}",
+    "timeout": "Timed out ({seconds}s) waiting for IRSA",
+    "cutoutFailed": "The cutout could not be prepared",
+    "someFailed": "{failed} of {total} cutouts failed. Try again; no data was invented.",
+    "differentialFailed": "The differential analysis failed",
+    "title": "Manual A/B comparison",
+    "prepare": "Prepare cutouts ({done}/{total})",
+    "differential": "Differential analysis",
+    "failedTitle": "Failed cutouts ({count})",
+    "retryFailed": "Retry failed",
+    "noSelection": "Select observations in the Living sky to prepare cutouts and compare them.",
+    "epochs": "Real epochs",
+    "epochObservations": "{count} obs · {collection}",
+    "play": "Play",
+    "pause": "Pause",
+    "speed": "Speed",
+    "previewBlink": "Preview blinking (not aligned — visual only).",
+    "views": {
+      "ab": "Before / After",
+      "overlay": "Overlay",
+      "diff": "Difference (measured)"
+    },
+    "tagA": "Before · A",
+    "tagB": "After · B",
+    "chooseCutout": "Choose cutout {tag}",
+    "previewAlt": "Preview {tag}",
+    "noPreview": "No preview.",
+    "detectorBand": "det {detector} · {band}",
+    "epochA": "Epoch A",
+    "epochBOverlay": "Epoch B overlaid",
+    "blend": "A/B blend",
+    "overlayNote": "Visual overlay without alignment: it is not a measurement.",
+    "artifacts": {
+      "a_png": "A (aligned)",
+      "b_png": "B (realigned)",
+      "diff_png": "Difference A−B"
+    },
+    "artifactMissing": "Artifact not available.",
+    "diffLegend": "Difference: red = brighter in A, blue = brighter in B (after aligning and matching the background).",
+    "whatChanged": "What changed",
+    "runPrompt": "Run the differential analysis to measure real changes.",
+    "noChanges": "No significant changes were detected between the two images.",
+    "possibleChanges": "{count, plural, one {# possible change is marked} other {# possible changes are marked}}. Each mark is a candidate to validate.",
+    "detectionsSummary": "{count} detections ≥ threshold · valid fraction {fraction} · aligned: {aligned}",
+    "notAligned": "NO (visual only)",
+    "displacement": "Displacement: {separation}″ ± {error}″",
+    "mark": "Mark #{label}",
+    "centroid": "centroid ({x}, {y}) · {classification}",
+    "limitations": "Limitations"
+  },
+  "shiftStack": {
+    "stage": {
+      "sending": "Sending the request",
+      "queued": "Queued",
+      "searching": "Searching observations in the archive",
+      "downloading": "Downloading cutouts",
+      "processing": "Processing frames",
+      "rendering": "Generating images"
+    },
+    "heatmap": {
+      "label": "Significance map by velocity. Use the arrows to choose a velocity.",
+      "title": "Uncorrected significance by east and north velocity",
+      "cell": "East {east} ″/yr, north {north} ″/yr: {value}",
+      "noData": "no data",
+      "sigma": "{value} σ",
+      "eastAxis": "velocity toward the east (″/yr)",
+      "northAxis": "velocity toward the north (″/yr)",
+      "selected": "Chosen velocity: east {east} ″/yr, north {north} ″/yr; uncorrected significance {value}.",
+      "bestBox": "White box: the best velocity of the search."
+    },
+    "targeted": {
+      "title": "Check with the known motion of the target",
+      "found": "There is signal at the position predicted by its proper motion: it is compatible with the object, but requires verification.",
+      "notFound": "There is no significant signal at the position predicted by its proper motion.",
+      "sigma": "Significance at the predicted position",
+      "pValue": "Probability that chance matches that peak (p)",
+      "nNull": "Comparison positions",
+      "offset": "Peak offset from the prediction",
+      "predicted": "Predicted motion in the window",
+      "stackAlt": "Image stacked following the proper motion of the target",
+      "stackCaption": "Stacked following its proper motion."
+    },
+    "sectionLabel": "Planet X mode",
+    "title": "Planet X mode: stacking search",
+    "intro": "Shifts and adds the exposures, trying many velocities on the sky. A faint moving source appears as a peak at its velocity. It is a search with many trials: the corrected significance accounts for that effect.",
+    "repeat": "Repeat the search",
+    "start": "Search for moving objects",
+    "cancel": "Cancel",
+    "cancelled": "You stopped waiting for this search.",
+    "notRun": "Search not run: there are {visits} visits and at least 3 are needed.",
+    "detected": "Signal compatible with a moving object, requires verification.",
+    "notDetected": "No significant signal after correcting for multiple search.",
+    "sigmaRaw": "Uncorrected significance",
+    "sigmaCorrected": "Corrected significance",
+    "trials": "Trials (velocities × positions)",
+    "threshold": "Threshold",
+    "bestVelocity": "Best velocity",
+    "bestVelocityValue": "E {east} · N {north} ″/yr",
+    "visits": "Visits",
+    "stackAlt": "Image stacked at the best velocity of the search",
+    "stackCaption": "Image stacked at the best velocity."
+  }
+}

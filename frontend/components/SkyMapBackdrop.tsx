@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { getPathname, useRouter } from "@/i18n/navigation";
 import { MAP_SIZE, galacticPlanePaths, meridianPaths, outlinePath, parallelPaths, project, starField } from "@/lib/skyProjection";
 import { sequenceUrl } from "@/lib/sequenceParams";
-import type { ValidationTarget } from "@/lib/targets";
+import { useTargetCopy, type ValidationTarget } from "@/lib/targets";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface Props {
@@ -12,12 +13,10 @@ interface Props {
   onPrefetch: (target: ValidationTarget) => void;
 }
 
-const ROLE: Record<string, string> = {
-  motion: "se mueve",
-  brightness: "cambia de brillo",
-};
-
 export default function SkyMapBackdrop({ targets, onPrefetch }: Props) {
+  const t = useTranslations("skyMapBackdrop");
+  const locale = useLocale();
+  const targetCopy = useTargetCopy();
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const geometry = useMemo(
@@ -41,7 +40,7 @@ export default function SkyMapBackdrop({ targets, onPrefetch }: Props) {
         preserveAspectRatio="xMidYMid meet"
         className="h-auto w-full"
         role="group"
-        aria-label="Mapa del cielo con los cinco objetivos del desafío"
+        aria-label={t("ariaLabel")}
       >
         <defs>
           <radialGradient id="sky-fill" cx="50%" cy="45%" r="65%">
@@ -76,27 +75,27 @@ export default function SkyMapBackdrop({ targets, onPrefetch }: Props) {
           ))}
         </g>
 
-        {targets.map((t) => {
-          const { x, y } = project(t.ra_deg, t.dec_deg);
+        {targets.map((target) => {
+          const { x, y } = project(target.ra_deg, target.dec_deg);
           const flip = x > MAP_SIZE.width * 0.72;
           const labelX = flip ? x - 16 : x + 16;
-          const href = sequenceUrl(t, undefined, t.mode);
+          const href = sequenceUrl(target, undefined, target.mode);
           return (
             <a
-              key={t.key}
-              href={href}
+              key={target.key}
+              href={getPathname({ href, locale })}
               className="pointer-events-auto cursor-pointer outline-none focus-visible:[&>circle.focus]:opacity-100"
-              aria-label={`${t.name}: ${ROLE[t.mode]}. Abrir su secuencia.`}
-              data-testid={`sky-target-${t.key}`}
+              aria-label={t("openSequence", { name: target.name, role: t(`role.${target.mode}`) })}
+              data-testid={`sky-target-${target.key}`}
               onClick={(e) => {
                 if (e.metaKey || e.ctrlKey || e.shiftKey) return;
                 e.preventDefault();
                 router.push(href);
               }}
-              onMouseEnter={() => onPrefetch(t)}
-              onFocus={() => onPrefetch(t)}
+              onMouseEnter={() => onPrefetch(target)}
+              onFocus={() => onPrefetch(target)}
             >
-              <title>{t.hook}</title>
+              <title>{targetCopy(target.key).hook}</title>
               <circle cx={x} cy={y} r="26" fill="transparent" />
               <circle className="focus" cx={x} cy={y} r="15" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0" />
               <circle cx={x} cy={y} r="9" fill="#46d8ff" opacity="0.3" filter="url(#sky-glow)" />
@@ -108,7 +107,7 @@ export default function SkyMapBackdrop({ targets, onPrefetch }: Props) {
                   </>
                 )}
               </circle>
-              <circle cx={x} cy={y} r="3.6" fill={t.mode === "motion" ? "#46d8ff" : "#ffb64a"} />
+              <circle cx={x} cy={y} r="3.6" fill={target.mode === "motion" ? "#46d8ff" : "#ffb64a"} />
               <text
                 x={labelX}
                 y={y + 4}
@@ -121,19 +120,19 @@ export default function SkyMapBackdrop({ targets, onPrefetch }: Props) {
                 paintOrder="stroke"
                 style={{ paintOrder: "stroke" }}
               >
-                {t.name}
+                {target.name}
               </text>
             </a>
           );
         })}
       </svg>
       <p className="pointer-events-none mt-1 flex flex-wrap items-center justify-end gap-x-3 gap-y-0.5 text-[10px] text-mutedstar">
-        <span>Los cinco objetivos en el cielo real; la banda tenue es la Vía Láctea. Pulsa uno para ver su video.</span>
+        <span>{t("caption")}</span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-pulse" aria-hidden="true" /> se mueve
+          <span className="inline-block h-2 w-2 rounded-full bg-pulse" aria-hidden="true" /> {t("role.motion")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-[#ffb64a]" aria-hidden="true" /> cambia de brillo
+          <span className="inline-block h-2 w-2 rounded-full bg-[#ffb64a]" aria-hidden="true" /> {t("role.brightness")}
         </span>
       </p>
     </div>

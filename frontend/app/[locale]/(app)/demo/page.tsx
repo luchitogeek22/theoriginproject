@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, ArrowRight, TriangleAlert } from "lucide-react";
 import BeforeAfter, { MotionSentence } from "@/components/BeforeAfter";
 import JobProgress from "@/components/JobProgress";
 import LightCurve from "@/components/LightCurve";
 import SequencePlayer from "@/components/SequencePlayer";
+import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { sequenceJobKey, sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
 import { VALIDATION_TARGETS } from "@/lib/targets";
@@ -16,37 +17,15 @@ import { useJob } from "@/lib/useJob";
 type StepView = "before-after" | "light-curve" | "stack";
 
 interface DemoStep {
-  id: string;
+  id: "moves" | "pulses" | "planetX";
   targetKey: string;
-  title: string;
-  sentence: string;
   view: StepView;
 }
 
 const STEPS: DemoStep[] = [
-  {
-    id: "moves",
-    targetKey: "barnard",
-    title: "Mira cómo se mueve",
-    sentence:
-      "La estrella de Barnard es la que más rápido cruza el cielo: compara su posición en la primera y la última época.",
-    view: "before-after",
-  },
-  {
-    id: "pulses",
-    targetKey: "rdra",
-    title: "Mira cómo late",
-    sentence: "R Draconis es una estrella que respira: su brillo sube y baja a lo largo de las exposiciones.",
-    view: "light-curve",
-  },
-  {
-    id: "planet-x",
-    targetKey: "wise0855",
-    title: "Así se buscaría un Planeta X",
-    sentence:
-      "WISE 0855 es un objeto frío y tenue que se mueve: así se vería en la secuencia, y el apilado lo hace aparecer al sumar cuadros.",
-    view: "stack",
-  },
+  { id: "moves", targetKey: "barnard", view: "before-after" },
+  { id: "pulses", targetKey: "rdra", view: "light-curve" },
+  { id: "planetX", targetKey: "wise0855", view: "stack" },
 ];
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -60,11 +39,13 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 function StepResult({ step }: { step: DemoStep }) {
+  const t = useTranslations("demoPage");
+  const tc = useTranslations("common");
   const target = VALIDATION_TARGETS.find((t) => t.key === step.targetKey);
   const request = useMemo(() => (target ? targetSequenceRequest(target, target.mode) : null), [target]);
   const key = request ? sequenceJobKey(request) : null;
   const job = useJob<SequenceResult>(key, (signal) => {
-    if (!request) throw new Error("Objetivo desconocido.");
+    if (!request) throw new Error("Unknown target.");
     return api.createSequence(request, { signal });
   });
 
@@ -77,20 +58,20 @@ function StepResult({ step }: { step: DemoStep }) {
       {busy && <JobProgress job={job.job} onCancel={job.cancel} />}
       {job.phase === "cancelled" && (
         <section className="mb-3 max-w-xl rounded border border-line bg-deep p-3 text-xs text-mutedstar">
-          <p>Dejaste de esperar esta secuencia.</p>
+          <p>{t("cancelled")}</p>
           <button
             type="button"
             onClick={job.retry}
             className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-abyss hover:brightness-110"
           >
-            Volver a pedirla
+            {t("requestAgain")}
           </button>
         </section>
       )}
       {job.phase === "failed" && (
         <section role="alert" className="mb-3 max-w-xl rounded border border-red-400/40 bg-deep p-3 text-xs">
           <p className="flex items-center gap-1 font-semibold text-red-300">
-            <TriangleAlert size={13} /> No se pudo preparar la secuencia
+            <TriangleAlert size={13} /> {t("failedTitle")}
           </p>
           <p className="mt-1 text-mutedstar">{job.error}</p>
           <button
@@ -98,12 +79,12 @@ function StepResult({ step }: { step: DemoStep }) {
             onClick={job.retry}
             className="mt-2 rounded border border-line px-3 py-1 text-starlight hover:border-pulse"
           >
-            Reintentar
+            {tc("retry")}
           </button>
         </section>
       )}
       {result && result.frames.length === 0 && (
-        <p className="text-xs text-mutedstar">El archivo no tiene exposiciones que cubran este objetivo.</p>
+        <p className="text-xs text-mutedstar">{t("noExposures")}</p>
       )}
       {result && result.frames.length > 0 && (
         <>
@@ -127,10 +108,10 @@ function StepResult({ step }: { step: DemoStep }) {
                 data-testid="demo-open-explorer"
                 className="mx-auto mt-3 block w-fit rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
               >
-                Abrir WISE 0855 en el Explorador temporal para apilar los cuadros
+                {t("openExplorer")}
               </Link>
               <p className="mx-auto mt-1 max-w-[560px] text-center text-[10px] text-mutedstar">
-                Allí, en «Apilado y búsqueda de un Planeta X», se suman los cuadros siguiendo su movimiento.
+                {t("stackHint")}
               </p>
             </>
           )}
@@ -141,6 +122,7 @@ function StepResult({ step }: { step: DemoStep }) {
 }
 
 export default function DemoPage() {
+  const t = useTranslations("demoPage");
   const [current, setCurrent] = useState(0);
   const step = STEPS[current];
 
@@ -156,8 +138,8 @@ export default function DemoPage() {
 
   return (
     <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4" data-testid="demo-page">
-      <h1 className="text-lg font-bold text-starlight">Demo guiada en tres pasos</h1>
-      <ol className="mt-2 flex flex-wrap gap-2 text-[11px]" aria-label="Pasos de la demo">
+      <h1 className="text-lg font-bold text-starlight">{t("title")}</h1>
+      <ol className="mt-2 flex flex-wrap gap-2 text-[11px]" aria-label={t("stepsLabel")}>
         {STEPS.map((s, i) => (
           <li key={s.id}>
             <button
@@ -169,7 +151,7 @@ export default function DemoPage() {
                 i === current ? "border-pulse text-pulse" : "border-line text-mutedstar hover:text-starlight"
               }`}
             >
-              {i + 1}. {s.title}
+              {i + 1}. {t(`steps.${s.id}.title`)}
             </button>
           </li>
         ))}
@@ -177,12 +159,12 @@ export default function DemoPage() {
 
       <section className="mt-3" aria-labelledby="demo-step-title">
         <p className="text-[11px] text-mutedstar">
-          Paso {current + 1} de {STEPS.length}
+          {t("stepOf", { current: current + 1, total: STEPS.length })}
         </p>
         <h2 id="demo-step-title" className="text-xl font-bold text-starlight" data-testid="demo-step-title">
-          {step.title}
+          {t(`steps.${step.id}.title`)}
         </h2>
-        <p className="mt-1 max-w-xl text-sm text-mutedstar">{step.sentence}</p>
+        <p className="mt-1 max-w-xl text-sm text-mutedstar">{t(`steps.${step.id}.sentence`)}</p>
         <div className="mt-3">
           <StepResult key={step.id} step={step} />
         </div>
@@ -196,7 +178,7 @@ export default function DemoPage() {
           data-testid="demo-prev"
           className="flex items-center gap-1 rounded border border-line px-3 py-1.5 text-xs text-starlight hover:border-pulse disabled:opacity-40"
         >
-          <ArrowLeft size={13} /> Anterior
+          <ArrowLeft size={13} /> {t("previous")}
         </button>
         <button
           type="button"
@@ -205,9 +187,9 @@ export default function DemoPage() {
           data-testid="demo-next"
           className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
         >
-          Siguiente <ArrowRight size={13} />
+          {t("next")} <ArrowRight size={13} />
         </button>
-        <span className="text-[10px] text-mutedstar">Flechas ← → también cambian de paso.</span>
+        <span className="text-[10px] text-mutedstar">{t("arrowsHint")}</span>
       </div>
     </div>
   );

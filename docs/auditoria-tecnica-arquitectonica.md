@@ -1110,7 +1110,7 @@ Implementados WP-00 a WP-33 (el plan completo). Verificación con datos reales d
 |---|---|---|
 | D2 | Opción completa: espectro por fotometría del objetivo en cada exposición (WP-26) | El perfil espacial se conserva, rotulado como tal |
 | D3 | `VirtualSkyViewer` y `PlanetSimulator3D` retirados y borrados; Aladin Lite 3.6.1 fijo | `docs/challenge.md` los cita como desvío |
-| D4 | Interfaz en **español** (no inglés, que era la recomendación) | El texto existente ya era mayoritariamente español; cambiar de idioma es un cambio de copia, no de código |
+| D4 | ~~Interfaz en **español**~~ → **Revisada 2026-11-12:** inglés predeterminado y español como segundo idioma con next-intl (ver `docs/i18n.md`) | Pedido explícito del responsable; coincide con la recomendación original |
 | D5 | Tolerancia de longitud de onda del modo "Brillo": ±0,06 µm | Punto medio del rango propuesto (0,04 a 0,08) |
 | D6 | El blob es caché regenerable: si falta, el siguiente `POST` lo baja de nuevo | Sin volumen persistente asumido |
 | D8 | "Candidatos" | Recomendación |

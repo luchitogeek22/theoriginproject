@@ -1,0 +1,77 @@
+import { expect, test } from "@playwright/test";
+import { skipTutorial } from "./helpers";
+
+test.describe("internationalization", () => {
+  test.use({ locale: "es-ES" });
+
+  test.beforeEach(async ({ page }) => {
+    await skipTutorial(page);
+  });
+
+  test("first visit is English even when the browser prefers Spanish", async ({ page }) => {
+    await page.goto("/candidates");
+    await expect(page).toHaveURL(/\/candidates$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Candidates" })).toBeVisible();
+  });
+
+  test("switching language keeps the page, persists and survives reloads", async ({ page, context }) => {
+    await page.goto("/candidates?from=test");
+    await page.getByRole("combobox", { name: /Change language/ }).selectOption("es");
+
+    await expect(page).toHaveURL(/\/es\/candidates\?from=test$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "es");
+    await expect(page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Candidatos" })).toBeVisible();
+    const cookie = (await context.cookies()).find((c) => c.name === "NEXT_LOCALE");
+    expect(cookie?.value).toBe("es");
+    expect(cookie?.expires ?? 0).toBeGreaterThan(Date.now() / 1000 + 300 * 24 * 3600);
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "es");
+
+    // A later unprefixed visit honours the remembered choice.
+    await page.goto("/time-explorer");
+    await expect(page).toHaveURL(/\/es\/time-explorer$/);
+
+    // Navigation inside the app stays in Spanish.
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Candidatos" }).click();
+    await expect(page).toHaveURL(/\/es\/candidates$/);
+
+    await page.getByRole("combobox", { name: /Cambiar idioma/ }).selectOption("en");
+    await expect(page).toHaveURL(/\/candidates$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect.poll(async () => (await context.cookies()).find((c) => c.name === "NEXT_LOCALE")?.value).toBe("en");
+
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  });
+
+  test("each language has translated metadata, canonical and hreflang", async ({ page }) => {
+    await page.goto("/es/candidates");
+    await expect(page).toHaveTitle("Candidatos — The Origin Project");
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/es\/candidates$/);
+    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute("href", /\/candidates$/);
+    await expect(page.locator('link[rel="alternate"][hreflang="es"]')).toHaveAttribute("href", /\/es\/candidates$/);
+    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute("href", /\/candidates$/);
+    await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "es_ES");
+
+    await page.goto("/candidates");
+    await expect(page).toHaveTitle("Candidates — The Origin Project");
+    await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "en_US");
+  });
+
+  test("unknown pages show a localized 404", async ({ page }) => {
+    const response = await page.goto("/es/does-not-exist");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "Página no encontrada" })).toBeVisible();
+  });
+
+  test("the language switcher is keyboard operable", async ({ page }) => {
+    await page.goto("/candidates");
+    const select = page.getByRole("combobox", { name: /Change language/ });
+    await select.focus();
+    await expect(select).toBeFocused();
+    await expect(select.locator("option")).toHaveText(["English", "Español"]);
+  });
+});
