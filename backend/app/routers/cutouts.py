@@ -61,7 +61,7 @@ def preview_png(cutout_id: int, db: Session = Depends(get_db)) -> Response:
     return Response(
         content=storage_get(record.preview_key),
         media_type="image/png",
-        headers={"Cache-Control": PREVIEW_CACHE_CONTROL},
+        headers={"Cache-Control": PREVIEW_CACHE_CONTROL, "Vary": "Origin"},
     )
 
 

@@ -21,6 +21,7 @@ STATIC_DILATION_PX = 2
 MIN_DISPLACEMENT_PX = 1.5
 WORK_BUDGET = 6e7
 SIGMA_CAP = 40.0
+SYSTEMATIC_PX = 0.3
 EDGE_MARGIN_PX = 3
 
 
@@ -80,6 +81,86 @@ def remove_static(
                 scaled[region] = gain * reference[region]
         cleaned.append(im - scaled)
     return cleaned
+
+
+def measure_motion(
+    images: list[np.ndarray],
+    variances: list[np.ndarray],
+    mjds: list[float],
+    pm_ra_mas_yr: float,
+    pm_dec_mas_yr: float,
+    centre_xy: tuple[float, float],
+    psf_sigma_pix: float = 0.6,
+    pixel_scale_arcsec: float = PIXEL_SCALE_ARCSEC,
+    threshold: float = 4.0,
+) -> dict[str, Any]:
+    """Measured displacement of the target between the early and late halves vs the predicted one."""
+    from app.services.temporal import TemporalAnalysisEngine
+
+    if len(images) < 4:
+        return {"measurable": False, "reason": "At least 4 visits are needed to compare two halves."}
+    order = np.argsort(mjds)
+    images = [images[i] for i in order]
+    variances = [variances[i] for i in order]
+    mjds = [mjds[i] for i in order]
+    ref_mjd = float(np.mean(mjds))
+    half = len(images) // 2
+    groups = [(images[:half], variances[:half], mjds[:half]), (images[-half:], variances[-half:], mjds[-half:])]
+    height, width = images[0].shape
+    yy, xx = np.mgrid[:height, :width]
+
+    def expected_xy(mjd: float) -> tuple[float, float]:
+        years = (mjd - ref_mjd) / 365.25
+        dx = -(pm_ra_mas_yr * years / 1000.0) / pixel_scale_arcsec
+        dy = (pm_dec_mas_yr * years / 1000.0) / pixel_scale_arcsec
+        return centre_xy[0] + dx, centre_xy[1] + dy
+
+    protect = np.zeros((height, width), dtype=bool)
+    for mjd in mjds:
+        ex, ey = expected_xy(mjd)
+        protect |= (xx - ex) ** 2 + (yy - ey) ** 2 <= 3.0**2
+    cleaned_all = remove_static(images, variances, protect=protect)
+    cleaned = [cleaned_all[:half], cleaned_all[-half:]]
+
+    found = []
+    mean_epochs = []
+    for (_, group_var, group_mjds), group_images in zip(groups, cleaned):
+        epoch = float(np.mean(group_mjds))
+        mean_epochs.append(epoch)
+        ex, ey = expected_xy(epoch)
+        shifts = motion_shifts(group_mjds, pm_ra_mas_yr, pm_dec_mas_yr, epoch, pixel_scale_arcsec)
+        mean, error = stack_weighted(group_images, group_var, shifts)
+        valid = np.isfinite(mean) & np.isfinite(error) & (error > 0)
+        source = TemporalAnalysisEngine._find_source(
+            np.where(valid, mean, 0.0), valid, error**2, ex, ey, psf_sigma_pix, 3.0, threshold
+        )
+        if source is None:
+            return {"measurable": False, "reason": "The target is too faint to locate in each half of the visits."}
+        found.append((source, (ex, ey)))
+    (early, early_expected), (late, late_expected) = found
+    baseline_years = (mean_epochs[1] - mean_epochs[0]) / 365.25
+    east = -((late[0] - late_expected[0]) - (early[0] - early_expected[0])) * pixel_scale_arcsec
+    north = ((late[1] - late_expected[1]) - (early[1] - early_expected[1])) * pixel_scale_arcsec
+    measured_east = pm_ra_mas_yr * baseline_years / 1000.0 + east
+    measured_north = pm_dec_mas_yr * baseline_years / 1000.0 + north
+    predicted_east = pm_ra_mas_yr * baseline_years / 1000.0
+    predicted_north = pm_dec_mas_yr * baseline_years / 1000.0
+    statistical = float(np.hypot(early[3], late[3])) * pixel_scale_arcsec
+    sigma = float(np.hypot(statistical, SYSTEMATIC_PX * pixel_scale_arcsec))
+    return {
+        "measurable": True,
+        "baseline_days": baseline_years * 365.25,
+        "predicted_east_arcsec": predicted_east,
+        "predicted_north_arcsec": predicted_north,
+        "predicted_arcsec": float(np.hypot(predicted_east, predicted_north)),
+        "measured_east_arcsec": float(measured_east),
+        "measured_north_arcsec": float(measured_north),
+        "measured_arcsec": float(np.hypot(measured_east, measured_north)),
+        "difference_arcsec": float(np.hypot(measured_east - predicted_east, measured_north - predicted_north)),
+        "uncertainty_arcsec": sigma,
+        "statistical_arcsec": statistical,
+        "systematic_arcsec": SYSTEMATIC_PX * pixel_scale_arcsec,
+    }
 
 
 def targeted_check(

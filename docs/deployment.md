@@ -130,3 +130,18 @@ Railway debe ser esa URL exacta (o ambas separadas por coma).
 `pytest` del backend (dependencias de `backend/requirements-dev.txt`), y
 `npx tsc --noEmit` más `npm run build` del frontend. Un error de lint falla el
 trabajo.
+
+## Calentamiento de la caché antes de una demo
+
+Tras desplegar, y con la ruta hacia IRSA disponible, prepara las secuencias de los cinco objetivos para que
+la primera visita sea inmediata y para que sigan funcionando si IRSA cae:
+
+```bash
+cd backend
+python scripts/warm_targets.py --api https://<api> --frontend https://<web>
+python scripts/validate_motion.py --api https://<api> --out ../docs/validacion-movimiento.md
+```
+
+El primer comando tarda de 1 a 5 minutos por objetivo la primera vez (las descargas de IRSA van a ritmo
+limitado) y es casi instantáneo después. Sale con código distinto de cero si algún objetivo tiene menos de
+dos visitas. Con `--check` solo comprueba, sin reintentos.

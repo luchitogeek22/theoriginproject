@@ -184,3 +184,48 @@ def test_the_targeted_check_is_calibrated_on_noise():
 def test_the_targeted_check_needs_three_visits():
     images, variances, mjds = visits(2, slow_mover_sources, noise=0.5)
     assert targeted_check(images, variances, mjds, SLOW_PM_RA, 0.0, CENTRE)["ok"] is False
+
+
+from app.services.shift_stack import measure_motion  # noqa: E402
+
+
+def fast_mover_sources(k, total_px=3.0, peak=8.0):
+    offset = -total_px / 2 + total_px * k / 7
+    return [(RA0 - offset * SCALE / np.cos(np.deg2rad(DEC0)), DEC0, peak)]
+
+
+PM_3PX = -(3.0 * 6.15 * 1000) / (7 * INTERVAL_DAYS / 365.25)
+
+
+def test_measured_motion_matches_the_injected_displacement():
+    images, variances, mjds = visits(8, fast_mover_sources, noise=0.4)
+    result = measure_motion(images, variances, mjds, PM_3PX, 0.0, CENTRE, psf_sigma_pix=PSF_SIGMA)
+    assert result["measurable"] is True
+    assert result["difference_arcsec"] < 0.3 * 6.15
+    assert result["measured_arcsec"] == pytest.approx(result["predicted_arcsec"], abs=0.3 * 6.15)
+    assert result["measured_east_arcsec"] * result["predicted_east_arcsec"] > 0
+
+
+def test_a_target_that_does_not_move_measures_no_displacement_when_none_is_predicted():
+    images, variances, mjds = visits(8, lambda k: [(RA0, DEC0, 8.0)], noise=0.4)
+    result = measure_motion(images, variances, mjds, 0.0, 0.0, CENTRE, psf_sigma_pix=PSF_SIGMA)
+    assert result["measurable"] is True
+    assert result["measured_arcsec"] < 0.3 * 6.15
+
+
+def test_a_wrong_catalogue_motion_shows_up_as_a_difference():
+    images, variances, mjds = visits(8, lambda k: [(RA0, DEC0, 8.0)], noise=0.4)
+    result = measure_motion(images, variances, mjds, PM_3PX, 0.0, CENTRE, psf_sigma_pix=PSF_SIGMA)
+    assert result["measurable"] is True
+    assert result["difference_arcsec"] > 1.0 * 6.15
+
+
+def test_a_faint_target_is_reported_as_not_measurable():
+    images, variances, mjds = visits(8, lambda k: [], noise=0.5)
+    result = measure_motion(images, variances, mjds, PM_3PX, 0.0, CENTRE, psf_sigma_pix=PSF_SIGMA)
+    assert result["measurable"] is False and result["reason"]
+
+
+def test_measuring_motion_needs_four_visits():
+    images, variances, mjds = visits(3, lambda k: [(RA0, DEC0, 8.0)], noise=0.4)
+    assert measure_motion(images, variances, mjds, PM_3PX, 0.0, CENTRE)["measurable"] is False

@@ -31,7 +31,7 @@ const ITEMS: Array<{ title: string; body: string }> = [
 
 export default function Explainer() {
   return (
-    <details open className="rounded border border-line bg-deep" aria-label="¿Qué estoy viendo?">
+    <details className="rounded border border-line bg-deep" aria-label="¿Qué estoy viendo?">
       <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-starlight">¿Qué estoy viendo?</summary>
       <div className="flex flex-col gap-2 border-t border-line p-3 text-[11px] leading-snug text-mutedstar">
         {ITEMS.map((item) => (

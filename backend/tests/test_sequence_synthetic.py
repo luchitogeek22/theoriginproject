@@ -184,7 +184,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
 from app.routers import sequences as sequences_router  # noqa: E402
-from app.services import cutout_store  # noqa: E402
+from app.services import cutout_store, store  # noqa: E402
 
 client = TestClient(app)
 URL = "https://irsa.ipac.caltech.edu/ibe/data/spherex/"
@@ -408,3 +408,32 @@ def test_the_lightcurve_says_when_the_target_is_not_detected_in_each_frame(archi
     curve = done["result"]["lightcurve"]
     assert curve["target_detected"] is False
     assert any("could not be measured" in note or "not detected individually" in note for note in curve["limitations"])
+
+
+def test_a_result_served_from_the_result_cache_still_becomes_the_fallback(archive, monkeypatch):
+    import pathlib
+
+    first = post_sequence(ra_deg=RA0 + 0.013)
+    key = first["result"]["key"]
+    for pointer in pathlib.Path(store.storage_root(), "sequences", "index").glob("*.json"):
+        pointer.unlink()
+    again = post_sequence(ra_deg=RA0 + 0.013)
+    assert again["result"]["key"] == key
+
+    def down(*a, **k):
+        raise sequences_router.ArchiveUnavailableError("503")
+
+    monkeypatch.setattr(sequences_router.gateway, "search", down)
+    served = post_sequence(ra_deg=RA0 + 0.013)
+    assert served["result"]["served_from_cache"] is True and served["result"]["key"] == key
+
+
+def test_images_vary_on_origin_so_a_cached_copy_never_blocks_a_cors_reader(archive):
+    done = post_sequence(ra_deg=RA0 + 0.014)
+    result = done["result"]
+    for url in (result["frames"][0]["png_url"],):
+        response = client.get(url)
+        assert response.headers["vary"].lower().find("origin") >= 0
+        assert "immutable" in response.headers["cache-control"]
+    with_origin = client.get(result["frames"][0]["png_url"], headers={"Origin": "http://localhost:3000"})
+    assert with_origin.headers["access-control-allow-origin"] == "http://localhost:3000"

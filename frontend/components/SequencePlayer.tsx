@@ -1,9 +1,13 @@
 "use client";
 
+import { translateLimitation } from "@/lib/limitations";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Link2, Loader2, Pause, Play, SkipBack, SkipForward, TriangleAlert } from "lucide-react";
 import ResultBadge from "@/components/ResultBadge";
+import BeforeAfter, { MotionSentence } from "@/components/BeforeAfter";
 import { assetUrl } from "@/lib/api";
+import { formatArcsec, spanLabel } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import type { SequenceFrame, SequenceResult } from "@/lib/types";
 import { nextLargerFov } from "@/lib/sequenceParams";
 import { ExportError, downloadPng, exportSequence } from "@/lib/sequenceExport";
@@ -85,18 +89,6 @@ function usePreload(frames: SequenceFrame[]): PreloadState {
   return state;
 }
 
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduced;
-}
-
 function cacheNotice(result: SequenceResult): string {
   const queried = result.queried_at ? new Date(result.queried_at) : null;
   if (queried && !Number.isNaN(queried.getTime())) {
@@ -162,7 +154,9 @@ export default function SequencePlayer({
   const [blinkB, setBlinkB] = useState(Math.max(0, total - 1));
   const [blinkPhase, setBlinkPhase] = useState(false);
   const [showGaia, setShowGaia] = useState(false);
-  const [showTrack, setShowTrack] = useState(false);
+  const [showTrack, setShowTrack] = useState(result.overlay?.proper_motion_applied === true);
+  const [smooth, setSmooth] = useState(result.mode === "motion");
+  const [view, setView] = useState<"sequence" | "compare">("sequence");
   const [showReference, setShowReference] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
   const [exportMessage, setExportMessage] = useState("");
@@ -291,6 +285,11 @@ export default function SequencePlayer({
   const targetNow = overlay?.target.find((p) => p.index === frameIndex);
   const targetFirst = overlay?.target[0];
   const targetLast = overlay?.target[overlay.target.length - 1];
+  const trailSpan = spanLabel(frames[0].date_iso, frames[total - 1].date_iso);
+  const trailLabel =
+    overlay?.proper_motion_applied && overlay.displacement_arcsec !== undefined && total > 1
+      ? `${formatArcsec(overlay.displacement_arcsec)}″${trailSpan ? ` en ${trailSpan}` : ""}`
+      : null;
   const overlayVisible = overlay !== undefined && ((showGaia && gaiaEnabled) || showTrack);
 
   return (
@@ -302,6 +301,7 @@ export default function SequencePlayer({
       aria-label="Reproductor de secuencia. Espacio reproduce o pausa; flechas cambian de cuadro."
     >
       <div className="min-w-0">
+        <MotionSentence result={result} />
         {result.served_from_cache && (
           <p
             role="status"
@@ -314,14 +314,54 @@ export default function SequencePlayer({
         <div className="mx-auto mb-1 max-w-[560px]">
           <ResultBadge kind="observation" />
         </div>
-        <div className={showReference && reference ? "grid gap-2 sm:grid-cols-2" : ""}>
+        {total > 1 && (
+          <div className="mx-auto mb-2 flex max-w-[560px] flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-mutedstar">
+            <div className="flex rounded border border-line bg-deep p-0.5" role="group" aria-label="Vista">
+              {(
+                [
+                  ["sequence", "Secuencia"],
+                  ["compare", "Antes / después"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={view === value}
+                  data-testid={`view-${value}`}
+                  onClick={() => {
+                    setView(value);
+                    if (value === "compare") setPlaying(false);
+                  }}
+                  className={`rounded px-2.5 py-1 text-xs ${
+                    view === value ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {view === "sequence" && (
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={smooth}
+                  onChange={(e) => setSmooth(e.target.checked)}
+                  data-testid="smooth-toggle"
+                />
+                Suavizar imagen
+              </label>
+            )}
+          </div>
+        )}
+        {view === "compare" && total > 1 && <BeforeAfter result={result} />}
+        <div className={`${showReference && reference ? "grid gap-2 sm:grid-cols-2" : ""} ${view === "compare" && total > 1 ? "hidden" : ""}`}>
         <div className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded border border-line bg-abyss">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={frameUrl(frame)}
             alt={`Cuadro ${frame.index + 1} de ${total}, ${frame.date_iso}, detector ${frame.detector}`}
             className="h-full w-full"
-            style={{ imageRendering: "pixelated" }}
+            style={{ imageRendering: smooth ? "auto" : "pixelated" }}
             draggable={false}
           />
           {overlayVisible && overlay && (
@@ -349,24 +389,40 @@ export default function SequencePlayer({
                   ) : null;
                 })}
               {showTrack && targetFirst && targetLast && targetFirst !== targetLast && (
-                <line
-                  x1={targetFirst.x}
-                  y1={targetFirst.y}
-                  x2={targetLast.x}
-                  y2={targetLast.y}
-                  stroke="#46d8ff"
-                  strokeWidth={1}
-                  strokeDasharray="4 3"
-                  vectorEffect="non-scaling-stroke"
-                />
+                <>
+                  <polyline
+                    points={overlay.target.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke="#46d8ff"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    cx={targetFirst.x}
+                    cy={targetFirst.y}
+                    r={Math.max(0.9, size * 0.014)}
+                    fill="none"
+                    stroke="#46d8ff"
+                    strokeWidth={1.5}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <path
+                    d={`M ${targetLast.x - 1.1} ${targetLast.y} L ${targetLast.x + 1.1} ${targetLast.y} M ${targetLast.x} ${targetLast.y - 1.1} L ${targetLast.x} ${targetLast.y + 1.1}`}
+                    stroke="#ffb64a"
+                    strokeWidth={1.8}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </>
               )}
               {showTrack && targetNow && (
                 <circle
                   cx={targetNow.x}
                   cy={targetNow.y}
-                  r={overlay.uncertainty_px}
+                  r={Math.max(overlay.uncertainty_px, 1.6)}
                   fill="none"
-                  stroke="#46d8ff"
+                  stroke="#ffffff"
+                  strokeOpacity={0.85}
                   strokeWidth={1.5}
                   vectorEffect="non-scaling-stroke"
                 />
@@ -395,6 +451,14 @@ export default function SequencePlayer({
           <div className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[10px] text-mutedstar">
             Norte arriba · Este a la izquierda
           </div>
+          {showTrack && trailLabel && (
+            <div
+              className="pointer-events-none absolute bottom-1.5 right-1.5 rounded bg-abyss/80 px-1.5 py-0.5 text-[11px] font-semibold text-pulse"
+              data-testid="trajectory-label"
+            >
+              {trailLabel}
+            </div>
+          )}
         </div>
         {showReference && reference && (
           <figure className="mx-auto w-full max-w-[560px]">
@@ -428,8 +492,13 @@ export default function SequencePlayer({
                 Marcas Gaia
               </label>
               <label className="flex items-center gap-1">
-                <input type="checkbox" checked={showTrack} onChange={(e) => setShowTrack(e.target.checked)} />
-                Trayectoria del objetivo
+                <input
+                  type="checkbox"
+                  checked={showTrack}
+                  onChange={(e) => setShowTrack(e.target.checked)}
+                  data-testid="trajectory-toggle"
+                />
+                Cola de trayectoria
               </label>
               {reference && (
                 <label className="flex items-center gap-1">
@@ -450,7 +519,7 @@ export default function SequencePlayer({
                       overlay.displacement_arcsec !== undefined
                         ? ` (desplazamiento ${overlay.displacement_arcsec.toFixed(1).replace(".", ",")}″ en la ventana)`
                         : ""
-                    }; el círculo es la incertidumbre de ${overlay.uncertainty_px}px.`
+                    }. Círculo azul: posición prevista en la primera visita; cruz naranja: en la última; anillo blanco: posición prevista en este cuadro (radio = incertidumbre).`
                   : "Sin movimiento propio conocido: el objetivo se marca en posición fija."}
               </p>
             )}
@@ -704,7 +773,7 @@ export default function SequencePlayer({
           <p className="font-semibold text-starlight">Rejilla común</p>
           <p className="mt-0.5">
             {grid.size_px} × {grid.size_px} px · {grid.pixel_scale_arcsec.toFixed(2).replace(".", ",")} ″/px ·{" "}
-            {grid.orientation}
+            {grid.orientation === "north up, east left" ? "norte arriba, este a la izquierda" : grid.orientation}
           </p>
           <p className="mt-0.5">
             {result.n_used} cuadros usados de {result.n_available} disponibles
@@ -725,7 +794,7 @@ export default function SequencePlayer({
             </p>
             <ul className="mt-0.5 flex flex-col gap-0.5 text-mutedstar">
               {result.limitations.map((l, i) => (
-                <li key={i}>· {l}</li>
+                <li key={i}>· {translateLimitation(l)}</li>
               ))}
             </ul>
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { translateLimitation } from "@/lib/limitations";
 import { useId, useMemo, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { api } from "@/lib/api";
@@ -229,7 +230,7 @@ export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) 
           {result.limitations.length > 0 && (
             <ul className="text-[11px] text-mutedstar">
               {result.limitations.map((l, i) => (
-                <li key={i}>· {l}</li>
+                <li key={i}>· {translateLimitation(l)}</li>
               ))}
             </ul>
           )}

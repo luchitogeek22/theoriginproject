@@ -1,5 +1,6 @@
 "use client";
 
+import { translateLimitation } from "@/lib/limitations";
 import { useId } from "react";
 import { TriangleAlert } from "lucide-react";
 import type { LightCurve as LightCurveData } from "@/lib/types";
@@ -52,7 +53,11 @@ export default function LightCurve({ curve }: { curve: LightCurveData }) {
   const summary =
     lo !== null && hi !== null
       ? `${used.length} de ${points.length} épocas con medida. Mínimo ${fmt(lo)}, máximo ${fmt(hi)}, amplitud ${fmt(hi - lo)}${
-          relative ? " (flujo relativo, normalizado a la mediana)" : " (flujo absoluto)"
+          curve.method === "psf_wings"
+            ? " (amplitud relativa de las alas de la PSF, normalizada a la mediana)"
+            : relative
+              ? " (flujo relativo, normalizado a la mediana)"
+              : " (flujo absoluto)"
         }.`
       : "Ninguna época tiene una medida utilizable.";
   const path = used.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.mjd).toFixed(1)},${sy(p.value as number).toFixed(1)}`).join(" ");
@@ -147,7 +152,7 @@ export default function LightCurve({ curve }: { curve: LightCurveData }) {
           fill="#93a1c0"
           textAnchor="middle"
         >
-          {relative ? "flujo relativo" : "flujo absoluto"}
+          {curve.method === "psf_wings" ? "amplitud relativa de las alas de la PSF" : relative ? "flujo relativo" : "flujo absoluto"}
         </text>
       </svg>
 
@@ -168,11 +173,11 @@ export default function LightCurve({ curve }: { curve: LightCurveData }) {
         )}
       </ul>
       <p className="mt-1 text-[11px] text-starlight">{summary}</p>
-      <p className="mt-1 text-[11px] text-mutedstar">{curve.label}</p>
+      <p className="mt-1 text-[11px] text-mutedstar">{translateLimitation(curve.label)}</p>
       {curve.limitations.length > 0 && (
         <ul className="mt-1 text-[11px] text-mutedstar">
           {curve.limitations.map((l, i) => (
-            <li key={i}>· {l}</li>
+            <li key={i}>· {translateLimitation(l)}</li>
           ))}
         </ul>
       )}

@@ -38,11 +38,11 @@ Salen directamente del enunciado. Sin estos no hay entrega válida.
 
 | ID | Requisito | Frase del enunciado |
 |----|-----------|---------------------|
-| R1 | Herramienta web pública, sin barreras de acceso | "public-facing web tool" |
-| R2 | Parcial | El backend acepta decimal, sexagesimal (`08h55m10.831s -7d14m42.53s`, `08:55:10.8 -07:14:42`) y nombres, con pruebas; la página acepta `?ra=&dec=` y `?q=`. No observado en navegador. |
-| R3 | Parcial | 2026-11-12: `POST /sequences` de punta a punta por HTTP contra IRSA devolvió secuencias reales (9 a 12 cuadros de un detector) para los cinco objetivos, con la sintaxis de recorte válida. Verificado en la API, no en navegador. |
-| R4 | Parcial | Reproductor implementado (cuadros precargados, controles, teclado, parpadeo A/B); compila y construye, pero no se reprodujo en un navegador. |
-| R5 | El cambio se percibe rápido y sin ser experto | "easy for anyone to quickly see how they change over time" |
+| R1 | Parcial | 2026-11-12: en un Chromium real, sin iniciar sesión, la portada y los cinco enlaces cargan la secuencia (`frontend/e2e`, 19 pruebas). Falta observarlo en el despliegue público. |
+| R2 | Cumple | Observado en Chromium: `?q=08h55m10.831s -7d14m42.53s` se resuelve y la URL pasa a coordenadas numéricas; `?ra=&dec=` y nombres funcionan; una consulta inválida da un mensaje claro. |
+| R3 | Cumple | Observado en Chromium: los cuadros mostrados son recortes reales de SPHEREx (IRSA) de los cinco objetivos, con fecha, detector, longitud de onda, banderas y colección por cuadro. Servidos desde la caché de secuencias reales con IRSA cortado. |
+| R4 | Cumple | Observado en Chromium: la secuencia se reproduce y la imagen cambia en cada paso; hay pausa, anterior, siguiente, velocidad, teclado, parpadeo A/B y vista antes/después. |
+| R5 | Parcial | De la portada al video hay un clic (observado); la demo guiada y la frase "se movió X″ hacia el <rumbo>" ayudan a entenderlo. Falta la prueba con personas sin formación (tabla vacía en `docs/demo.md`). |
 | R6 | Funciona en los cinco objetivos de prueba | "Test your tool on..." |
 
 ## Objetivos de prueba

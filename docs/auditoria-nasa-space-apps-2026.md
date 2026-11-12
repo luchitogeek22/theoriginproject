@@ -1273,3 +1273,123 @@ porque Gaia no respondió, así que la curva es absoluta.
 - La curva de RW Aurigae sale relativa (4 estrellas de comparación, amplitud ±48 % en D1, sin corrección de color); la de R Draconis sale absoluta porque no hay estrellas de comparación medibles.
 - No se probó ninguna secuencia en detectores distintos de los que eligió el motor.
 - La prueba con personas sin formación (WP-32) está pendiente: `docs/demo.md` tiene la tabla vacía.
+
+---
+
+## 17. Mejoras para competir (2026-11-12)
+
+Salen de la lectura crítica del proyecto como lo haría un jurado. Los cinco riesgos y su respuesta:
+
+| Riesgo detectado | Respuesta | Paquete |
+|---|---|---|
+| El movimiento (1 a 2 px en un año) puede no verse a simple vista | Hacerlo visible: antes/después, cola de trayectoria con distancia medida, interpolación suave | WP-34 |
+| Demasiados paneles; un jurado recuerda una sola idea | Demo guiada de tres pasos y paneles avanzados plegados | WP-35 |
+| Nunca se vio la interfaz en un navegador | Pruebas automáticas en navegador real con datos reales en caché | WP-36 |
+| El rigor científico es difícil de comprobar de un vistazo | Tabla pública de predicción frente a medición por objetivo | WP-37 |
+| Primera impresión lenta | Precarga, calentamiento de despliegue y progreso por etapas | WP-38 |
+
+#### WP-34 · Movimiento visible
+
+- **Requisitos:** R5, impacto. **Depende de:** WP-11, WP-24. **Tamaño:** M.
+- **Superficie de edición:** `frontend/components/SequencePlayer.tsx`,
+  `frontend/components/BeforeAfter.tsx` (nuevo), `frontend/app/(app)/time-explorer/page.tsx`,
+  `frontend/lib/types.ts`.
+- **Cambio:** (1) vista "antes / después" con la primera y la última época, con deslizador de
+  cortina y modo parpadeo; (2) cola de trayectoria del objetivo con la distancia recorrida en
+  arcsec y el rumbo; (3) interpolación suave de la imagen, activada por defecto en modo
+  movimiento y desactivable; (4) con movimiento propio conocido, la frase "se movió X″ hacia el
+  <rumbo>, igual que predice el catálogo".
+- **Criterios de aceptación:** con movimiento conocido se muestran la distancia y el rumbo
+  derivados de `overlay`; sin movimiento conocido no aparece la frase; el deslizador cambia entre
+  las dos épocas; todo es operable con teclado.
+
+#### WP-35 · Demo guiada de tres pasos
+
+- **Requisitos:** R5, presentación. **Depende de:** WP-34. **Tamaño:** S.
+- **Superficie de edición:** `frontend/app/(app)/demo/page.tsx` (nuevo),
+  `frontend/app/(app)/time-explorer/page.tsx` (paneles avanzados plegados), `frontend/app/(app)/page.tsx`.
+- **Cambio:** ruta `/demo` con tres pasos (Barnard se mueve, R Draconis late, WISE 0855 aparece al
+  sumar), cada uno con una frase, el resultado y "Siguiente"; en el explorador, los paneles de
+  apilado, espectro y verificación quedan plegados por defecto.
+- **Criterios de aceptación:** tres pasos completables solo con teclado; cada paso usa una
+  secuencia real (caché si no hay red); el explorador muestra primero solo el video.
+
+#### WP-36 · Pruebas automáticas en navegador
+
+- **Requisitos:** validez, presentación. **Depende de:** WP-34, WP-35. **Tamaño:** M. **Decisión
+  D11 revisada:** se incorpora Playwright (dependencia de desarrollo).
+- **Superficie de edición:** `frontend/playwright.config.ts`, `frontend/e2e/**`,
+  `frontend/package.json` (solo `devDependencies` y scripts), `backend/tests/fixtures/real_sequences/`,
+  `.github/workflows/ci.yml` (trabajo opcional).
+- **Cambio:** el backend arranca sin ruta hacia IRSA y sirve las secuencias reales guardadas; las
+  pruebas abren los cinco enlaces permanentes, reproducen, copian el enlace, exportan, usan el
+  modo incrustado y recorren la demo guiada.
+- **Criterios de aceptación:** los cinco enlaces muestran cuadros que cambian al reproducir; de la
+  portada al video hay como máximo dos interacciones; `?embed=1` oculta la navegación; la
+  exportación produce un archivo o la descarga de PNG; las cabeceras de incrustación son las
+  esperadas.
+
+#### WP-37 · Validación: predicción frente a medición
+
+- **Requisitos:** validez. **Depende de:** WP-25. **Tamaño:** M.
+- **Superficie de edición:** `backend/app/services/shift_stack.py`, `backend/app/routers/sequences.py`,
+  `backend/scripts/validate_motion.py` (nuevo), `docs/validacion-movimiento.md` (nuevo),
+  `frontend/components/ShiftStackPanel.tsx`, `backend/tests/test_shift_stack_synthetic.py`.
+- **Cambio:** medir el desplazamiento real del objetivo comparando el apilado de la mitad temprana
+  con el de la mitad tardía, y compararlo con lo previsto por su movimiento propio; incluir
+  `measured_motion` en la comprobación dirigida; un script que corre los cinco objetivos y escribe
+  la tabla.
+- **Criterios de aceptación:** con un desplazamiento inyectado, el medido coincide con el previsto
+  dentro de 0,3 px; la tabla de los cinco objetivos se genera con datos reales y marca como "no
+  medible" lo que no lo es.
+
+#### WP-38 · Primera impresión y rapidez
+
+- **Requisitos:** R5 ("quickly"). **Depende de:** WP-31. **Tamaño:** S.
+- **Superficie de edición:** `frontend/app/(app)/page.tsx`, `frontend/components/SequencePlayer.tsx`,
+  `docs/deployment.md`.
+- **Cambio:** al pasar el cursor o enfocar una tarjeta de objetivo se lanza la secuencia en segundo
+  plano; el progreso muestra la etapa y los cuadros ("3 de 12 cuadros"); el calentamiento de la
+  caché queda documentado como paso de despliegue.
+- **Criterios de aceptación:** al abrir un objetivo ya precargado el video aparece sin esperar; el
+  indicador de progreso muestra etapa y conteo.
+
+### 17.1 Estado
+
+| Paquete | Estado | Evidencia observada |
+|---|---|---|
+| WP-34 Movimiento visible | Hecho | Antes/después con cortina y parpadeo; círculo de la posición prevista en cada época; frase "se movió X″ hacia el <rumbo>"; se eligen épocas con cobertura ≥ 80 %; aviso cuando el objetivo es demasiado débil para verse |
+| WP-35 Demo guiada | Hecho | `/demo` con tres pasos recorridos en un navegador real (teclado incluido); paneles avanzados plegados |
+| WP-36 Pruebas en navegador | Hecho | Playwright con Chromium sobre las secuencias reales (`backend/tests/fixtures/real_sequences`) y el backend sin ruta hacia IRSA; ver 17.2 |
+| WP-37 Predicción frente a medición | Hecho | `docs/validacion-movimiento.md`: diferencias de 0,07 a 0,30 px en Barnard, Epsilon Indi B y WISE 0855 |
+| WP-38 Primera impresión | Hecho | Precarga al pasar el cursor, progreso por etapa y conteo; calentamiento documentado en `docs/deployment.md` |
+
+### 17.2 Lo que el navegador real encontró
+
+Es la primera vez que la interfaz se ejecutó en un navegador. Hallazgos y arreglos:
+
+| Hallazgo | Arreglo |
+|---|---|
+| La descarga de un cuadro y la exportación de video fallaban: la imagen se cacheaba sin cabecera CORS y la lectura posterior con `crossOrigin` la bloqueaba | `Vary: Origin` en las imágenes de secuencia y de recorte |
+| Los punteros de "última secuencia buena" solo se escribían al calcular, no al servir desde la caché de resultados | Se reescriben también al reutilizar un resultado |
+| El antes/después de Barnard comparaba una época con solo ~30 % de cobertura | Se eligen las épocas extremas con cobertura ≥ 80 % |
+| El marcador de trayectoria era una mancha que tapaba la fuente | Círculo en la primera posición, cruz en la última, anillo en la actual |
+| Avisos del servidor en inglés dentro de una interfaz en español | `lib/limitations.ts` traduce los avisos conocidos |
+| La etiqueta de la curva de R Draconis decía "flujo absoluto" aunque usa la amplitud de las alas de la PSF | La etiqueta y el eje lo dicen |
+
+Resultado de la batería en navegador: ver el resumen de §17.3.
+
+### 17.3 Resumen de pruebas en navegador
+
+**19 de 19 pruebas pasan** en Chromium (Playwright 1.49), con el backend sin ruta hacia IRSA y las secuencias reales de
+`backend/tests/fixtures/real_sequences` (284 KB): los cinco enlaces permanentes muestran cuadros reales que cambian
+al reproducir y llevan la insignia "desde caché"; de la portada al video hay un clic; una coordenada sexagesimal
+en la URL se resuelve y se reemplaza por números; una consulta inválida muestra un mensaje claro; la demo guiada
+se recorre con el teclado; antes/después, trayectoria y suavizado responden; los paneles avanzados empiezan
+plegados; el enlace copiado reproduce el estado en otra ventana; el modo incrustado oculta la navegación y la
+incrustación desde otro origen funciona mientras el resto del sitio queda bloqueado; la descarga de un cuadro y la
+exportación de video funcionan; los avisos del servidor salen en español y R Draconis explica que satura. Se ejecuta
+con `npm run test:e2e` en `frontend/` y como trabajo `e2e-browser` en CI.
+
+No cubre: la búsqueda del Planeta X (necesita el archivo en vivo), Aladin (carga un script externo) ni
+dispositivos móviles.

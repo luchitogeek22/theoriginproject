@@ -1,4 +1,4 @@
-import type { SequenceMode } from "./types";
+import type { SequenceMode, SequenceRequest } from "./types";
 
 export const DEFAULT_FOV_ARCMIN = 6;
 export const FOV_OPTIONS_ARCMIN = [2, 4, 6, 10, 20, 30, 60];
@@ -94,4 +94,22 @@ export function sequenceStateUrl(state: SequenceState, opts: { frame?: number; e
   if (opts.frame !== undefined) params.set("frame", String(opts.frame));
   if (opts.embed) params.set("embed", "1");
   return `/time-explorer?${params.toString()}`;
+}
+
+/** Request the time explorer sends for a permanent link, so the server cache matches. */
+export function targetSequenceRequest(
+  target: { ra_deg: number; dec_deg: number },
+  mode: SequenceMode,
+  fovArcmin = DEFAULT_FOV_ARCMIN
+): SequenceRequest {
+  return {
+    ra_deg: Number(target.ra_deg.toFixed(6)),
+    dec_deg: Number(target.dec_deg.toFixed(6)),
+    size_arcmin: fovArcmin,
+    mode,
+  };
+}
+
+export function sequenceJobKey(request: SequenceRequest): string {
+  return `sequence|${request.ra_deg.toFixed(6)}|${request.dec_deg.toFixed(6)}|${request.size_arcmin}|${request.mode}|${request.detector ?? ""}|${request.include_reference ? "ref" : ""}`;
 }

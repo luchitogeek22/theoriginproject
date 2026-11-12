@@ -40,6 +40,7 @@ gateway = SPHERExDataGateway()
 LONG_WAVELENGTH_DETECTOR = 6
 KEY_PATTERN = re.compile(r"^[0-9a-fs][0-9a-f]{23}$")
 IMMUTABLE = "public, max-age=31536000, immutable"
+IMAGE_HEADERS = {"Cache-Control": IMMUTABLE, "Vary": "Origin"}
 
 
 def _key(params: dict, product_ids: list[str]) -> str:
@@ -118,6 +119,12 @@ def _request_hash(params: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:24]
 
 
+def _remember_last_good(params: dict, key: str, result: dict) -> None:
+    if result.get("n_used", 0) > 0:
+        storage_put(f"sequences/{key}/last.json", json.dumps(result, default=str).encode())
+        storage_put(f"sequences/index/{_request_hash(params)}.json", json.dumps({"key": key}).encode())
+
+
 def _from_last_good(params: dict) -> dict | None:
     pointer = f"sequences/index/{_request_hash(params)}.json"
     if not storage_exists(pointer):
@@ -174,7 +181,9 @@ def _run_sequence(params: dict) -> dict:
     key = _key(params, [c["product_id"] for c in candidates])
     cached = f"sequences/{key}/result.json"
     if storage_exists(cached):
-        return json.loads(storage_get(cached))
+        reused = json.loads(storage_get(cached))
+        _remember_last_good(params, key, reused)
+        return reused
 
     centre = centre_for(params, candidates)
     job_store.set_progress(job_id, "downloading", 2, 6)
@@ -225,11 +234,7 @@ def _run_sequence(params: dict) -> dict:
         params["_degraded"] = True
     result["limitations"] = limitations + result["limitations"]
     result["queried_at"] = datetime.now(timezone.utc).isoformat()
-    if result["n_used"] > 0:
-        storage_put(f"sequences/{key}/last.json", json.dumps(result, default=str).encode())
-        storage_put(
-            f"sequences/index/{_request_hash(params)}.json", json.dumps({"key": key}).encode()
-        )
+    _remember_last_good(params, key, result)
     if not params.get("_degraded"):
         storage_put(cached, json.dumps(result, default=str).encode())
     return result
@@ -264,6 +269,10 @@ def run_shift_stack(params: dict) -> dict:
             motion["pmra"], motion["pmdec"], ((size_px - 1) / 2.0, (size_px - 1) / 2.0),
         )
         targeted.pop("_stack_error", None)
+        targeted["measured_motion"] = shift_stack.measure_motion(
+            [w["image"] for w in usable], [w["variance"] for w in usable], [w["mjd"] for w in usable],
+            motion["pmra"], motion["pmdec"], ((size_px - 1) / 2.0, (size_px - 1) / 2.0),
+        )
         targeted_mean = targeted.pop("_stack_mean", None)
         if targeted_mean is not None:
             noise = float(np.nanmedian(np.abs(targeted_mean - np.nanmedian(targeted_mean))) * 1.4826)
@@ -314,8 +323,7 @@ def named_png(key: str, name: str) -> Response:
     storage_key = f"sequences/{key}/{name}.png"
     if not KEY_PATTERN.match(key) or not storage_exists(storage_key):
         raise HTTPException(status_code=404, detail="Image not available")
-    return Response(content=storage_get(storage_key), media_type="image/png",
-                    headers={"Cache-Control": IMMUTABLE})
+    return Response(content=storage_get(storage_key), media_type="image/png", headers=IMAGE_HEADERS)
 
 
 @router.get("/sequences/{key}/frames/{index}.png")
@@ -324,6 +332,5 @@ def frame_png(key: str, index: int) -> Response:
     if not KEY_PATTERN.match(key) or index < 0 or not storage_exists(storage_key):
         raise HTTPException(status_code=404, detail="Frame not available")
     return Response(
-        content=storage_get(storage_key), media_type="image/png",
-        headers={"Cache-Control": IMMUTABLE},
+        content=storage_get(storage_key), media_type="image/png", headers=IMAGE_HEADERS,
     )

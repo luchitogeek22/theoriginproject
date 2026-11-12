@@ -1,0 +1,36 @@
+import { expect, test } from "@playwright/test";
+import { FRAME, skipTutorial, waitForSequence } from "./helpers";
+
+test("from the home page to the video takes one interaction", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/");
+  await page.getByRole("link", { name: /WISE 0855/ }).first().click();
+  await expect(page).toHaveURL(/\/time-explorer\?/);
+  await waitForSequence(page);
+  await expect(page.locator(FRAME).first()).toBeVisible();
+});
+
+test("a free-text coordinate in the URL is resolved and replaced by numbers", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/time-explorer?q=08h55m10.831s%20-7d14m42.53s&fov=6&mode=motion");
+  await expect(page).toHaveURL(/ra=133\.\d+&dec=-7\.\d+/, { timeout: 30_000 });
+});
+
+test("an invalid query shows a clear message and no crash", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/time-explorer?q=zzzz-not-a-place-12345&fov=6&mode=motion");
+  await expect(page.getByText(/No se pudo|no se encontr/i).first()).toBeVisible({ timeout: 40_000 });
+});
+
+test("the guided demo walks through three steps with the keyboard", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/demo");
+  const title = page.getByTestId("demo-step-title");
+  await expect(title).toHaveText("Mira cómo se mueve");
+  await page.getByTestId("demo-next").click();
+  await expect(title).toHaveText("Mira cómo late");
+  await page.keyboard.press("ArrowRight");
+  await expect(title).toHaveText("Así se buscaría un Planeta X");
+  await page.keyboard.press("ArrowLeft");
+  await expect(title).toHaveText("Mira cómo late");
+});

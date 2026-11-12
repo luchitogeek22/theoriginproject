@@ -1,5 +1,6 @@
 "use client";
 
+import { translateLimitation } from "@/lib/limitations";
 import { useMemo, useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { api, assetUrl } from "@/lib/api";
@@ -189,7 +190,7 @@ function TargetedSection({ check }: { check: NonNullable<ShiftStackResult["targe
       )}
       <ul className="mt-1">
         {check.limitations.map((l, i) => (
-          <li key={i}>· {l}</li>
+          <li key={i}>· {translateLimitation(l)}</li>
         ))}
       </ul>
     </div>
@@ -258,7 +259,7 @@ export default function ShiftStackPanel({ ra, dec, detector }: ShiftStackPanelPr
           <p className="font-semibold">Búsqueda no realizada: hay {result.n_visits} visitas y se necesitan al menos 3.</p>
           <ul className="mt-1">
             {result.limitations.map((l, i) => (
-              <li key={i}>· {l}</li>
+              <li key={i}>· {translateLimitation(l)}</li>
             ))}
           </ul>
         </div>
@@ -315,7 +316,7 @@ export default function ShiftStackPanel({ ra, dec, detector }: ShiftStackPanelPr
       {result && result.limitations.length > 0 && result.ok && (
         <ul className="mt-2 text-[11px] text-mutedstar">
           {result.limitations.map((l, i) => (
-            <li key={i}>· {l}</li>
+            <li key={i}>· {translateLimitation(l)}</li>
           ))}
         </ul>
       )}

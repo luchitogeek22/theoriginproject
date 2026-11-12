@@ -3,19 +3,28 @@
 /** Entry screen: search, challenge targets, three actions and real archive status. */
 
 import Link from "next/link";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Clock3, Crosshair, Orbit, RefreshCw } from "lucide-react";
+import { Clock3, Crosshair, Orbit, Play, RefreshCw } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import { DataRelease, StatusDot, useDataSources } from "@/components/StatusBanner";
-import { sequenceUrl } from "@/lib/sequenceParams";
+import { api } from "@/lib/api";
+import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
 import { useResearch } from "@/lib/store";
-import { VALIDATION_TARGETS } from "@/lib/targets";
+import { VALIDATION_TARGETS, type ValidationTarget } from "@/lib/targets";
 
 export default function Home() {
   const router = useRouter();
   const { target } = useResearch();
   const { sources, note, collections, error, loading, refresh } = useDataSources();
+  const prefetched = useRef(new Set<string>());
+
+  const prefetch = (t: ValidationTarget) => {
+    if (prefetched.current.has(t.key)) return;
+    prefetched.current.add(t.key);
+    api.createSequence(targetSequenceRequest(t, t.mode)).catch(() => {});
+  };
 
   return (
     <div className="scroll-thin relative h-full w-full overflow-y-auto">
@@ -44,6 +53,13 @@ export default function Home() {
             <SearchBar />
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href="/demo"
+              data-testid="home-demo-link"
+              className="flex items-center gap-1.5 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
+            >
+              <Play size={14} /> Ver la demo guiada
+            </Link>
             <button
               onClick={() => router.push("/living-sky")}
               className="flex items-center gap-1.5 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
@@ -72,6 +88,8 @@ export default function Home() {
               <li key={t.key}>
                 <Link
                   href={sequenceUrl(t, undefined, t.mode)}
+                  onMouseEnter={() => prefetch(t)}
+                  onFocus={() => prefetch(t)}
                   className="flex h-full min-h-[120px] flex-col justify-between gap-3 rounded-lg border border-line bg-abyss/85 p-4 hover:border-pulse focus-visible:border-pulse focus-visible:outline-none"
                 >
                   <span className="text-base font-semibold leading-snug text-starlight">{t.hook}</span>

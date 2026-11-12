@@ -119,6 +119,7 @@ export interface LightCurve {
   detector?: number | null;
   target_detected?: boolean;
   target_median_snr?: number | null;
+  method?: "aperture" | "psf_wings";
   limitations: string[];
 }
 

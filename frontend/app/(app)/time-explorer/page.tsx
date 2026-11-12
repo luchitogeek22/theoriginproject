@@ -1,9 +1,11 @@
 "use client";
 
+import { translateLimitation } from "@/lib/limitations";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, TriangleAlert } from "lucide-react";
+import JobProgress from "@/components/JobProgress";
 import CutoutComparison from "@/components/CutoutComparison";
 import Explainer from "@/components/Explainer";
 import Glossary from "@/components/Glossary";
@@ -17,6 +19,7 @@ import {
   freeTextQuery,
   parseFrameParam,
   parseSequenceState,
+  sequenceJobKey,
   sequenceStateUrl,
 } from "@/lib/sequenceParams";
 import { useResearch } from "@/lib/store";
@@ -34,14 +37,6 @@ const MODES: Array<{ value: SequenceMode; label: string; help: string }> = [
   { value: "motion", label: "Movimiento", help: "Cada cuadro se normaliza por separado: realza desplazamientos." },
   { value: "brightness", label: "Brillo", help: "Escala común a todos los cuadros: el brillo es comparable." },
 ];
-
-const STAGE_LABELS: Record<string, string> = {
-  queued: "En cola",
-  searching: "Buscando observaciones en el archivo",
-  downloading: "Descargando recortes",
-  processing: "Procesando cuadros",
-  rendering: "Generando imágenes",
-};
 
 function friendlyError(status: number | null, message: string): string {
   if (status === 429) {
@@ -63,6 +58,7 @@ function Explorer() {
   const initialFrame = useMemo(() => parseFrameParam(searchParams.get("frame")), [searchParams]);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     if (!query) {
@@ -118,9 +114,7 @@ function Explorer() {
       },
     [params]
   );
-  const key = request
-    ? `sequence|${request.ra_deg.toFixed(6)}|${request.dec_deg.toFixed(6)}|${request.size_arcmin}|${request.mode}|${request.detector ?? ""}|${request.include_reference ? "ref" : ""}`
-    : null;
+  const key = request ? sequenceJobKey(request) : null;
 
   const job = useJob<SequenceResult>(key, (signal) => {
     if (!request) throw new Error("Faltan coordenadas.");
@@ -185,9 +179,6 @@ function Explorer() {
   const title = marker?.name ?? "objetivo";
   const result = job.phase === "completed" ? job.result : null;
   const busy = job.phase === "creating" || job.phase === "running";
-  const total = job.job?.total ?? 0;
-  const done = job.job?.done ?? 0;
-  const stageLabel = job.job?.stage ? (STAGE_LABELS[job.job.stage] ?? job.job.stage) : "Enviando la petición";
   const shareUrl = (frame: number) => sequenceStateUrl(params, { frame });
   const exportName = `origin-${title.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "objetivo"}`;
 
@@ -274,39 +265,7 @@ function Explorer() {
       )}
 
       <div aria-live="polite">
-        {busy && (
-          <section className="mb-3 max-w-xl rounded border border-line bg-deep p-3 text-xs" aria-label="Progreso">
-            <p className="flex items-center gap-2 text-starlight">
-              <Loader2 size={14} className="animate-spin text-pulse" />
-              {stageLabel}
-              {total > 0 ? ` (${done} / ${total})` : ""}
-            </p>
-            <div
-              className="mt-2 h-1.5 overflow-hidden rounded bg-abyss"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={total || 1}
-              aria-valuenow={total > 0 ? done : undefined}
-              aria-label="Progreso de la secuencia"
-            >
-              <div
-                className={`h-full bg-pulse ${total > 0 ? "" : "w-1/3 animate-pulse"}`}
-                style={total > 0 ? { width: `${Math.round((done / total) * 100)}%` } : undefined}
-              />
-            </div>
-            <p className="mt-2 text-mutedstar">
-              La primera vez puede tardar un par de minutos: se descargan y alinean las exposiciones. Si recargas la
-              página, se recupera la misma tarea.
-            </p>
-            <button
-              type="button"
-              onClick={job.cancel}
-              className="mt-2 rounded border border-line px-3 py-1 text-starlight hover:border-pulse"
-            >
-              Cancelar
-            </button>
-          </section>
-        )}
+        {busy && <JobProgress job={job.job} onCancel={job.cancel} />}
 
         {job.phase === "cancelled" && (
           <section className="mb-3 max-w-xl rounded border border-line bg-deep p-3 text-xs text-mutedstar">
@@ -348,7 +307,7 @@ function Explorer() {
             {result.limitations.length > 0 && (
               <ul className="mt-1">
                 {result.limitations.map((l, i) => (
-                  <li key={i}>· {l}</li>
+                  <li key={i}>· {translateLimitation(l)}</li>
                 ))}
               </ul>
             )}
@@ -356,29 +315,19 @@ function Explorer() {
         )}
       </div>
 
-      <div className={embed ? "" : "grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px]"}>
-        <section aria-label="Secuencia de imágenes" className="min-w-0">
-          {result && result.frames.length > 0 && (
-            <SequencePlayer
-              key={job.job?.job_id ?? key}
-              result={result}
-              fovArcmin={params.fov}
-              onFovChange={(fov) => update({ fov: String(fov) })}
-              initialFrame={initialFrame}
-              shareUrl={shareUrl}
-              exportName={exportName}
-            />
-          )}
-        </section>
-        {!embed && (
-          <div className="flex min-w-0 flex-col gap-3">
-            <Explainer />
-            <section aria-label="Mapa del cielo" className="h-[360px] overflow-hidden rounded border border-line xl:h-[420px]">
-              <AladinViewer ra={params.ra} dec={params.dec} fovArcmin={params.fov} marker={marker} />
-            </section>
-          </div>
+      <section aria-label="Secuencia de imágenes" className="min-w-0">
+        {result && result.frames.length > 0 && (
+          <SequencePlayer
+            key={job.job?.job_id ?? key}
+            result={result}
+            fovArcmin={params.fov}
+            onFovChange={(fov) => update({ fov: String(fov) })}
+            initialFrame={initialFrame}
+            shareUrl={shareUrl}
+            exportName={exportName}
+          />
         )}
-      </div>
+      </section>
 
       {embed && (
         <p className="mt-2 text-center text-[10px] text-mutedstar">
@@ -386,15 +335,40 @@ function Explorer() {
         </p>
       )}
 
-      {!embed && result && result.frames.length > 0 && (
-        <div className="mt-4 grid gap-3 xl:grid-cols-2">
-          {result.lightcurve && <LightCurve curve={result.lightcurve} />}
-          <ShiftStackPanel ra={params.ra} dec={params.dec} detector={params.detector} />
-        </div>
-      )}
-
       {!embed && (
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-4 flex flex-col gap-2" data-testid="advanced-panels">
+          <Explainer />
+          <details
+            className="rounded border border-line bg-deep/60"
+            onToggle={(e) => setMapOpen(e.currentTarget.open)}
+          >
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">Mapa del cielo</summary>
+            <section aria-label="Mapa del cielo" className="h-[360px] overflow-hidden border-t border-line">
+              {mapOpen && <AladinViewer ra={params.ra} dec={params.dec} fovArcmin={params.fov} marker={marker} />}
+            </section>
+          </details>
+          {result && result.frames.length > 0 && (
+            <>
+              {result.lightcurve && (
+                <details className="rounded border border-line bg-deep/60" open={params.mode === "brightness"}>
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
+                    Curva de luz
+                  </summary>
+                  <div className="p-3">
+                    <LightCurve curve={result.lightcurve} />
+                  </div>
+                </details>
+              )}
+              <details className="rounded border border-line bg-deep/60">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
+                  Apilado y búsqueda de un Planeta X (avanzado)
+                </summary>
+                <div className="p-3">
+                  <ShiftStackPanel ra={params.ra} dec={params.dec} detector={params.detector} />
+                </div>
+              </details>
+            </>
+          )}
           <Glossary />
           <details className="rounded border border-line bg-deep/60">
             <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
