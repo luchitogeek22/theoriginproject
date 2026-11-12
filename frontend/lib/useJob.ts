@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ApiError, api } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
 import type { JobStatus } from "@/lib/types";
 
 export type JobPhase = "idle" | "creating" | "running" | "completed" | "failed" | "cancelled";
@@ -10,9 +12,12 @@ export interface JobState<T> {
   phase: JobPhase;
   job: JobStatus | null;
   result: T | null;
+  /** User-facing error text in the active language ("" when there is no error). */
   error: string;
   errorStatus: number | null;
   forKey: string | null;
+  /** Raw failure, translated on render so a language switch also updates the message. */
+  cause?: unknown;
 }
 
 const STORAGE_PREFIX = "origin-job:";
@@ -103,7 +108,8 @@ export function useJob<T>(
         phase: "failed",
         job: s.job,
         result: null,
-        error: e instanceof Error ? e.message : "El trabajo falló.",
+        error: "",
+        cause: e,
         errorStatus: e instanceof ApiError ? e.status : null,
       }));
     };
@@ -139,7 +145,9 @@ export function useJob<T>(
           return;
         }
         if (job.status === "failed") {
-          throw new ApiError(500, job.error || "El trabajo falló en el servicio científico.");
+          throw job.error
+            ? new ApiError(500, job.error)
+            : new ApiError(500, "The job failed in the science service.", "jobFailed");
         }
         await sleep(delay, signal);
         await waitVisible(signal);
@@ -186,5 +194,8 @@ export function useJob<T>(
       : state.forKey === key
         ? state
         : { ...(IDLE as JobState<T>), phase: "creating", forKey: key };
-  return { ...current, cancel, retry };
+  const errorText = useErrorText();
+  const t = useTranslations("errors");
+  const error = current.phase === "failed" ? errorText(current.cause, t("jobFailed")) : current.error;
+  return { ...current, error, cancel, retry };
 }

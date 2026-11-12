@@ -73,7 +73,7 @@
     "label": "Language",
     "change": "Change language, current: {language}"
   },
-  "errors": {
+  "errorPage": {
     "title": "Something went wrong",
     "body": "The screen hit an unexpected error. Your saved research has not been deleted.",
     "reference": "Reference: {digest}."

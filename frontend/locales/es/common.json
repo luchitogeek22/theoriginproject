@@ -73,7 +73,7 @@
     "label": "Idioma",
     "change": "Cambiar idioma, actual: {language}"
   },
-  "errors": {
+  "errorPage": {
     "title": "Algo salió mal",
     "body": "La pantalla tuvo un error inesperado. Tu investigación guardada no se ha borrado.",
     "reference": "Referencia: {digest}."

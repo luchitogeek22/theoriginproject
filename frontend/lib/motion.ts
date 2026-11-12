@@ -1,38 +1,23 @@
+import { useFormatter, useTranslations } from "next-intl";
 import type { SequenceFrame, SequenceOverlay } from "./types";
 
-const COMPASS = ["norte", "noreste", "este", "sureste", "sur", "suroeste", "oeste", "noroeste"];
+const COMPASS = ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"] as const;
+
+export type CompassKey = (typeof COMPASS)[number];
 
 export interface MotionSummary {
   arcsec: number;
-  direction: string;
+  direction: CompassKey;
   from: string;
   to: string;
   months: number;
 }
 
-export function formatArcsec(value: number): string {
-  return value.toFixed(1).replace(".", ",");
-}
-
-export function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso.slice(0, 10);
-  return date.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-}
-
-export function compassDirection(dx: number, dy: number): string {
+export function compassDirection(dx: number, dy: number): CompassKey {
   const east = -dx;
   const north = -dy;
   const angle = (Math.atan2(east, north) * 180) / Math.PI;
   return COMPASS[Math.round(((angle + 360) % 360) / 45) % 8];
-}
-
-export function spanLabel(fromIso: string, toIso: string): string {
-  const days = (new Date(toIso).getTime() - new Date(fromIso).getTime()) / 86_400_000;
-  if (!Number.isFinite(days) || days < 0) return "";
-  const months = Math.round(days / 30.44);
-  if (months < 1) return `${Math.max(1, Math.round(days))} ${Math.round(days) === 1 ? "día" : "días"}`;
-  return `${months} ${months === 1 ? "mes" : "meses"}`;
 }
 
 export function motionSummary(overlay: SequenceOverlay | undefined, frames: SequenceFrame[]): MotionSummary | null {
@@ -54,24 +39,52 @@ export function motionSummary(overlay: SequenceOverlay | undefined, frames: Sequ
   };
 }
 
-const STAGE_LABELS: Record<string, string> = {
-  queued: "En cola",
-  searching: "Buscando observaciones",
-  selecting: "Eligiendo visitas",
-  downloading: "Descargando cuadros",
-  rendering: "Alineando y dibujando",
-  photometry: "Midiendo brillo",
-  "reference frame": "Buscando el cuadro WISE",
-  storing: "Guardando",
-  processing: "Procesando cuadros",
-};
+const STAGES = [
+  "queued",
+  "searching",
+  "selecting",
+  "downloading",
+  "rendering",
+  "photometry",
+  "reference frame",
+  "storing",
+  "processing",
+] as const;
 
-export function stageLabel(stage: string | undefined): string {
-  if (!stage) return "Enviando la petición";
-  return STAGE_LABELS[stage] ?? stage;
-}
+type StageKey = "queued" | "searching" | "selecting" | "downloading" | "rendering" | "photometry" | "referenceFrame" | "storing" | "processing";
 
-export function progressText(stage: string | undefined, done: number, total: number): string {
-  const label = stageLabel(stage);
-  return total > 0 ? `${label}: ${done} de ${total}` : label;
+const stageKey = (stage: string): StageKey | null =>
+  (STAGES as readonly string[]).includes(stage) ? (stage === "reference frame" ? "referenceFrame" : (stage as StageKey)) : null;
+
+/** Locale-aware labels and formats for motion results and job progress. */
+export function useMotionFormat() {
+  const t = useTranslations("motion");
+  const format = useFormatter();
+  return {
+    /** Angular displacement with one decimal in the active locale's notation. */
+    arcsec: (value: number) => format.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    /** Observation date (UTC) such as "12 November 2026". */
+    date: (iso: string) => {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return iso.slice(0, 10);
+      return format.dateTime(date, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    },
+    direction: (key: CompassKey) => t(`compass.${key}`),
+    span: (fromIso: string, toIso: string) => {
+      const days = (new Date(toIso).getTime() - new Date(fromIso).getTime()) / 86_400_000;
+      if (!Number.isFinite(days) || days < 0) return "";
+      const months = Math.round(days / 30.44);
+      if (months < 1) return t("span.days", { count: Math.max(1, Math.round(days)) });
+      return t("span.months", { count: months });
+    },
+    stage: (stage: string | undefined) => {
+      if (!stage) return t("stage.sending");
+      const key = stageKey(stage);
+      return key ? t(`stage.${key}`) : stage;
+    },
+    progress: (stage: string | undefined, done: number, total: number) => {
+      const label = stage ? (stageKey(stage) ? t(`stage.${stageKey(stage)!}`) : stage) : t("stage.sending");
+      return total > 0 ? t("progress", { label, done, total }) : label;
+    },
+  };
 }

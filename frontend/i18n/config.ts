@@ -27,4 +27,4 @@ export const LOCALE_COOKIE = "NEXT_LOCALE";
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /** Message files, one per functional domain. Every locale ships the same files. */
-export const MESSAGE_FILES = ["common", "lib", "pages", "analysis", "components", "landing"] as const;
+export const MESSAGE_FILES = ["common", "lib", "pages", "analysis", "sky", "components", "landing"] as const;

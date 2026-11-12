@@ -1,6 +1,6 @@
 # i18n EN/ES for the whole frontend
 Objective: end-to-end internationalization (English default, Spanish second) with next-intl, extensible to new locales by config + message files.
-Branch: `feat/i18n-en-es` (from `developer`). Delivery: ask-on-risk. Runner: `tsc --noEmit`, `next build`, `node --test` (parity), Playwright e2e.
+Branch: `developer` (user request). Delivery: ask-on-risk. Runner: `tsc --noEmit`, `next build`, `node --test` (parity), Playwright e2e.
 
 ## Specs
 
@@ -33,3 +33,4 @@ Decisions: `localePrefix: "as-needed"` (English unprefixed keeps `/time-explorer
 - L1 (2026-11-12) User request: full i18n prompt (EN default, ES second, next-intl evaluation, SEO, switcher, tests, final report) + "tanto para la lading como para las demas pantallas ok?"
 - L2 Audit: Next 14.2.35 App Router, React 18.3.1, TS 5.6.3; ~40 files with hardcoded Spanish; landing already English; backend sends English limitation text that `lib/limitations.ts` translates to Spanish via regex; `html lang="es"` fixed; no unit test runner (audit D11).
 - L3 (2026-11-12) User correction: "no llames la carpete messages llamale locales por fa" — translation files live in `frontend/locales/<locale>/*.json`.
+- L4 (2026-11-12) User correction: "qur por que create otra rama? en la misma rama developoer por fa" — work moved to `developer` (fast-forward), feature branch deleted.

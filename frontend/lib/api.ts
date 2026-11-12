@@ -14,6 +14,7 @@ import type {
   Target,
 } from "./types";
 import { getAccessToken } from "@/lib/supabase/client";
+import { TranslatableError, type ErrorCode, type ErrorValues } from "./errors";
 
 export function resolveBase(value: string | undefined, production: boolean): string | null {
   const raw = (value ?? "").trim();
@@ -27,8 +28,9 @@ export function resolveBase(value: string | undefined, production: boolean): str
   return raw.replace(/\/+$/, "");
 }
 
-export function parseErrorBody(status: number, contentType: string, body: string): string {
-  const fallback = `La petición falló (${status}).`;
+/** Server-provided error detail (FastAPI `detail`), or null when the body carries none. */
+export function parseErrorBody(contentType: string, body: string): string | null {
+  const fallback = null;
   if (!contentType.toLowerCase().includes("json")) return fallback;
   let parsed: unknown;
   try {
@@ -56,19 +58,16 @@ function formatValidationItem(item: unknown): string {
 
 const BASE = resolveBase(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV === "production");
 
-const NOT_CONFIGURED =
-  "La dirección de la API no está configurada. Define NEXT_PUBLIC_API_URL con la URL del backend (https://...).";
-
-export class ApiError extends Error {
+export class ApiError extends TranslatableError {
   status: number;
-  constructor(status: number, message: string) {
-    super(message);
+  constructor(status: number, message: string, code?: ErrorCode, values?: ErrorValues) {
+    super(message, code, values);
     this.status = status;
   }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (BASE === null) throw new ApiError(0, NOT_CONFIGURED);
+  if (BASE === null) throw new ApiError(0, "API URL is not configured (NEXT_PUBLIC_API_URL).", "apiNotConfigured");
   let authHeader: Record<string, string> = {};
   try {
     const token = await getAccessToken();
@@ -88,25 +87,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
-    throw new ApiError(0, "No se pudo contactar con el servicio científico. Comprueba que esté en marcha.");
+    throw new ApiError(0, "Could not reach the science service.", "apiUnreachable");
   }
   const contentType = res.headers.get("content-type") ?? "";
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new ApiError(res.status, parseErrorBody(res.status, contentType, body));
+    const detail = parseErrorBody(contentType, body);
+    throw detail
+      ? new ApiError(res.status, detail)
+      : new ApiError(res.status, `Request failed (${res.status}).`, "requestFailed", { status: res.status });
   }
   if (res.status === 204) return undefined as T;
   if (!contentType.toLowerCase().includes("json")) {
-    throw new ApiError(
-      res.status,
-      "El servidor devolvió una respuesta que no es JSON. Comprueba que NEXT_PUBLIC_API_URL apunte al backend."
-    );
+    throw new ApiError(res.status, "The server returned a non-JSON response.", "notJson");
   }
   try {
     return (await res.json()) as T;
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
-    throw new ApiError(res.status, "El servidor devolvió un JSON no válido.");
+    throw new ApiError(res.status, "The server returned invalid JSON.", "invalidJson");
   }
 }
 
@@ -190,9 +189,11 @@ export async function pollJob<T>(
       return full.result;
     }
     if (status.status === "failed") {
-      throw new ApiError(500, status.error || "El análisis falló en el servicio científico.");
+      throw status.error
+        ? new ApiError(500, status.error)
+        : new ApiError(500, "The analysis failed in the science service.", "analysisFailed");
     }
-    if (Date.now() > deadline) throw new ApiError(504, "El análisis excedió el tiempo de espera. Inténtalo más tarde.");
+    if (Date.now() > deadline) throw new ApiError(504, "The analysis timed out.", "analysisTimeout");
     await new Promise((r) => setTimeout(r, interval));
   }
 }
