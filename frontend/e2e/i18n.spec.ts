@@ -47,7 +47,7 @@ test.describe("internationalization", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
-  test("each language has translated metadata, canonical and hreflang", async ({ page }) => {
+  test("each language has translated metadata, canonical and hreflang", async ({ page, context }) => {
     await page.goto("/es/candidates");
     await expect(page).toHaveTitle("Candidatos — The Origin Project");
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/es\/candidates$/);
@@ -56,6 +56,8 @@ test.describe("internationalization", () => {
     await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute("href", /\/candidates$/);
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "es_ES");
 
+    // Visiting /es remembered Spanish; forget it to look at the English document.
+    await context.clearCookies();
     await page.goto("/candidates");
     await expect(page).toHaveTitle("Candidates — The Origin Project");
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "en_US");
@@ -74,4 +76,22 @@ test.describe("internationalization", () => {
     await expect(select).toBeFocused();
     await expect(select.locator("option")).toHaveText(["English", "Español"]);
   });
+
+  for (const prefix of ["", "/es"]) {
+    test(`no hydration or missing-translation errors (${prefix || "/"})`, async ({ page }) => {
+      const problems: string[] = [];
+      const watch = (text: string) => {
+        if (/hydrat|did not match|MISSING_MESSAGE|INVALID_MESSAGE|FORMATTING_ERROR|IntlError/i.test(text)) problems.push(text);
+      };
+      page.on("console", (msg) => {
+        if (msg.type() === "error" || msg.type() === "warning") watch(msg.text());
+      });
+      page.on("pageerror", (error) => watch(error.message));
+      for (const path of ["/", "/landing-page", "/living-sky", "/time-explorer", "/spectral-lab", "/candidates", "/demo", "/login"]) {
+        await page.goto(`${prefix}${path === "/" && prefix ? "" : path}`);
+        await page.waitForLoadState("networkidle");
+      }
+      expect(problems).toEqual([]);
+    });
+  }
 });
