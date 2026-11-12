@@ -98,7 +98,7 @@ desplegada.
 |---|---|---|---|---|---|
 | R1 | Herramienta pública sin barreras | Parcial | El middleware exige sesión en `/time-explorer` si Supabase está configurado (`frontend/middleware.ts:17`); el backend responde 401 en `/analysis/*` con secreto configurado (`backend/app/auth.py:161-166`) | Todo el flujo funciona en una ventana privada; la sesión solo sirve para guardar en el diario | WP-04 |
 | R2 | Entrada por RA y Dec | Parcial | Solo grados decimales (`frontend/components/SearchBar.tsx:25-28`); el formato del propio enunciado (`08h55m10.831s -7d14m42.53s`) se envía a SIMBAD como nombre | Acepta decimal, sexagesimal, nombre y la URL `?ra=&dec=` | WP-06, WP-11 |
-| R3 | Imágenes reales de SPHEREx | No verificable | Supuestos sin comprobar sobre columnas de SIA2, recorte y extensiones (SCI-10); ruta PyVO siempre falla (BE-03) | Cada cuadro cita su `obs_id`, colección, fecha y detector, y enlaza al producto en IRSA | WP-05, WP-07 |
+| R3 | Imágenes reales de SPHEREx | **Parcial** (verificado en WP-05) | Los datos existen y son accesibles para los cinco objetivos, pero la URL de recorte de la app es rechazada por IRSA (HTTP 422) y el respaldo baja el detector completo; el mapeo de columnas no reconoce detector, banda ni fecha (§15.1) | Cada cuadro cita su producto (`obs_publisher_did`), colección, fecha y detector, y enlaza al archivo en IRSA | WP-07, WP-08, WP-33 |
 | R4 | Secuencia como video | **Falta** | No hay ninguna imagen ligada a la reproducción | Reproductor fluido, precargado, con teclado, parpadeo A/B y exportación a video | WP-10, WP-11, WP-29 |
 | R5 | Cambio perceptible rápido y sin ser experto | **Falta** | Escala por cuadro (SCI-01), cuadros sin alinear (SCI-02), seis interacciones manuales (UX-04) | Dos interacciones hasta ver la secuencia; el cambio se señala y se explica en lenguaje llano | WP-10, WP-11, WP-24, WP-32 |
 | R6 | Funciona en los cinco objetivos | **Falta** en 3, Parcial en 1, No verificable en 1 | §4 | Cada objetivo tiene un enlace permanente que muestra su fenómeno en la demo | WP-06, WP-10, WP-23, WP-31 |
@@ -121,20 +121,28 @@ desplegada.
 
 ## 4. Auditoría por objetivo de prueba
 
-Datos físicos aproximados, para orientar el diseño. Los valores que vayan al
-código se toman de SIMBAD o Gaia con su procedencia (RC-8 del documento
-técnico); no se copian de esta tabla.
+**Verificado el 2026-11-11 (WP-05).** Movimientos propios y posiciones de SIMBAD
+(espejo de Harvard); cobertura y bases temporales de la API SIA2 de IRSA. El
+detalle y la procedencia están en §15. Los valores que vayan al código se toman
+de la fuente con su procedencia (RC-8 del documento técnico).
 
-| Objetivo | Fenómeno | Movimiento propio aprox. | Desplazamiento desde J2000 | Desplazamiento en la ventana SPHEREx (mayo 2025 a nov. 2026, unos 1,5 años) |
-|---|---|---|---|---|
-| Barnard's Star | Movimiento | 10,4 arcsec/año | ≈ 4,5 arcmin | ≈ 16 arcsec ≈ 2,5 píxeles |
-| WISE 0855 | Movimiento, objeto muy frío | 8,1 arcsec/año | No aplica: posición de referencia de la era WISE | ≈ 12 arcsec ≈ 2 píxeles |
-| Epsilon Indi B | Movimiento, binaria de enanas marrones | 4,7 arcsec/año | ≈ 2 arcmin | ≈ 7 arcsec ≈ 1,1 píxeles |
-| RW Aurigae | Brillo, T Tauri irregular | Pequeño | — | — |
-| R Draconis | Brillo, Mira con periodo de unos 245 días | Pequeño | — | — |
+| Objetivo | Fenómeno | Movimiento propio (SIMBAD) | Desplazamiento desde J2000 a 2026,0 | Mejor base temporal en un detector | Desplazamiento esperado en esa base |
+|---|---|---|---|---|---|
+| Barnard's Star | Movimiento | 10,39 arcsec/año | 4,5 arcmin | 402 días (D3/D6, 2025-08 a 2026-09) | 11,4 arcsec = **1,9 px** |
+| WISE 0855 | Movimiento, objeto muy frío | 8,15 arcsec/año | 3,5 arcmin respecto de la posición J2000 de SIMBAD | 373 días (D2, 2025-05 a 2026-05) | 8,3 arcsec = **1,35 px** |
+| Epsilon Indi B | Movimiento, binaria de enanas marrones | 4,68 arcsec/año | 2,0 arcmin | 526 días (D2, 2025-04 a 2026-10) | 6,7 arcsec = **1,1 px** |
+| RW Aurigae | Brillo, T Tauri irregular | 0,02 arcsec/año | 0,01 arcmin | 373 días, 57 exposiciones por detector | — |
+| R Draconis | Brillo, Mira con periodo de unos 245 días | 0,02 arcsec/año | 0,01 arcmin | 478 días, unas 600 exposiciones por detector | — |
 
-Píxel de SPHEREx: 6,15 arcsec (documentación de la misión). La paralaje de estos
-objetos (≤ 0,55 arcsec) es despreciable frente al píxel.
+Píxel de SPHEREx: 6,15 arcsec (columna `s_pixel_scale` de la respuesta de IRSA).
+La paralaje de estos objetos (≤ 0,55 arcsec) es despreciable frente al píxel.
+
+**Consecuencia de diseño:** ningún objetivo de movimiento se desplaza más de 2
+píxeles con todos los datos disponibles. A simple vista, un parpadeo entre dos
+cuadros sueltos casi no muestra movimiento. Para que R5 se cumpla hacen falta
+tres cosas: apilar por época (sube la señal y permite medir un centroide con
+precisión de décimas de píxel), marcar la trayectoria prevista y ampliar la
+imagen sin suavizarla.
 
 ### 4.1 Estado y necesidades por objetivo
 
@@ -142,10 +150,11 @@ objetos (≤ 0,55 arcsec) es despreciable frente al píxel.
 - Hoy: sin fijar; depende de SIMBAD; con la posición J2000 queda **fuera** del
   recorte de 3 arcmin de radio.
 - Necesita: posición propagada a la fecha de cada cuadro (WP-06); recorte
-  centrado en la posición propagada; la estrella es brillante, por lo que 2,5
-  píxeles en 1,5 años se ven en un parpadeo entre la primera y la última visita.
-- Riesgo: saturación o persistencia en el detector (hipótesis; WP-05 lo
-  comprueba con las banderas).
+  centrado en la posición propagada. Es brillante, así que su centroide se mide
+  con precisión muy inferior a un píxel, y el desplazamiento de 1,9 píxeles se
+  verá si se apila por época y se marca la trayectoria.
+- Riesgo: saturación o persistencia en el detector. Pendiente de comprobar con
+  las banderas `OVERFLOW` y `PERSIST` de sus propios píxeles (§15.6).
 - Demo: "la estrella se desplaza sobre un fondo fijo de estrellas de Gaia", con
   la trayectoria prevista dibujada.
 
@@ -157,20 +166,28 @@ objetos (≤ 0,55 arcsec) es despreciable frente al píxel.
   longitud de onda (WP-10); búsqueda por apilado con desplazamiento (WP-25).
 - **Hipótesis central de la demo:** al ser una enana marrón de unos 250 K, su
   emisión debería concentrarse en el extremo largo del rango de SPHEREx (en
-  torno a 4,5 µm) y ser casi invisible por debajo de unos 3 µm. Si WP-05 lo
-  confirma, es la mejor historia posible: "así se vería un Planeta X frío".
-- Riesgo: puede estar en el límite de detección incluso sumando. Si no se
-  detecta, la herramienta lo dice y muestra el límite superior.
+  torno a 4,5 µm) y ser casi invisible por debajo de unos 3 µm. Estado tras
+  WP-05: **parcialmente respaldada.** Al sumar 22 exposiciones del detector D6
+  (4,4 a 5,0 µm) aparece un excedente a menos de 0,5 píxeles de la posición
+  prevista, más brillante que el 97 % de las posiciones al azar, con un flujo
+  compatible con su magnitud W2 de AllWISE. No es una detección confirmada
+  (≈ 1,9σ empíricos con un solo ensayo a priori) y falta comprobar que no aparece
+  en los detectores de longitud de onda corta (§15.5).
+- Riesgo: está en el límite de detección incluso sumando. Si no se detecta, la
+  herramienta lo dice y muestra el límite superior.
 
 **Epsilon Indi B**
 - Hoy: depende de SIMBAD; unos 2 arcmin descentrado.
 - Necesita: propagación (WP-06). Las dos enanas marrones están separadas menos
   de un arcosegundo: **SPHEREx no puede separarlas** y la interfaz debe
-  decirlo. Epsilon Indi A, muy brillante, está a unos 6 o 7 arcmin (verificar):
-  puede quedar en el campo y producir artefactos.
-- Con 1,1 píxeles en 1,5 años el movimiento es marginal solo con SPHEREx. La
-  época de referencia WISE (2010) amplía la base a unos 16 años y unos 75 arcsec
-  (WP-28), rotulada como contexto de otra misión.
+  decirlo. Epsilon Indi A, muy brillante, está a 6,7 arcmin según SIMBAD
+  (posiciones J2000 de A y B): no entra en un recorte de 6 arcmin, pero sí en
+  campos de unos 14 arcmin o más y puede producir artefactos.
+- Con 1,1 píxeles en 526 días el movimiento es marginal solo con SPHEREx. La
+  época de referencia WISE/NEOWISE amplía la base a más de una década (IRSA
+  devuelve 677 imágenes individuales NEOWISE-R de todas las bandas y 4 imágenes
+  AllWISE en el campo de WISE 0855; en el de Epsilon Indi B falta comprobarlo) y
+  se rotula como contexto de otra misión (WP-28).
 
 **RW Aurigae**
 - Hoy: sin escala compartida ni fotometría; la variabilidad es invisible.
@@ -181,11 +198,15 @@ objetos (≤ 0,55 arcsec) es despreciable frente al píxel.
 
 **R Draconis**
 - Hoy: igual que RW Aurigae.
-- Necesita: lo mismo. Con un periodo de unos 245 días, la ventana de 1,5 años
-  cubre más de dos ciclos: si hay visitas suficientes, la curva de luz debería
-  mostrar el ciclo (hipótesis; depende de la cobertura real).
+- Necesita: lo mismo. Con un periodo de unos 245 días, los 478 días de base
+  cubren casi dos ciclos. **Cobertura verificada:** unas 600 exposiciones por
+  detector (D1, D3, D4, D6) y 57 visitas en `spherex_qr2`, `spherex_qr2_deep` y
+  `spherex_qr3_deep`. La curva de luz tendrá muchísimos puntos.
 - Está a alta declinación, cerca del polo norte de la eclíptica, donde SPHEREx
-  observa con más frecuencia (hipótesis a confirmar en WP-05).
+  observa con más frecuencia: **confirmado** por la presencia de las colecciones
+  `deep` (1259 filas en `qr2_deep` y 743 en `qr3_deep` para este campo).
+- La app hoy lo trunca: el esquema limita a 200 filas por colección y la
+  configuración a 500 (§15.2).
 
 ### 4.2 Criterio de aceptación de la demo por objetivo
 
@@ -894,6 +915,293 @@ Documentación oficial y artículos consultados el 2026-11-11:
 - astroquery, módulo IMCCE:
   https://astroquery.readthedocs.io/en/stable/imcce/imcce.html
 
-Los valores de movimiento propio, tipos espectrales y periodos de §4 son
-aproximaciones de conocimiento general para orientar el diseño; deben
-confirmarse en SIMBAD o Gaia antes de usarse en código o en la demo (RC-8).
+Los periodos y las magnitudes de §4 que no aparecen en §15 siguen siendo
+aproximaciones de conocimiento general; deben confirmarse antes de usarse en
+código o en la demo (RC-8). Los movimientos propios, las posiciones y la
+magnitud W2 de WISE 0855 sí están verificados (§15).
+
+---
+
+## 15. Resultados de WP-05: datos reales de SPHEREx (2026-11-11)
+
+Este es el primer contacto del proyecto con los datos reales. Cambia varias
+cosas del plan; §15.7 dice cuáles.
+
+### 15.0 Qué se hizo y qué límites tiene
+
+- Se consultó la API SIA2 y el TAP de IRSA, SIMBAD (espejo de Harvard) y AllWISE.
+  Todo son consultas de lectura sobre datos públicos, sin credenciales.
+- Se descargaron 29 recortes reales: 22 de WISE 0855 (detector D6) para el
+  experimento de §15.5, uno de cada uno de los otros cuatro objetivos y tres de
+  prueba.
+- Se ejecutaron las funciones de la propia app (`summarize`, `render_preview`,
+  `TemporalAnalysisEngine.compare`, `SpectralAnalysisEngine.extract`) sobre esos
+  recortes.
+- Los fixtures reales y los datos con su procedencia están en
+  `backend/tests/fixtures/real/` (1,5 MB; ver su README).
+- **El servicio de recortes de IRSA limita las peticiones:** respondió
+  `503 "Server busy, retry later."` en ráfagas. La descarga de las 43
+  exposiciones D6 de WISE 0855 se detuvo en 22 por esa causa.
+- Los scripts de exploración no se versionaron; los métodos están descritos lo
+  bastante como para reproducirlos.
+
+### 15.1 Hallazgos
+
+Los identificadores DAT- son nuevos. Los paquetes enmendados están en §15.7.
+
+| ID | Prio. | Hallazgo (observado) | Impacto | Paquete |
+|---|---|---|---|---|
+| DAT-01 | P0 | IRSA responde **HTTP 422** a la URL de recorte que construye la app (`?POS=CIRCLE ...&RESPONSEFORMAT=application/fits`): `Either center or both ra and dec must be provided`. La sintaxis válida es `?center=RA,Dec&size=<grados>` (acepta también `6arcmin`) | El primer intento siempre falla y `cutouts.py:44` baja el archivo completo (~70 MB, detector de 3,5°). Lo que la app llama "recorte" no lo es | WP-08 |
+| DAT-02 | P0 | La respuesta SIA2 **no tiene** las columnas `detector`, `band` ni `date_obs`. Trae `energy_bandpassname` (`SPHEREx-D1`..`D6`), `em_min`/`em_max` (metros) y `t_min`/`t_max` (MJD) | Detector, banda y fecha quedan vacíos; la guarda "nunca se mezclan detectores" no actúa | WP-07 |
+| DAT-03 | P0 | `obs_id` **no identifica un producto**: una exposición tiene hasta 6 imágenes (una por detector) con el mismo `obs_id`. En WISE 0855: 298 filas, 151 `obs_id`. El producto se identifica por `obs_publisher_did` (`.../D1`) | La clave `(obs_id, collection)` de la base mezcla productos: se guarda solo el primer `access_url` y un recorte puede bajar un detector distinto del mostrado | WP-07 |
+| DAT-04 | P0 | Los motores de la app **fallan con productos reales**: `WCS(dict(header))` lanza `ValueError` por un comentario de la cabecera; el espectral lee `hdul[5]` (es la PSF, no `WCS-WAVE`) y devuelve 51 "muestras" sin longitud de onda; el temporal lanza `IncompatibleError` (recortes de 59×59 y 58×58) | Los análisis diferencial y espectral no producen resultados válidos con datos reales | WP-33 |
+| DAT-05 | P0 | `FLAGS == 0` descarta casi todo: el bit 21 `SOURCE` ("fuente conocida") está activo en el 30 % al 100 % de los píxeles del recorte. La función `summarize` de la app da **0 % de píxeles válidos en Barnard y R Draconis**, 22 % en Epsilon Indi B y 32 % en RW Aurigae | Se enmascaran las propias estrellas, incluido el objetivo | WP-33 |
+| DAT-06 | P1 | La luz zodiacal es el 70 % al 84 % del fondo en 4 de los 5 campos y no está restada de `IMAGE` (documentación oficial) | Comparar brillo entre épocas sin restarla no es válido | WP-10 |
+| DAT-07 | P1 | `WCS-WAVE` es una rejilla 9×9 de pares (longitud de onda, ancho de banda) en coordenadas de detector completo. **La longitud de onda cambia con la fila del detector**: en D6, de 5,02 µm (fila 1) a 4,41 µm (fila 2040) | Una exposición ve el objetivo a un color distinto según dónde caiga; "misma banda" exige comparar la longitud de onda en el píxel | WP-10, WP-26 |
+| DAT-08 | P1 | QR2 y QR3 son **periodos consecutivos**, no versiones: QR2 llega al 2026-07-20 y QR3 al 2026-10-05. Existen además `_deep` y `_cal`. R Draconis suma 570 + 1259 + 743 filas y la app limita a 200 o 500 por colección | Resultados truncados en el objetivo con más datos | WP-07, WP-30 |
+| DAT-09 | P1 | El servicio de recortes de IRSA devuelve `503` en ráfagas; las descargas tardan de 6 a 15 s cada una | Una secuencia de 12 cuadros tarda minutos; hace falta caché, ritmo y reintentos con espera | WP-08, WP-09 |
+| DAT-10 | P2 | El CSV de IRSA está mal formado en `cloud_access` (JSON sin entrecomillar): toda fila trae campos de más | Sin efecto en las columnas usadas, pero el analizador debe tolerarlo | WP-07 |
+| DAT-11 | P2 | SIA2 no distingue una colección inexistente de una sin cobertura (ambas devuelven una tabla vacía de 641 bytes) | No se puede validar la configuración con SIA2; el TAP (`spherex.obscore`) sí lista las colecciones | WP-30 |
+| DAT-12 | P2 | Cada recorte lleva el cubo de PSF completo (121 planos): 4,9 de sus 5,1 MB | 12 cuadros son unos 60 MB de transferencia | WP-08 |
+| DAT-13 | P2 | La versión del procesado varía entre exposiciones: cabecera `VERSION` `6.4+psffix1` y `6.5.4+psffix1`; las rutas llevan `l2b-v20` y `l2b-v24` | `PROCESSING_VERSION` debe incluir la versión de los datos | WP-10 |
+| DAT-14 | P2 | La posición de WISE 0855 del enunciado coincide con AllWISE (`J085510.74-071442.5`, 133,79476, -7,24515): es de la época WISE (~2010), no J2000. SIMBAD la da en J2000 a 133,81891 | Confirma SCI-03: sin propagar por movimiento propio la posición no sirve | WP-06 |
+
+### 15.2 Cobertura por objetivo
+
+Posición propagada a 2026,0 con el movimiento propio de SIMBAD; cono de 0,05°
+(las imágenes miden 3,5°, así que el radio solo decide qué huellas se
+intersecan). Filas = productos; exposiciones = `obs_id` distintos.
+
+| Objetivo | `qr2` | `qr3` | `qr2_deep` | `qr3_deep` | Rango de fechas (todas) |
+|---|---|---|---|---|---|
+| Barnard's Star | 258 / 130 exp. | 129 / 65 exp. | 0 | 0 | 2025-08-15 a 2026-09-22 |
+| Epsilon Indi B | 350 / 189 exp. | 120 / 60 exp. | 0 | 0 | 2025-04-24 a 2026-10-02 |
+| WISE 0855 | 261 / 133 exp. | 0 | 0 | 0 | 2025-05-05 a 2026-05-14 |
+| RW Aurigae | 226 / 114 exp. | 114 / 57 exp. | 0 | 0 | 2025-09-01 a 2026-09-09 |
+| R Draconis | 570 / 290 exp. | 0 | 1259 / 639 exp. | 743 / 374 exp. | 2025-05-16 a 2026-09-27 |
+
+Mejor base temporal en un solo detector (esto fija cuánto se puede mover un
+objeto entre la primera y la última imagen):
+
+| Objetivo | Detector | Base | Exposiciones | Desplazamiento esperado |
+|---|---|---|---|---|
+| Barnard's Star | D3 y D6 | 402 días | 63 | 11,4″ = 1,86 px |
+| Epsilon Indi B | D2 | 526 días | 96 | 6,7″ = 1,10 px |
+| WISE 0855 | D2 | 373 días | 48 | 8,3″ = 1,35 px |
+| RW Aurigae | D1 | 373 días | 57 | — |
+| R Draconis | D1 y D4 | 478 días | 599 | — |
+
+Una posición cae casi siempre en **dos detectores a la vez** (147 de las 151
+exposiciones de WISE 0855), en parejas fijas: D1 y D4, D2 y D5, D3 y D6. Eso
+entrega dos colores del mismo punto en el mismo instante, justo lo que necesita
+el termómetro de color de WP-26. Las "visitas" (huecos de más de un día) duran de 0
+a 5 días; WISE 0855 tiene entre 5 y 10 por detector.
+
+### 15.3 Estructura de un producto (recorte)
+
+Orden y contenido verificados en los cinco objetivos.
+
+| Índice | `EXTNAME` | Contenido | Unidad |
+|---|---|---|---|
+| 0 | `PRIMARY` | Sin datos; solo `VERSION` | — |
+| 1 | `IMAGE` | Brillo superficial; **no** tiene restada la luz zodiacal | MJy/sr |
+| 2 | `FLAGS` | Máscara de bits; la cabecera define la posición de cada bit (`MP_*`) | — |
+| 3 | `VARIANCE` | Varianza de `IMAGE` | (MJy/sr)² |
+| 4 | `ZODI` | Modelo de luz zodiacal | MJy/sr |
+| 5 | `PSF` | Cubo 121×101×101, sobremuestreo ×10, 0,615″/px | — |
+| 6 | `WCS-WAVE` | Tabla de una fila: `X`, `Y` (9 valores) y `VALUES` (9×9×2) | µm |
+
+- La WCS es `RA---TAN-SIP` y se lee con `WCS(header_de_IMAGE, hdul)`.
+  `DETECTOR` (entero), `DATE-OBS` y `MJD-OBS` están en la cabecera de `IMAGE`.
+- La longitud de onda en un píxel se evalúa con
+  `WCS(header, hdul, key="W").all_pix2world([[x, y]], 0)`; IRSA documenta
+  interpolación bilineal de los puntos de control, con exactitud de ~1 nm y
+  "solo para visualización". Para ciencia, IRSA remite a los productos
+  `CWAVE`/`CBAND` de la WCS espectral (no evaluados).
+- Una `size=0.1` (grados) da 58 o 59 píxeles por eje, según la exposición.
+- IRSA avisa de que las entregas anteriores al 2026-03-31 tienen un error en la
+  descripción de las zonas de la cabecera de la PSF, y recomienda el producto
+  ePSF (QR3) para modelar.
+
+### 15.4 Banderas (`FLAGS`)
+
+Definiciones oficiales de IRSA (página de ayuda de espectrofotometría, consultada
+el 2026-11-11). La cabecera de cada recorte confirma las posiciones de bit.
+
+| Bit | Nombre | Significado | En la máscara dura |
+|---|---|---|---|
+| 0 | `TRANSIENT` | Impacto de rayo cósmico | Sí |
+| 1 | `OVERFLOW` | Cerca de saturar | No (aviso) |
+| 2 | `SUR_ERROR` | Posibles errores | Sí |
+| 6 | `NONFUNC` | Píxel muerto | Sí |
+| 7 | `DICHROIC` | Píxel inutilizable | Sí |
+| 9 | `MISSING_DATA` | Sin datos | Sí |
+| 10 | `HOT` | Píxel ruidoso | Sí |
+| 11 | `COLD` | Píxel muerto | Sí |
+| 15 | `NONLINEAR` | No corregible | Sí |
+| 17 | `PERSIST` | Carga persistente | Sí |
+| 19 | `OUTLIER` | Valor atípico marcado | No (aviso) |
+| 21 | `SOURCE` | Fuente conocida | **No**: es nominal e incluye al objetivo |
+| 26 a 29 | `BLOOM`, `SNOWBALL`, `HALO`, `SATELLITE_HALO` | Artefactos de estrellas brillantes (`BLOOM` y `HALO` aparecen en el recorte de R Draconis) | Sí |
+
+IRSA ignora al ajustar: `SUR_ERROR`, `NONFUNC`, `MISSING_DATA`, `HOT`, `COLD`,
+`NONLINEAR`, `PERSIST`, `BLOOM`, `SNOWBALL`, `HALO` y `SATELLITE_HALO`. La
+máscara dura propuesta es esa lista más `DICHROIC` y `TRANSIENT`: los bits 0, 2,
+6, 7, 9, 10, 11, 15, 17, 26, 27, 28 y 29. Con ella queda excluido del 0,8 % al
+4,9 % de los píxeles de los cinco recortes, contra el 33 % al 100 % que excluye
+hoy `FLAGS == 0`. Los bits que aparecen en los cinco recortes son 0, 1, 2, 6, 11,
+17, 19, 21, 26 y 28. La tabla completa de bits está en el Suplemento Explicativo
+de SPHEREx (Tabla 10 en la versión consultada), que no se leyó.
+
+### 15.5 Experimento: ¿se ve WISE 0855 al sumar exposiciones?
+
+Independiente de los motores de la app. Detalle y caveats en
+`backend/tests/fixtures/real/experiment_wise0855_stack.json`.
+
+- **Datos:** 22 de las 43 exposiciones D6 (4,41 a 5,01 µm) de `spherex_qr2`,
+  del 2025-05-05 al 2026-05-11, descargadas alternando época temprana y tardía.
+- **Método:** `IMAGE − ZODI`, menos la mediana de cada cuadro; máscara dura de
+  §15.4; reproyección a una rejilla común; media ponderada por varianza inversa;
+  apertura de 1,5 píxeles; el nulo son 400 posiciones al azar tratadas igual.
+- **Resultado (siguiendo el movimiento previsto):** flujo en la posición de
+  WISE 0855 de 0,427 MJy/sr·px (±0,033 formal), mayor que el de **el 97,25 % de
+  las posiciones al azar** (11 de 400). El pico queda a menos de 0,5 px de la
+  predicción. Al dividir las exposiciones en un grupo temprano (3, mayo de 2025)
+  y uno tardío (11, mayo de 2026), el pico de cada grupo cae a ~0,5 px de su
+  posición prevista y se desplaza en la dirección esperada (1,3 px de recorrido
+  previsto), aunque el grupo temprano es débil (S/N formal 2,0). Sin seguir el
+  movimiento: 96,25 %.
+- **Flujo físico:** 0,380 ± 0,029 mJy en esa apertura, sin corrección de
+  apertura. AllWISE da W2 = 13,704 ± 0,033, es decir 0,567 mJy esperados:
+  cociente 0,67, compatible con la fracción del flujo que cae fuera de una
+  apertura de 1,5 px (no medida).
+- **Veredicto:** **sugerente, no confirmado.** Con un solo ensayo a priori,
+  p ≈ 0,03 (~1,9σ). Los errores formales subestiman el ruido real por 1,4 a 1,9.
+  El z robusto (~9) no es fiable porque el fondo tiene estrellas reales y su cola
+  no es gaussiana.
+- **Para confirmarlo:** las 43 exposiciones, los otros cinco detectores (si es
+  frío debe desaparecer por debajo de ~3 µm: D1 a D4) y una medición de la
+  corrección de apertura con la PSF.
+
+### 15.6 Objetivo por objetivo (un recorte real de cada uno)
+
+| Objetivo | Fixture | Detector | Longitud de onda en el objetivo | Fracción con `FLAGS == 0` (válida hoy) | Fracción excluida por la máscara dura |
+|---|---|---|---|---|---|
+| WISE 0855 | `wise0855_d6_20250505` | D6 | 4,961 µm | 67 % | 0,8 % |
+| Barnard's Star | `barnards_star_d6_20250827` | D6 | 4,883 µm | 0 % | 1,2 % |
+| Epsilon Indi B | `epsilon_indi_b_d6_20251104` | D6 | 4,631 µm | 22 % | 1,1 % |
+| RW Aurigae | `rw_aurigae_d1_20250904` | D1 | 0,965 µm | 32 % | 1,3 % |
+| R Draconis | `r_draconis_d3_20251226` | D3 | 1,636 µm | 0 % | 4,9 % |
+
+Los cinco objetivos caen dentro de su recorte de 0,1° centrado en la posición
+propagada a 2026,0 (píxel 28 a 29 de 58 o 59). Con la posición J2000, Barnard
+quedaría a 4,5′ del centro, fuera de un recorte de 3′ de radio.
+
+### 15.7 Cambios al plan
+
+Estas enmiendas se suman a las de §9.2 y prevalecen sobre las fichas del documento
+técnico.
+
+**Nuevo orden de la fase B.** DAT-01 a DAT-05 bloquean todo lo demás: sin
+recortes que funcionen y sin lectura correcta del producto no hay secuencia
+posible. La fase B pasa a: WP-06, WP-07, **WP-33**, WP-08, WP-09, WP-10, WP-11.
+
+**WP-33 (nuevo) · Lector de productos SPHEREx.**
+- **Hallazgos:** DAT-04, DAT-05, DAT-07. **Depende de:** WP-05. **Bloquea:**
+  WP-10, WP-12, WP-26. **Tamaño:** M. **Verificación independiente:** sí
+  (validez científica).
+- **Superficie de edición:** `backend/app/services/spherex_product.py` (nuevo),
+  `backend/app/services/fits_processing.py`, `backend/app/services/spectral.py`
+  y `backend/app/services/temporal.py` (solo para usar el lector),
+  `backend/tests/test_spherex_product.py` (nuevo).
+- **Cambio:** un único lector que abre por `EXTNAME` (nunca por índice), construye
+  la WCS con `WCS(header, hdul)` (nunca `WCS(dict(header))`), evalúa la longitud
+  de onda con `key="W"`, lee `DETECTOR`, `DATE-OBS` y `MJD-OBS` de `IMAGE`,
+  expone `IMAGE − ZODI` y una máscara de calidad construida con los bits de
+  §15.4 (`SOURCE` no se enmascara), y tolera tamaños de 58 o 59 píxeles.
+- **Criterios de aceptación (con los cinco fixtures reales):**
+  1. Las extensiones salen en el orden y con las formas de §15.3.
+  2. La WCS se construye con SIP y el píxel del objetivo coincide con
+     `observed_cutouts.json` dentro de 0,5 px.
+  3. La longitud de onda en el objetivo coincide con `observed_cutouts.json`
+     dentro de 0,001 µm.
+  4. La fracción de píxeles válidos con la máscara dura es mayor que 0,95 en
+     los cinco (hoy es 0 en dos).
+  5. Un píxel con solo el bit 21 activo es válido.
+  6. No queda ninguna llamada `WCS(dict(` en `backend/app`.
+  7. El motor espectral deja de leer la PSF como tabla de longitudes de onda.
+
+**WP-07 (enmendado).**
+- La identidad de un producto es `obs_publisher_did`; `(obs_id, collection)` deja
+  de ser clave única en la base.
+- `FIELD_MAP`: detector desde `energy_bandpassname` (entero 1 a 6), banda desde
+  `em_min`/`em_max` (metros a µm), fecha desde `t_min` (MJD), sin buscar
+  `detector`, `band` ni `date_obs`.
+- `maxrec` y el tope por colección dejan de truncar: paginar o avisar con un
+  mensaje explícito cuando se alcance (R Draconis necesita más de 2500 filas).
+- El analizador de CSV tolera los campos sobrantes de `cloud_access`.
+- Las colecciones disponibles se listan por TAP (`spherex.obscore`), no por SIA2.
+- Se mantiene el criterio de clave de caché completa de BE-01.
+
+**WP-08 (enmendado).**
+- La URL de recorte es `<access_url>?center=<ra>,<dec>&size=<grados>`.
+- **Se elimina la descarga del archivo completo como respaldo**: si el recorte
+  falla, se informa el error (70 MB por cuadro no es un respaldo razonable).
+- Peticiones con ritmo (concurrencia de 1 a 2, pausa entre ellas) y reintento
+  con espera creciente ante `503`, sin superar un tope.
+- La clave de recorte incluye producto, posición, tamaño y versión del procesado.
+- Decidir si se guarda el cubo de PSF (4,9 de 5,1 MB) o solo su cabecera.
+
+**WP-10 (enmendado).**
+- Una "visita" es un grupo de exposiciones **del mismo detector** separadas por
+  menos de un día. La comparación de brillo exige además que la longitud de onda
+  en el píxel del objetivo coincida dentro de una tolerancia (D5: propuesta de
+  una a dos veces el ancho de banda, 0,04 a 0,08 µm), porque dentro de un
+  detector cambia hasta 0,6 µm con la fila.
+- Se resta `ZODI` y se aplica la máscara de §15.4.
+- La pareja D1/D4, D2/D5 o D3/D6 de una misma exposición es el insumo del
+  termómetro de color (WP-26).
+- `PROCESSING_VERSION` incluye la versión de los datos de cada exposición
+  (DAT-13).
+- La rejilla común se calcula sobre el tamaño de cada recorte, no sobre 59×59.
+
+**WP-26 (enmendado).** Usa el lector de WP-33. El espectro se arma con la
+fotometría del objetivo en cada exposición, situada en la longitud de onda que
+da `WCS-WAVE` en el píxel; con muchas exposiciones por detector (hasta ~600 en
+R Draconis) el muestreo en longitud de onda es denso.
+
+**WP-25 (enmendado).** El máximo de 2 px de desplazamiento (§4) hace que el modo
+"Planeta X" dependa del apilado por época, no de ver el movimiento en cuadros
+sueltos. El experimento de §15.5 es su primera prueba con datos reales.
+
+**WP-28 (enmendado).** Hay 677 imágenes NEOWISE-R y 4 AllWISE en el campo de
+WISE 0855; falta comprobar los otros campos.
+
+### 15.8 Decisiones
+
+| ID | Decisión | Estado |
+|---|---|---|
+| D5 | Tolerancia de longitud de onda para "misma banda" | Propuesta en §15.7; decidir con el espectro de variación real |
+| D10 | Autorizar red para verificar datos reales | **Resuelta**: usada en WP-05 |
+| D15 | Ventana que define una "visita" | Propuesta: mismo detector y separación menor que un día (§15.7) |
+| D17 | Qué hacer con el cubo de PSF de cada recorte | Nueva: conservar, o solo su cabecera (4,9 MB por cuadro) |
+| D18 | Completar el experimento de §15.5 (43 exposiciones, detectores D1 a D5) | Nueva: requiere más peticiones al servicio de recortes, que limita el ritmo |
+
+### 15.9 Lo que no se verificó
+
+- Las otras 21 exposiciones D6 de WISE 0855 y los detectores D1 a D5: el servicio
+  respondió `503` de forma sostenida.
+- El comportamiento de los tres objetivos restantes en un apilado.
+- Si `OVERFLOW` o `PERSIST` afectan a los propios píxeles de Barnard's Star.
+- Los productos `CWAVE`/`CBAND` y el ePSF que IRSA recomienda para ciencia.
+- La tabla completa de bits del Suplemento Explicativo (se usó la página de ayuda).
+- Que la posición de SIMBAD esté en época J2000; es la convención de SIMBAD y es
+  coherente con la diferencia de ~85″ con la posición del enunciado, pero no se
+  leyó la documentación.
+- La corrección de apertura para convertir el flujo medido en flujo total.
+
+Fuentes de esta sección (consultadas el 2026-11-11): la API SIA2 y el TAP de
+IRSA; [ayuda de espectrofotometría de SPHEREx](https://irsa.ipac.caltech.edu/onlinehelp/spherex/spherex/sp.html);
+[productos de datos de SPHEREx](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products);
+[capacidades de recorte](https://irsa.ipac.caltech.edu/data/SPHEREx/docs/cutout_tool.html);
+SIMBAD (espejo de Harvard); catálogo AllWISE (`allwise_p3as_psd`).

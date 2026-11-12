@@ -1,0 +1,60 @@
+{
+ "queried_on": "2026-11-11",
+ "purpose": "Check whether WISE 0855 shows up when D6 exposures are stacked, independently of the app's engines.",
+ "script": "not versioned; the method below is complete enough to reproduce",
+ "data": {
+  "collection": "spherex_qr2",
+  "detector": "SPHEREx-D6 (4.41-5.01 um)",
+  "exposures_used": 22,
+  "exposures_available": 43,
+  "date_range": "2025-05-05 to 2026-05-11",
+  "why_not_43": "IRSA's cutout service kept answering 503 'Server busy'; the download was stopped at 22 files"
+ },
+ "method": [
+  "cutout 0.1 deg around the position propagated to 2026.0 with SIMBAD proper motion",
+  "IMAGE minus ZODI, then minus the frame median",
+  "mask pixels with FLAGS bits 0,2,6,7,9,10,11,15,17,26,27,28,29; SOURCE (21) is NOT masked",
+  "reproject_interp onto a common TAN grid (6.15 arcsec/px), inverse-variance weighted mean",
+  "follow: each frame shifted by the predicted proper-motion displacement; fixed: no shift",
+  "aperture radius 1.5 px; null = the same aperture at 400 random positions at least 9 px from the target"
+ ],
+ "result": {
+  "detector": "D6",
+  "n_exposures": 22,
+  "sigue": {
+   "flux": 0.4269083160540478,
+   "formal_err": 0.0326885564993903,
+   "z_empirical": 9.567770664071425,
+   "null_fraction_ge": 0.0275,
+   "noise_underestimate": 1.44058546708849,
+   "peak_xy": [
+    45,
+    45
+   ]
+  },
+  "fija": {
+   "flux": 0.45476427132935404,
+   "formal_err": 0.03282648354550962,
+   "z_empirical": 7.672185908790291,
+   "null_fraction_ge": 0.0375,
+   "noise_underestimate": 1.8601291002247085,
+   "peak_xy": [
+    45,
+    45
+   ]
+  }
+ },
+ "interpretation": {
+  "fraction_of_random_positions_as_bright_following": 0.0275,
+  "fraction_of_random_positions_as_bright_fixed": 0.0375,
+  "empirical_p_single_trial": 0.0275,
+  "equivalent_sigma_one_sided": 1.9,
+  "peak_offset_from_prediction_px": "< 0.5",
+  "measured_flux_mJy_in_1p5px_aperture": 0.38,
+  "measured_flux_formal_error_mJy": 0.029,
+  "expected_flux_mJy_from_allwise_w2_13.704": 0.567,
+  "ratio_measured_over_expected": 0.67,
+  "verdict": "suggestive, not a confirmed detection; formal errors underestimate the noise by x1.4-1.9",
+  "caveat": "the robust z-score (about 9) is not reliable: the background has real stars, so its tail is not Gaussian; use the empirical rank"
+ }
+}

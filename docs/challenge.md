@@ -147,15 +147,15 @@ y contra datos reales. Estados: `Por verificar`, `Cumple`, `Parcial`, `Falta`.
 |----|--------|-----------|
 | R1 | Por verificar | |
 | R2 | Por verificar | |
-| R3 | Por verificar | |
+| R3 | Parcial | WP-05 (2026-11-11): los datos reales existen y son accesibles para los cinco objetivos. La app no los lee bien: IRSA rechaza su URL de recorte (HTTP 422) y baja el detector completo, y el mapeo de SIA2 no reconoce detector ni fecha. Ver auditoría NASA §15. |
 | R4 | Por verificar | |
 | R5 | Por verificar | |
-| R6 — Barnard's Star | Por verificar | |
-| R6 — Epsilon Indi B | Por verificar | |
-| R6 — WISE 0855 | Por verificar | |
-| R6 — RW Aurigae | Por verificar | |
-| R6 — R Draconis | Por verificar | |
-| C1 | Por verificar | |
+| R6 — Barnard's Star | Falta | Datos (WP-05): 195 exposiciones, 2025-08 a 2026-09; movimiento máximo 1,9 px. En la app, `FLAGS == 0` deja 0 % de píxeles válidos en su recorte. |
+| R6 — Epsilon Indi B | Falta | Datos (WP-05): 249 exposiciones, 2025-04 a 2026-10; movimiento máximo 1,1 px. En la app queda 22 % de píxeles válidos. |
+| R6 — WISE 0855 | Falta | Datos (WP-05): 133 exposiciones, 2025-05 a 2026-05; movimiento máximo 1,35 px. Un apilado externo muestra una señal sugerente (no confirmada) en su posición prevista; la app no genera ninguna secuencia. |
+| R6 — RW Aurigae | Falta | Datos (WP-05): 171 exposiciones, 373 días por detector. La app no tiene escala compartida ni fotometría; 32 % de píxeles válidos. |
+| R6 — R Draconis | Falta | Datos (WP-05): unas 1300 exposiciones (`qr2`, `qr2_deep`, `qr3_deep`), 478 días. La app trunca a 200 o 500 filas por colección y deja 0 % de píxeles válidos. |
+| C1 | Parcial | WP-05: QR2 y QR3 son periodos consecutivos y se pueden descubrir por TAP; la app los fija en configuración y SIA2 no distingue una colección inexistente de una sin cobertura. |
 | C2 | Por verificar | |
 | C3 | Por verificar | |
 | C4 | Por verificar | |

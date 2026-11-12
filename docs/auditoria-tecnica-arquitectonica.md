@@ -874,6 +874,22 @@ Qué tipo de dato necesita cada prueba futura:
 
 ## 15. Matriz de hallazgos priorizados
 
+> **Actualización tras WP-05 (2026-11-11).** Con datos reales de IRSA cambió el
+> estado de varios hallazgos. Detalle, evidencia y los hallazgos nuevos
+> (DAT-01 a DAT-14) están en
+> [auditoria-nasa-space-apps-2026.md](auditoria-nasa-space-apps-2026.md) §15.
+>
+> | Hallazgo | Antes | Ahora |
+> |---|---|---|
+> | BE-03 (ruta PyVO) | Confirmado | Sigue; además el respaldo HTTP no mapea detector, banda ni fecha (DAT-02) |
+> | SCI-10 (supuestos sin verificar) | Riesgo potencial | **Verificado**: la URL de recorte de la app es rechazada con HTTP 422 y se baja el archivo completo (DAT-01); `POS` no se honra, se rechaza |
+> | SCI-06 (espectro) | Confirmado (incoherencia de índices) | **Confirmado con datos reales**: `hdul[5]` es la PSF; `WCS-WAVE` es el índice 6 y es una rejilla 9×9 (DAT-04, DAT-07) |
+> | H15/SCI-09 (detector vacío) | Riesgo potencial | **Confirmado**: la respuesta no tiene `detector`, `band` ni `date_obs` (DAT-02) |
+> | Observaciones duplicadas por `obs_id` | Riesgo potencial alto | **Confirmado**: un `obs_id` agrupa hasta 6 productos (DAT-03) |
+> | H20 (`FLAGS == 0`) | Riesgo potencial | **Confirmado**: 0 % de píxeles válidos en Barnard y R Draconis (DAT-05) |
+> | BE-10/H18 (truncamiento) | Riesgo potencial | **Confirmado**: R Draconis suma más de 2500 filas (DAT-08) |
+> | SCI-05/SCI-08 (motores) | Confirmado con sintéticos | Además **fallan con datos reales** (DAT-04) |
+
 La solución propuesta y las pruebas de cada hallazgo están en la ficha del
 paquete de trabajo indicado en la columna WP (§21). Complejidad y riesgo de
 cambio: B baja, M media, A alta.
@@ -1233,8 +1249,11 @@ Pendiente o decisión requerida: <...>
 
 > **Enmiendas vigentes:** WP-05, WP-10, WP-13, WP-18 y WP-20 tienen enmiendas, y
 > existen los paquetes nuevos WP-23 a WP-32, en
-> [auditoria-nasa-space-apps-2026.md](auditoria-nasa-space-apps-2026.md) §9. Las
-> enmiendas prevalecen sobre las fichas de esta sección.
+> [auditoria-nasa-space-apps-2026.md](auditoria-nasa-space-apps-2026.md) §9.
+> Tras ejecutar WP-05 (datos reales, 2026-11-11) también se enmiendan WP-07,
+> WP-08, WP-10, WP-25, WP-26 y WP-28, y existe el paquete nuevo **WP-33**
+> (lector de productos SPHEREx), en la misma fuente §15. Las enmiendas
+> prevalecen sobre las fichas de esta sección.
 
 Cada ficha es autosuficiente junto con §20. "Verificación independiente" indica
 que el cambio toca datos persistidos, seguridad, contratos, concurrencia o
