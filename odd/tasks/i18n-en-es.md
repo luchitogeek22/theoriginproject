@@ -22,11 +22,11 @@ Decisions: `localePrefix: "as-needed"` (English unprefixed keeps `/time-explorer
 ## Tasks
 
 - T1 S1-S4,S7,S8,S10 — next-intl infra, `[locale]` routes, middleware (+auth guard), switcher, metadata/sitemap — route: inline — status: done (build green; curl smoke: first visit en with Accept-Language es, cookie 1y set/updated, hreflang+canonical, embed headers, es 404)
-- T2 S3,S5,S6 — shared `lib/` texts (limitations, motion, api, useJob, sequenceExport, targets) — route: inline (shared contract) — status: pending
-- T3 S5 — app pages under `app/[locale]/(app)` — route: delegated (parallel units, disjoint surfaces) — status: pending
-- T4 S5 — analysis components (SequencePlayer, CutoutComparison, ShiftStackPanel, …) — route: delegated (parallel) — status: pending
-- T5 S5 — small shared components + landing — route: delegated (parallel) — status: pending
-- T6 S9,S11,S12 — parity test, e2e i18n spec, e2e text updates, docs — route: inline — status: pending
+- T2 S3,S5,S6 — shared `lib/` texts (limitations, motion, api, useJob, sequenceExport, targets) — route: inline (shared contract) — status: done (5353154)
+- T3 S5 — app pages under `app/[locale]/(app)` — route: delegated (parallel units, disjoint surfaces) — status: done (0d4dfdc, committed by user)
+- T4 S5 — analysis components (SequencePlayer, CutoutComparison, ShiftStackPanel, …) — route: delegated (parallel) — status: done (0d4dfdc, committed by user)
+- T5 S5 — small shared components + landing — route: delegated (parallel) — status: done (0d4dfdc, committed by user)
+- T6 S9,S11,S12 — parity test, e2e i18n spec, e2e text updates, docs — route: inline — status: done (0d4dfdc, 4444ae2, b7e29ce)
 
 ## Log
 
@@ -34,3 +34,6 @@ Decisions: `localePrefix: "as-needed"` (English unprefixed keeps `/time-explorer
 - L2 Audit: Next 14.2.35 App Router, React 18.3.1, TS 5.6.3; ~40 files with hardcoded Spanish; landing already English; backend sends English limitation text that `lib/limitations.ts` translates to Spanish via regex; `html lang="es"` fixed; no unit test runner (audit D11).
 - L3 (2026-11-12) User correction: "no llames la carpete messages llamale locales por fa" — translation files live in `frontend/locales/<locale>/*.json`.
 - L4 (2026-11-12) User correction: "qur por que create otra rama? en la misma rama developoer por fa" — work moved to `developer` (fast-forward), feature branch deleted.
+- L5 (2026-11-12) Verification: tsc clean; `npm run test:i18n` 18/18; `next build` green (25 static pages); Playwright full suite 26 passed + 1 test bug fixed (cookie leak in metadata test), i18n spec 7/7 incl. console/hydration scan of 8 pages x 2 locales.
+- L6 (2026-11-12) Independent verifier (Risk item 2, journal guard): blocker — percent-encoded paths (`/%6Aournal`, `/es/%6Aournal`) bypassed the guard because next-intl routes the decoded path. Fixed with `routeOf()` (RED→GREEN in tests/i18n/route-guard.test.mjs); runtime recheck with Supabase configured: all variants 307 → localized login. Advisories kept: refreshed Supabase cookies not visible to the same request's server render (journal is client-side); `/es/login?next=/es/journal` would double-prefix (hand-crafted links only).
+- L7 Pending/limitations: backend-generated evidence report and a few data notes (`color.reason`, journal stored methods) stay in English; Copilot history keeps the language it was asked in.
