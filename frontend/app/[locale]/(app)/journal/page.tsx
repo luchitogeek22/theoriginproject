@@ -139,7 +139,7 @@ export default function Journal() {
             <button
               onClick={() => void save()}
               disabled={busy || (!target && selected.length === 0)}
-              className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
             >
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} {tc("save")}
             </button>

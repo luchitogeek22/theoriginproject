@@ -278,7 +278,7 @@ function Explorer() {
             <button
               type="button"
               onClick={job.retry}
-              className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-abyss hover:brightness-110"
+              className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-starlight hover:brightness-110"
             >
               {t("requestAgain")}
             </button>

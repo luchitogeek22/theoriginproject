@@ -17,7 +17,7 @@ test.describe("internationalization", () => {
 
   test("switching language keeps the page, persists and survives reloads", async ({ page, context }) => {
     await page.goto("/candidates?from=test");
-    await page.getByRole("button", { name: "Español" }).click();
+    await page.getByRole("combobox", { name: /Change language/ }).selectOption("es");
 
     await expect(page).toHaveURL(/\/es\/candidates\?from=test$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
@@ -37,7 +37,7 @@ test.describe("internationalization", () => {
     await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Candidatos" }).click();
     await expect(page).toHaveURL(/\/es\/candidates$/);
 
-    await page.getByRole("button", { name: "English" }).click();
+    await page.getByRole("combobox", { name: /Cambiar idioma/ }).selectOption("en");
     await expect(page).toHaveURL(/\/candidates$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect.poll(async () => (await context.cookies()).find((c) => c.name === "NEXT_LOCALE")?.value).toBe("en");
@@ -71,12 +71,10 @@ test.describe("internationalization", () => {
 
   test("the language switcher is keyboard operable", async ({ page }) => {
     await page.goto("/candidates");
-    const spanish = page.getByRole("button", { name: "Español" });
-    await spanish.focus();
-    await expect(spanish).toBeFocused();
-    await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/es\/candidates$/);
-    await expect(spanish).toHaveAttribute("aria-pressed", "true");
+    const select = page.getByRole("combobox", { name: /Change language/ });
+    await select.focus();
+    await expect(select).toBeFocused();
+    await expect(select.locator("option")).toHaveText(["English", "Español"]);
   });
 
   for (const prefix of ["", "/es"]) {

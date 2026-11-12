@@ -560,7 +560,7 @@ export default function SequencePlayer({
                 onClick={() => setPlaying((p) => !p)}
                 disabled={!canAnimate}
                 aria-label={playing ? t("controls.pause") : t("controls.play")}
-                className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+                className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 font-bold text-starlight hover:brightness-110 disabled:opacity-40"
               >
                 {playing ? <Pause size={13} /> : <Play size={13} />} {playing ? t("controls.pause") : t("controls.play")}
               </button>

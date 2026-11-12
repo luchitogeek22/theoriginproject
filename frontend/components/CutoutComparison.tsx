@@ -154,7 +154,7 @@ export default function CutoutComparison() {
           <button
             onClick={() => void runDifferential()}
             disabled={!cutA || !cutB || analyzing}
-            className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
           >
             {analyzing ? <Loader2 size={13} className="animate-spin" /> : <GitCompare size={13} />}
             {t("differential")}

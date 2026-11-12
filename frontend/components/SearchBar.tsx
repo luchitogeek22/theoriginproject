@@ -67,7 +67,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
         <button
           onClick={() => void run(query)}
           disabled={busy}
-          className="flex items-center gap-1.5 rounded bg-pulse px-3 text-sm font-semibold text-abyss hover:brightness-110 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded bg-pulse px-3 text-sm font-semibold text-starlight hover:brightness-110 disabled:opacity-50"
         >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Crosshair size={15} />}
           {t("submit")}

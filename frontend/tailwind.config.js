@@ -10,9 +10,10 @@ module.exports = {
         line: "#1c2946",
         starlight: "#e8eefc",
         mutedstar: "#93a1c0",
-        // Single brand accent ("cobalto noche"): bright enough to keep bg-pulse/text-abyss
-        // buttons legible app-wide (AA, ~6:1), while reading as cobalt rather than cyan.
-        pulse: "#5a8fe0",
+        // Single brand accent ("cobalto noche"), exact approved hex. It's too dark to pair
+        // with dark text (bg-pulse buttons use text-starlight now, not text-abyss — see
+        // the `text-abyss` → `text-starlight` swap below).
+        pulse: "#2456b8",
         gold: "#c8a45c",
         void: "#05060A",
         ink: "#0B1020",

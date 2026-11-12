@@ -147,7 +147,7 @@ function LoginForm() {
       <button
         onClick={() => void submit()}
         disabled={busy}
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded bg-pulse px-3 py-2 text-sm font-bold text-abyss hover:brightness-110 disabled:opacity-50"
+        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded bg-pulse px-3 py-2 text-sm font-bold text-starlight hover:brightness-110 disabled:opacity-50"
       >
         {busy ? (
           <Loader2 size={15} className="animate-spin" />

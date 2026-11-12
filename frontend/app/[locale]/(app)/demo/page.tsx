@@ -62,7 +62,7 @@ function StepResult({ step }: { step: DemoStep }) {
           <button
             type="button"
             onClick={job.retry}
-            className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-abyss hover:brightness-110"
+            className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-starlight hover:brightness-110"
           >
             {t("requestAgain")}
           </button>
@@ -106,7 +106,7 @@ function StepResult({ step }: { step: DemoStep }) {
               <Link
                 href={sequenceUrl(target, undefined, target.mode)}
                 data-testid="demo-open-explorer"
-                className="mx-auto mt-3 block w-fit rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
+                className="mx-auto mt-3 block w-fit rounded bg-pulse px-3 py-2 text-xs font-bold text-starlight hover:brightness-110"
               >
                 {t("openExplorer")}
               </Link>
@@ -185,7 +185,7 @@ export default function DemoPage() {
           onClick={() => setCurrent((c) => Math.min(STEPS.length - 1, c + 1))}
           disabled={current === STEPS.length - 1}
           data-testid="demo-next"
-          className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+          className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
         >
           {t("next")} <ArrowRight size={13} />
         </button>

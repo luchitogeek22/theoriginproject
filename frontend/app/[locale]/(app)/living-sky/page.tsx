@@ -184,7 +184,7 @@ export default function LivingSky() {
             <button
               onClick={() => router.push("/time-explorer")}
               disabled={selected.length === 0}
-              className="flex w-full items-center justify-center gap-1 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-1 rounded bg-pulse px-3 py-2 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
             >
               {t("startInvestigation", { count: selected.length })} <ChevronRight size={14} />
             </button>

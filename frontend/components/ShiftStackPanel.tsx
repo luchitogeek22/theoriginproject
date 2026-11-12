@@ -227,7 +227,7 @@ export default function ShiftStackPanel({ ra, dec, detector }: ShiftStackPanelPr
         type="button"
         disabled={busy}
         onClick={() => (job.phase === "idle" || key === null ? setStarted(posKey) : job.retry())}
-        className="mt-2 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+        className="mt-2 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
       >
         {result || job.phase === "failed" || job.phase === "cancelled" ? t("repeat") : t("start")}
       </button>

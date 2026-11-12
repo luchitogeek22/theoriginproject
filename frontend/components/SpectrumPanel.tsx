@@ -213,7 +213,7 @@ export default function SpectrumPanel({ ra, dec }: { ra: number; dec: number }) 
         type="button"
         disabled={busy}
         onClick={() => (key === null ? setStarted(posKey) : job.retry())}
-        className="mt-2 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
+        className="mt-2 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110 disabled:opacity-40"
       >
         {result ? t("remeasure") : t("measure")}
       </button>

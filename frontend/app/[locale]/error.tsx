@@ -22,7 +22,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <button
             type="button"
             onClick={reset}
-            className="rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110"
+            className="rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110"
           >
             {t("common.retry")}
           </button>

@@ -16,7 +16,7 @@ export default function ModeToggle() {
           aria-selected={mode === m}
           onClick={() => setMode(m)}
           className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-            mode === m ? "bg-pulse text-abyss" : "text-mutedstar hover:text-starlight"
+            mode === m ? "bg-pulse text-starlight" : "text-mutedstar hover:text-starlight"
           }`}
         >
           {t(m)}

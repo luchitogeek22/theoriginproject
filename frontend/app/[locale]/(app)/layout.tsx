@@ -22,9 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <p className="text-[11px] text-mutedstar md:hidden">{t("common.brand")}</p>
               <p className="hidden text-[11px] text-mutedstar md:block">{t("nav.headerNote")}</p>
               <div className="flex items-center gap-2">
-                {/* The sidebar carries its own switch from md up; below that the sidebar is
-                    icon-only, so language switching stays reachable here. */}
-                <LanguageSwitcher className="md:hidden" />
+                <LanguageSwitcher />
                 <ModeToggle />
               </div>
             </header>

@@ -10,7 +10,7 @@ export default function NotFound() {
         <p className="mt-2 text-xs text-mutedstar">{t("notFound.body")}</p>
         <Link
           href="/"
-          className="mt-4 inline-block rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110"
+          className="mt-4 inline-block rounded bg-pulse px-3 py-1.5 text-xs font-bold text-starlight hover:brightness-110"
         >
           {t("common.goHome")}
         </Link>

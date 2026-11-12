@@ -72,7 +72,7 @@ export default function Tutorial() {
             </button>
             <button
               onClick={() => (step >= 3 ? close() : setStep(step + 1))}
-              className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 text-xs font-semibold text-abyss hover:brightness-110"
+              className="flex items-center gap-1 rounded bg-pulse px-3 py-1.5 text-xs font-semibold text-starlight hover:brightness-110"
             >
               {step >= 3 ? t("start") : t("next")} <ArrowRight size={13} />
             </button>

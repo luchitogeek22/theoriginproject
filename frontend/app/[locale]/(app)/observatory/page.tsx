@@ -9,6 +9,7 @@ import { Clock3, Crosshair, Orbit, Play, RefreshCw } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SkyBackdrop from "@/components/SkyBackdrop";
 import { DataRelease, StatusDot, useDataSources } from "@/components/StatusBanner";
+import TargetCurve from "@/components/TargetCurve";
 import { api } from "@/lib/api";
 import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
 import { useResearch } from "@/lib/store";
@@ -35,7 +36,7 @@ export default function Home() {
     <div className="scroll-thin relative h-full w-full overflow-y-auto">
       <div
         className="absolute inset-0 bg-abyss"
-        style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(90,143,224,0.12), transparent 60%)" }}
+        style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(36,86,184,0.14), transparent 60%)" }}
         aria-hidden="true"
       />
       <SkyBackdrop targets={VALIDATION_TARGETS} onPrefetch={prefetch} onLeaving={setLeaving} />
@@ -55,10 +56,10 @@ export default function Home() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="pointer-events-auto max-w-xl"
+          className="pointer-events-auto"
         >
           <p className="text-[11px] tracking-[0.25em] text-pulse">{tc("brand")} · SPHEREx</p>
-          <h1 className="mt-1 text-3xl font-bold text-starlight md:text-4xl">
+          <h1 className="mt-1 max-w-xl text-3xl font-bold text-starlight md:text-4xl">
             {t("title")}
           </h1>
           <p className="mt-1 max-w-md text-xs text-mutedstar md:text-sm">
@@ -71,25 +72,25 @@ export default function Home() {
             <Link
               href="/demo"
               data-testid="home-demo-link"
-              className="flex items-center gap-1.5 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
+              className="flex items-center gap-1.5 rounded-full bg-pulse px-3.5 py-2 text-xs font-bold text-starlight hover:brightness-110"
             >
               <Play size={14} /> {t("demo")}
             </Link>
             <button
               onClick={() => router.push("/living-sky")}
-              className="flex items-center gap-1.5 rounded border border-pulse/60 bg-abyss/80 px-3 py-2 text-xs font-semibold text-pulse hover:border-pulse"
+              className="flex items-center gap-1.5 rounded-full border border-pulse/60 bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
             >
               <Orbit size={14} /> {t("exploreSky")}
             </button>
             <button
               onClick={() => router.push("/living-sky")}
-              className="flex items-center gap-1.5 rounded border border-line bg-abyss/80 px-3 py-2 text-xs font-semibold text-starlight hover:border-pulse"
+              className="flex items-center gap-1.5 rounded-full border border-line bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
             >
               <Crosshair size={14} /> {t("findObject")}
             </button>
             <button
               onClick={() => router.push(target ? sequenceUrl(target) : "/time-explorer")}
-              className="flex items-center gap-1.5 rounded border border-gold/60 bg-abyss/80 px-3 py-2 text-xs font-semibold text-gold hover:border-gold"
+              className="flex items-center gap-1.5 rounded-full border border-line bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
             >
               <Clock3 size={14} /> {t("seeChange")}
             </button>
@@ -97,20 +98,25 @@ export default function Home() {
         </motion.div>
 
         <section className="pointer-events-auto" aria-label={t("targetsLabel")}>
-          <h2 className="text-sm font-semibold text-starlight">{t("targetsTitle")}</h2>
+          <h2 className="text-base font-semibold text-starlight">{t("targetsTitle")}</h2>
           <ul className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {VALIDATION_TARGETS.map((vt) => (
+            {VALIDATION_TARGETS.map((vt, i) => (
               <li key={vt.key}>
                 <Link
                   href={sequenceUrl(vt, undefined, vt.mode)}
                   onMouseEnter={() => prefetch(vt)}
                   onFocus={() => prefetch(vt)}
-                  className="flex h-full min-h-[120px] flex-col justify-between gap-3 rounded-xl p-4 transition-colors hover:bg-pulse/5 focus-visible:bg-pulse/5 focus-visible:outline-none"
+                  className="flex h-full min-h-[150px] flex-col justify-between gap-3 rounded-xl border border-line/70 bg-deep/60 p-4 transition-colors hover:border-pulse/50 hover:bg-deep/80 focus-visible:border-pulse/50 focus-visible:outline-none"
                 >
+                  <span className="flex items-center justify-between text-[11px]">
+                    <span className="font-mono font-semibold text-pulse">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="text-mutedstar">{vt.mode === "motion" ? t("modeMotion") : t("modeBrightness")}</span>
+                  </span>
                   <span className="text-base font-semibold leading-snug text-starlight">{targetCopy(vt.key).hook}</span>
+                  <TargetCurve targetKey={vt.key} />
                   <span className="flex items-center justify-between text-[11px] text-mutedstar">
                     {vt.name}
-                    <span className="text-pulse">
+                    <span className="font-semibold text-pulse">
                       {vt.mode === "motion" ? t("modeMotion") : t("modeBrightness")} →
                     </span>
                   </span>
@@ -121,7 +127,7 @@ export default function Home() {
         </section>
 
         <div className="pointer-events-auto flex flex-wrap items-end justify-between gap-2">
-          <div className="max-w-md rounded-xl bg-white/[0.04] p-2.5 text-[11px] ring-1 ring-inset ring-white/[0.06] backdrop-blur-md">
+          <div className="max-w-md rounded-xl border border-line/70 bg-deep/60 p-3 text-[11px] backdrop-blur-md">
             <div className="mb-1 flex items-center justify-between gap-3">
               <span className="font-semibold text-starlight">SPHEREx · IRSA</span>
               <button
@@ -148,7 +154,7 @@ export default function Home() {
           {target && (
             <Link
               href="/journal"
-              className="rounded-xl bg-white/[0.04] px-3 py-2 text-[11px] text-mutedstar ring-1 ring-inset ring-white/[0.06] backdrop-blur-md transition-colors hover:bg-white/[0.07] hover:text-starlight"
+              className="rounded-xl border border-line/70 bg-deep/60 px-3 py-2.5 text-[11px] text-mutedstar backdrop-blur-md transition-colors hover:border-pulse/50 hover:bg-deep/80 hover:text-starlight"
             >
               {t.rich("ongoing", {
                 name: (chunks) => <span className="text-starlight">{chunks}</span>,
