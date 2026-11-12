@@ -3,11 +3,12 @@
 /** Entry screen: search, challenge targets, three actions and real archive status. */
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Clock3, Crosshair, Orbit, Play, RefreshCw } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
+import SkyBackdrop from "@/components/SkyBackdrop";
 import { DataRelease, StatusDot, useDataSources } from "@/components/StatusBanner";
 import { api } from "@/lib/api";
 import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
@@ -19,6 +20,7 @@ export default function Home() {
   const { target } = useResearch();
   const { sources, note, collections, error, loading, refresh } = useDataSources();
   const prefetched = useRef(new Set<string>());
+  const [leaving, setLeaving] = useState(false);
 
   const prefetch = (t: ValidationTarget) => {
     if (prefetched.current.has(t.key)) return;
@@ -33,8 +35,19 @@ export default function Home() {
         style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(70,216,255,0.10), transparent 60%)" }}
         aria-hidden="true"
       />
+      <SkyBackdrop targets={VALIDATION_TARGETS} onPrefetch={prefetch} onLeaving={setLeaving} />
+      <div
+        className="pointer-events-none absolute inset-0 z-[2]"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(5,7,13,0.9) 0%, rgba(5,7,13,0.62) 34%, rgba(5,7,13,0) 68%), linear-gradient(0deg, rgba(5,7,13,0.85) 0%, rgba(5,7,13,0) 38%)",
+        }}
+        aria-hidden="true"
+      />
 
-      <div className="pointer-events-none relative z-10 flex min-h-full flex-col justify-between gap-6 p-4 md:p-6">
+      <div
+        className={`pointer-events-none relative z-10 flex min-h-full flex-col justify-between gap-6 p-4 transition-opacity duration-700 md:p-6 ${leaving ? "opacity-0" : "opacity-100"}`}
+      >
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -62,7 +75,7 @@ export default function Home() {
             </Link>
             <button
               onClick={() => router.push("/living-sky")}
-              className="flex items-center gap-1.5 rounded bg-pulse px-3 py-2 text-xs font-bold text-abyss hover:brightness-110"
+              className="flex items-center gap-1.5 rounded border border-pulse/60 bg-abyss/80 px-3 py-2 text-xs font-semibold text-pulse hover:border-pulse"
             >
               <Orbit size={14} /> Explorar el cielo
             </button>

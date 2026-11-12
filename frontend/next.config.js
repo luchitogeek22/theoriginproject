@@ -9,6 +9,7 @@ const securityHeaders = [{ key: "X-Frame-Options", value: "DENY" }, ...baseHeade
 const embeddableHeaders = [{ key: "Content-Security-Policy", value: "frame-ancestors *" }, ...baseHeaders];
 
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ["three"],

@@ -34,3 +34,15 @@ test("the guided demo walks through three steps with the keyboard", async ({ pag
   await page.keyboard.press("ArrowLeft");
   await expect(title).toHaveText("Mira cómo late");
 });
+
+test("the home sky shows the five targets and each point opens its video", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await skipTutorial(page);
+  await page.goto("/");
+  for (const key of ["barnard", "epsindi", "wise0855", "rwaur", "rdra"]) {
+    await expect(page.getByTestId(`sky-target-${key}`)).toBeAttached({ timeout: 20_000 });
+  }
+  await page.getByTestId("sky-target-barnard").evaluate((el) => (el as HTMLElement).click());
+  await expect(page).toHaveURL(/\/time-explorer\?.*ra=269\./);
+  await waitForSequence(page);
+});

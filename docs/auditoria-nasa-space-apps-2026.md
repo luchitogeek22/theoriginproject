@@ -1379,6 +1379,22 @@ Es la primera vez que la interfaz se ejecutó en un navegador. Hallazgos y arreg
 
 Resultado de la batería en navegador: ver el resumen de §17.3.
 
+**Mapa del cielo de la portada (sustituye al fondo decorativo retirado en D3).** El fondo anterior era un
+planetario genérico de constelaciones cargado desde un CDN: no mostraba datos de SPHEREx y sus etiquetas se
+montaban sobre el título. Se reemplazó por un mapa propio (`SkyMapBackdrop.tsx`, proyección de Hammer, Vía Láctea
+calculada, sin script externo) con los cinco objetivos en su posición real como puntos clicables que abren su
+secuencia (azul: se mueve; ámbar: cambia de brillo). Revisado en navegador: queda encima de las tarjetas, sin
+tapar el texto, con teclado (cada punto es un enlace) y movimiento reducido respetado. Cubierto por una prueba
+en navegador.
+
+**Portada 3D a pantalla completa.** El mapa se convirtió en una bóveda celeste 3D que ocupa todo el fondo
+(`SkyScene.tsx`, React Three Fiber): tres capas de estrellas con parpadeo, la Vía Láctea calculada en
+coordenadas galácticas, rotación lenta, arrastre con inercia y paralaje con el puntero. Los cinco objetivos son
+marcadores pulsantes en su posición real, con etiqueta que es un enlace (`<a>`, accesible por teclado). Al elegir
+uno, la cámara vuela hacia él (≈1,25 s) y se abre su secuencia. Si el equipo no tiene WebGL se usa el mapa 2D
+(`SkyMapBackdrop.tsx`); con movimiento reducido no hay rotación ni vuelo. El render se pausa cuando la pestaña
+no está visible. Cubierto por una prueba en navegador.
+
 ### 17.3 Resumen de pruebas en navegador
 
 **19 de 19 pruebas pasan** en Chromium (Playwright 1.49), con el backend sin ruta hacia IRSA y las secuencias reales de

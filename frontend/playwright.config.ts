@@ -33,7 +33,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `NEXT_PUBLIC_API_URL=${api} npx next build && NEXT_PUBLIC_API_URL=${api} npx next start -p ${WEB_PORT}`,
+      command: `NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_API_URL=${api} npx next build && NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_API_URL=${api} npx next start -p ${WEB_PORT}`,
       url: web,
       reuseExistingServer: !process.env.CI,
       timeout: 360_000,
