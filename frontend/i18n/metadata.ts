@@ -23,8 +23,8 @@ export type PageKey =
 
 /** Indexable pages and their locale-less paths (sitemap source). Private pages are excluded. */
 export const PUBLIC_PAGES: ReadonlyArray<{ key: PageKey; path: string }> = [
-  { key: "observatory", path: "/" },
-  { key: "landing", path: "/landing-page" },
+  { key: "landing", path: "/" },
+  { key: "observatory", path: "/observatory" },
   { key: "livingSky", path: "/living-sky" },
   { key: "timeExplorer", path: "/time-explorer" },
   { key: "spectralLab", path: "/spectral-lab" },

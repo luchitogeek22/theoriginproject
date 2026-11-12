@@ -48,7 +48,8 @@ export default function AuthButton() {
   const logout = async () => {
     await supabaseBrowser()?.auth.signOut();
     setEmail(null);
-    router.push("/");
+    // Back to the app's own home, not the public landing — "/" no longer means Observatory.
+    router.push("/observatory");
     router.refresh();
   };
 

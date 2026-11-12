@@ -8,15 +8,15 @@ export default function ModeToggle() {
   const { mode, setMode } = useResearch();
   const t = useTranslations("mode");
   return (
-    <div className="flex rounded border border-line bg-deep p-0.5 text-[11px]" role="tablist" aria-label={t("label")}>
+    <div className="flex rounded-full border border-line/80 bg-abyss/60 p-0.5 text-[11px]" role="tablist" aria-label={t("label")}>
       {(["explore", "investigate"] as const).map((m) => (
         <button
           key={m}
           role="tab"
           aria-selected={mode === m}
           onClick={() => setMode(m)}
-          className={`rounded px-2.5 py-1 transition-colors ${
-            mode === m ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
+          className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+            mode === m ? "bg-pulse text-abyss" : "text-mutedstar hover:text-starlight"
           }`}
         >
           {t(m)}

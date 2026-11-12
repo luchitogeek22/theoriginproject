@@ -2,7 +2,7 @@
  * Non-text data of the landing. Every visible text lives in `locales/<locale>/landing.json`
  * under `landing.*` and is looked up by the stable ids below.
  */
-export const APP_ENTRY = "/";
+export const APP_ENTRY = "/observatory";
 
 export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "platform" | "question";
 

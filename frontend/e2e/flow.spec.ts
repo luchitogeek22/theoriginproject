@@ -3,7 +3,7 @@ import { FRAME, skipTutorial, waitForSequence } from "./helpers";
 
 test("from the home page to the video takes one interaction", async ({ page }) => {
   await skipTutorial(page);
-  await page.goto("/");
+  await page.goto("/observatory");
   await page.getByRole("link", { name: /WISE 0855/ }).first().click();
   await expect(page).toHaveURL(/\/time-explorer\?/);
   await waitForSequence(page);
@@ -38,7 +38,7 @@ test("the guided demo walks through three steps with the keyboard", async ({ pag
 test("the home sky shows the five targets and each point opens its video", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await skipTutorial(page);
-  await page.goto("/");
+  await page.goto("/observatory");
   for (const key of ["barnard", "epsindi", "wise0855", "rwaur", "rdra"]) {
     await expect(page.getByTestId(`sky-target-${key}`)).toBeAttached({ timeout: 20_000 });
   }

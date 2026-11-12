@@ -35,7 +35,7 @@ export default function Home() {
     <div className="scroll-thin relative h-full w-full overflow-y-auto">
       <div
         className="absolute inset-0 bg-abyss"
-        style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(70,216,255,0.10), transparent 60%)" }}
+        style={{ backgroundImage: "radial-gradient(ellipse at 70% 20%, rgba(90,143,224,0.12), transparent 60%)" }}
         aria-hidden="true"
       />
       <SkyBackdrop targets={VALIDATION_TARGETS} onPrefetch={prefetch} onLeaving={setLeaving} />
@@ -105,7 +105,7 @@ export default function Home() {
                   href={sequenceUrl(vt, undefined, vt.mode)}
                   onMouseEnter={() => prefetch(vt)}
                   onFocus={() => prefetch(vt)}
-                  className="flex h-full min-h-[120px] flex-col justify-between gap-3 rounded-lg border border-line bg-abyss/85 p-4 hover:border-pulse focus-visible:border-pulse focus-visible:outline-none"
+                  className="flex h-full min-h-[120px] flex-col justify-between gap-3 rounded-xl p-4 transition-colors hover:bg-pulse/5 focus-visible:bg-pulse/5 focus-visible:outline-none"
                 >
                   <span className="text-base font-semibold leading-snug text-starlight">{targetCopy(vt.key).hook}</span>
                   <span className="flex items-center justify-between text-[11px] text-mutedstar">
@@ -121,7 +121,7 @@ export default function Home() {
         </section>
 
         <div className="pointer-events-auto flex flex-wrap items-end justify-between gap-2">
-          <div className="max-w-md rounded border border-line bg-abyss/85 p-2.5 text-[11px]">
+          <div className="max-w-md rounded-xl bg-white/[0.04] p-2.5 text-[11px] ring-1 ring-inset ring-white/[0.06] backdrop-blur-md">
             <div className="mb-1 flex items-center justify-between gap-3">
               <span className="font-semibold text-starlight">SPHEREx · IRSA</span>
               <button
@@ -148,7 +148,7 @@ export default function Home() {
           {target && (
             <Link
               href="/journal"
-              className="rounded border border-line bg-abyss/85 px-3 py-2 text-[11px] text-mutedstar hover:text-starlight"
+              className="rounded-xl bg-white/[0.04] px-3 py-2 text-[11px] text-mutedstar ring-1 ring-inset ring-white/[0.06] backdrop-blur-md transition-colors hover:bg-white/[0.07] hover:text-starlight"
             >
               {t.rich("ongoing", {
                 name: (chunks) => <span className="text-starlight">{chunks}</span>,

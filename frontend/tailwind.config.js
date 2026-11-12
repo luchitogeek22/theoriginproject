@@ -10,7 +10,9 @@ module.exports = {
         line: "#1c2946",
         starlight: "#e8eefc",
         mutedstar: "#93a1c0",
-        pulse: "#46d8ff",
+        // Single brand accent ("cobalto noche"): bright enough to keep bg-pulse/text-abyss
+        // buttons legible app-wide (AA, ~6:1), while reading as cobalt rather than cyan.
+        pulse: "#5a8fe0",
         gold: "#c8a45c",
         void: "#05060A",
         ink: "#0B1020",
@@ -20,9 +22,10 @@ module.exports = {
         stellar: "#F4F6FC",
       },
       fontFamily: {
-        sans: ["'Segoe UI'", "system-ui", "-apple-system", "Roboto", "sans-serif"],
+        // IBM Plex Sans everywhere, loaded via next/font in app/[locale]/layout.tsx.
+        sans: ["var(--font-sans)", "'IBM Plex Sans'", "system-ui", "-apple-system", "sans-serif"],
         display: ["var(--font-display)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        mono: ["var(--font-mono)", "'IBM Plex Mono'", "ui-monospace", "monospace"],
       },
     },
   },

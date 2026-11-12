@@ -17,7 +17,7 @@ test.describe("internationalization", () => {
 
   test("switching language keeps the page, persists and survives reloads", async ({ page, context }) => {
     await page.goto("/candidates?from=test");
-    await page.getByRole("combobox", { name: /Change language/ }).selectOption("es");
+    await page.getByRole("button", { name: "Español" }).click();
 
     await expect(page).toHaveURL(/\/es\/candidates\?from=test$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
@@ -37,7 +37,7 @@ test.describe("internationalization", () => {
     await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Candidatos" }).click();
     await expect(page).toHaveURL(/\/es\/candidates$/);
 
-    await page.getByRole("combobox", { name: /Cambiar idioma/ }).selectOption("en");
+    await page.getByRole("button", { name: "English" }).click();
     await expect(page).toHaveURL(/\/candidates$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect.poll(async () => (await context.cookies()).find((c) => c.name === "NEXT_LOCALE")?.value).toBe("en");
@@ -71,10 +71,12 @@ test.describe("internationalization", () => {
 
   test("the language switcher is keyboard operable", async ({ page }) => {
     await page.goto("/candidates");
-    const select = page.getByRole("combobox", { name: /Change language/ });
-    await select.focus();
-    await expect(select).toBeFocused();
-    await expect(select.locator("option")).toHaveText(["English", "Español"]);
+    const spanish = page.getByRole("button", { name: "Español" });
+    await spanish.focus();
+    await expect(spanish).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/es\/candidates$/);
+    await expect(spanish).toHaveAttribute("aria-pressed", "true");
   });
 
   for (const prefix of ["", "/es"]) {
@@ -87,7 +89,7 @@ test.describe("internationalization", () => {
         if (msg.type() === "error" || msg.type() === "warning") watch(msg.text());
       });
       page.on("pageerror", (error) => watch(error.message));
-      for (const path of ["/", "/landing-page", "/living-sky", "/time-explorer", "/spectral-lab", "/candidates", "/demo", "/login"]) {
+      for (const path of ["/", "/observatory", "/living-sky", "/time-explorer", "/spectral-lab", "/candidates", "/demo", "/login"]) {
         await page.goto(`${prefix}${path === "/" && prefix ? "" : path}`);
         await page.waitForLoadState("networkidle");
       }

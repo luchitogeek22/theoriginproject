@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { APP_ENTRY } from "./content";
 import { hasWebGL, useStageSync } from "./hooks";
 import { ProgressRail, ScrollMeter, StaticSky, TopBar } from "./ui/Chrome";
 import Hero from "./sections/Hero";
@@ -28,7 +29,7 @@ export default function LandingExperience() {
 
   return (
     <div className="landing">
-      <Link href="/" className="landing-skip landing-focus">
+      <Link href={APP_ENTRY} className="landing-skip landing-focus">
         {t("skip")}
       </Link>
       <div className="fixed inset-0 z-0" aria-hidden>
