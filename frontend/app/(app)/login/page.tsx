@@ -7,10 +7,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LogIn, UserPlus } from "lucide-react";
 import { isSupabaseConfigured, supabaseBrowser } from "@/lib/supabase/client";
 
+const DEFAULT_NEXT = "/living-sky";
+
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
+    return DEFAULT_NEXT;
+  }
+  if (/[\\\u0000-\u001f]/.test(raw)) return DEFAULT_NEXT;
+  return raw;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/living-sky";
+  const next = safeNext(searchParams.get("next"));
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +78,7 @@ function LoginForm() {
         {mode === "login" ? "Entrar" : "Crear cuenta"}
       </h1>
       <p className="mt-1 text-xs text-mutedstar">
-        Tu bitácora de investigación y tus descubrimientos quedarán asociados a tu cuenta.
+        Tu bitácora de investigación y tus candidatos quedarán asociados a tu cuenta.
       </p>
       <div className="mt-3 flex rounded border border-line bg-abyss p-0.5 text-xs" role="tablist">
         {(["login", "register"] as const).map((m) => (

@@ -10,6 +10,7 @@ from app.logging import get_logger
 
 log = get_logger("storage")
 
+MEMORY_CACHE_MAX_ENTRIES = 1024
 _memory_cache: dict[str, tuple[float, str]] = {}
 _redis_client = None
 
@@ -58,7 +59,18 @@ def cache_set(key: str, value: str, ttl_seconds: int) -> None:
             return
         except Exception:  # noqa: BLE001
             pass
+    _bound_memory_cache()
     _memory_cache[key] = (time.time() + ttl_seconds, value)
+
+
+def _bound_memory_cache() -> None:
+    if len(_memory_cache) < MEMORY_CACHE_MAX_ENTRIES:
+        return
+    now = time.time()
+    for stale in [k for k, (expires, _) in _memory_cache.items() if expires < now]:
+        del _memory_cache[stale]
+    while len(_memory_cache) >= MEMORY_CACHE_MAX_ENTRIES:
+        del _memory_cache[min(_memory_cache, key=lambda k: _memory_cache[k][0])]
 
 
 def cache_get_json(key: str) -> Any | None:

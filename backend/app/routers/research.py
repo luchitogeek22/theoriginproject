@@ -12,12 +12,15 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.auth import UserInfo, get_current_user
-from app.database import get_db, init_db
+from app.database import get_db
 from app.models import ResearchSession
 from app.schemas import ResearchCreateRequest, ResearchResponse
+from app.config import get_settings
 from app.services.evidence import (
+    CURRENT_HASH_VERSION,
     build_report,
     compute_verification_hash,
+    covers_text,
     report_markdown,
     report_pdf_bytes,
 )
@@ -49,6 +52,7 @@ def _session_view(record: ResearchSession) -> dict:
         "dec_deg": record.dec_deg,
         "payload": _stored_payload(record),
         "verification_hash": record.verification_hash or "",
+        "hash_version": record.hash_version or 1,
     }
 
 
@@ -76,7 +80,7 @@ def _serialize(record: ResearchSession, request: Request) -> ResearchResponse:
         updated_at=record.updated_at.isoformat() if record.updated_at else "",
         share_url=f"{base}/api/v1/research/{record.id}",
         verification_hash=record.verification_hash or "",
-        user_id=record.user_id,
+        hash_version=record.hash_version or 1,
     )
 
 
@@ -84,15 +88,17 @@ def _serialize(record: ResearchSession, request: Request) -> ResearchResponse:
 def create_research(payload: ResearchCreateRequest, request: Request,
                     db: Session = Depends(get_db),
                     user: UserInfo | None = Depends(get_current_user)) -> ResearchResponse:
-    init_db()
     title = payload.title or f"Research — {payload.target_name or 'untargeted'}"
+    stored_payload = json.loads(json.dumps(payload.payload, default=str))
+    stored_payload.setdefault("processing_version", get_settings().processing_version)
     verification_hash, _ = compute_verification_hash(
         {
             "title": title,
             "target_name": payload.target_name,
             "ra_deg": payload.ra_deg,
             "dec_deg": payload.dec_deg,
-            "payload": payload.payload,
+            "payload": stored_payload,
+            "hash_version": CURRENT_HASH_VERSION,
         }
     )
     record = ResearchSession(
@@ -101,8 +107,9 @@ def create_research(payload: ResearchCreateRequest, request: Request,
         target_name=payload.target_name,
         ra_deg=payload.ra_deg,
         dec_deg=payload.dec_deg,
-        payload_json=json.dumps(payload.payload, default=str),
+        payload_json=json.dumps(stored_payload),
         verification_hash=verification_hash,
+        hash_version=CURRENT_HASH_VERSION,
         user_id=user.user_id if user else None,
     )
     db.add(record)
@@ -131,14 +138,12 @@ def verify_research(session_id: str, db: Session = Depends(get_db)):
     return {
         "session_id": session_id,
         "algorithm": "SHA-256",
+        "hash_version": record.hash_version or 1,
         "stored_hash": stored,
         "recomputed_hash": recomputed,
         "match": bool(stored) and stored == recomputed,
         "canonical_string": canonical,
-        "covers": (
-            "target name, RA/DEC, sorted (collection, obs_id) list, "
-            "candidate count and ids"
-        ),
+        "covers": covers_text(record.hash_version or 1),
         "note": (
             "The hash detects accidental edits and lets anyone audit a report. "
             "It is not tamper-proof against someone with database write access."
@@ -161,13 +166,21 @@ def _download_response(payload: bytes | str, media_type: str, filename: str) -> 
     )
 
 
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_cell(value: object) -> str:
+    text = "" if value is None else str(value)
+    return f"'{text}" if text.startswith(FORMULA_PREFIXES) else text
+
+
 def _report_csv(report: dict) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["obs_id", "collection", "date_obs", "detector", "band", "access_url"])
     for obs in report["observations"]:
-        writer.writerow([obs.get("obs_id"), obs.get("collection"), obs.get("date_obs"),
-                         obs.get("detector"), obs.get("band"), obs.get("access_url")])
+        writer.writerow([_csv_cell(obs.get(key)) for key in
+                         ("obs_id", "collection", "date_obs", "detector", "band", "access_url")])
     return buffer.getvalue()
 
 

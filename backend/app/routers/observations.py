@@ -1,13 +1,18 @@
 """Observation search (live SIA2) + cached record retrieval."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.database import get_db, init_db
+from app.database import get_db
 from app.models import Observation
+from app.services.observation_store import upsert_observation
 from app.schemas import ObservationItem, ObservationSearchRequest, ObservationSearchResponse
-from app.services.sia2_gateway import ArchiveUnavailableError, SPHERExDataGateway, query_hash
+from app.services.sia2_gateway import (
+    ArchiveUnavailableError,
+    InvalidCollectionError,
+    SPHERExDataGateway,
+    query_hash,
+)
 
 router = APIRouter()
 gateway = SPHERExDataGateway()
@@ -15,7 +20,6 @@ gateway = SPHERExDataGateway()
 
 @router.post("/observations/search", response_model=ObservationSearchResponse)
 def search(payload: ObservationSearchRequest, db: Session = Depends(get_db)) -> ObservationSearchResponse:
-    init_db()
     try:
         result = gateway.search(
             payload.ra_deg,
@@ -26,13 +30,19 @@ def search(payload: ObservationSearchRequest, db: Session = Depends(get_db)) -> 
             payload.t_max_mjd,
             payload.maxrec,
         )
+    except InvalidCollectionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except ArchiveUnavailableError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    qhash = query_hash(payload.ra_deg, payload.dec_deg, payload.radius_arcmin,
-                       payload.collections or gateway.settings.collection_list)
+    qhash = query_hash(
+        payload.ra_deg, payload.dec_deg, payload.radius_arcmin,
+        payload.collections or gateway.available_collections(),
+        payload.t_min_mjd, payload.t_max_mjd, payload.maxrec,
+        gateway.settings.irsa_sia2_url,
+    )
     items: list[ObservationItem] = []
     for row in result["items"]:
-        record_id = _upsert(db, row, qhash)
+        record_id = upsert_observation(db, row, qhash)
         items.append(ObservationItem(id=record_id, **row))
     db.commit()
     return ObservationSearchResponse(
@@ -45,44 +55,6 @@ def search(payload: ObservationSearchRequest, db: Session = Depends(get_db)) -> 
     )
 
 
-def _upsert(db: Session, row: dict, qhash: str) -> int | None:
-    try:
-        existing = db.scalar(
-            select(Observation).where(
-                Observation.obs_id == row.get("obs_id", ""),
-                Observation.collection == row.get("collection", ""),
-            )
-        )
-        if existing is not None:
-            existing.query_hash = qhash
-            return existing.id
-        record = Observation(
-            obs_id=row.get("obs_id", ""),
-            collection=row.get("collection", ""),
-            ra_deg=row.get("ra_deg"),
-            dec_deg=row.get("dec_deg"),
-            fov_deg=row.get("fov_deg"),
-            t_min_mjd=row.get("t_min_mjd"),
-            t_max_mjd=row.get("t_max_mjd"),
-            date_obs=row.get("date_obs", "") or "",
-            instrument=row.get("instrument", "") or "",
-            detector=row.get("detector", "") or "",
-            band=row.get("band", "") or "",
-            dataproduct_type=row.get("dataproduct_type", "") or "",
-            access_url=row.get("access_url", "") or "",
-            access_format=row.get("access_format", "") or "",
-            filesize_bytes=row.get("filesize_bytes"),
-            s_region=row.get("s_region", "") or "",
-            query_hash=qhash,
-        )
-        db.add(record)
-        db.flush()
-        return record.id
-    except Exception:  # noqa: BLE001
-        db.rollback()
-        return None
-
-
 @router.get("/observations/{record_id}", response_model=ObservationItem)
 def get_observation(record_id: int, db: Session = Depends(get_db)) -> ObservationItem:
     record = db.get(Observation, record_id)
@@ -91,6 +63,7 @@ def get_observation(record_id: int, db: Session = Depends(get_db)) -> Observatio
     return ObservationItem(
         id=record.id,
         obs_id=record.obs_id,
+        product_id=record.product_id,
         collection=record.collection,
         ra_deg=record.ra_deg,
         dec_deg=record.dec_deg,
@@ -99,7 +72,7 @@ def get_observation(record_id: int, db: Session = Depends(get_db)) -> Observatio
         t_max_mjd=record.t_max_mjd,
         date_obs=record.date_obs,
         instrument=record.instrument,
-        detector=record.detector,
+        detector=int(record.detector) if record.detector.isdigit() else None,
         band=record.band,
         dataproduct_type=record.dataproduct_type,
         access_url=record.access_url,

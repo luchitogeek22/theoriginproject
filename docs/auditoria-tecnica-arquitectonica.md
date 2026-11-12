@@ -1101,6 +1101,30 @@ responsable antes de implementar el paquete indicado.
 | D10 | Autorizar una sesión con red para verificar datos reales | Sí; sin ella varios supuestos quedan sin comprobar | WP-05 |
 | D11 | Incorporar un ejecutor de pruebas de frontend (dependencia nueva) | Sí, mínimo, para `lib/api.ts` y el reproductor | WP-03, WP-11 |
 
+### Registro de implementación (2026-11-12)
+
+Implementados WP-00 a WP-33 (el plan completo). Verificación con datos reales de IRSA en `docs/auditoria-nasa-space-apps-2026.md` §16. Decisiones tomadas durante la implementación
+(revisables; ninguna requiere migración):
+
+| ID | Decisión tomada | Motivo |
+|---|---|---|
+| D2 | Opción completa: espectro por fotometría del objetivo en cada exposición (WP-26) | El perfil espacial se conserva, rotulado como tal |
+| D3 | `VirtualSkyViewer` y `PlanetSimulator3D` retirados y borrados; Aladin Lite 3.6.1 fijo | `docs/challenge.md` los cita como desvío |
+| D4 | Interfaz en **español** (no inglés, que era la recomendación) | El texto existente ya era mayoritariamente español; cambiar de idioma es un cambio de copia, no de código |
+| D5 | Tolerancia de longitud de onda del modo "Brillo": ±0,06 µm | Punto medio del rango propuesto (0,04 a 0,08) |
+| D6 | El blob es caché regenerable: si falta, el siguiente `POST` lo baja de nuevo | Sin volumen persistente asumido |
+| D8 | "Candidatos" | Recomendación |
+| D9 | Una sola ruta HTTP; PyVO sin uso (sigue en `requirements.txt`) | Recomendación |
+| D11 | **Sin** ejecutor de pruebas de frontend; criterio manual más `tsc` y `next build` | No se añadió dependencia |
+| D13 | Gaia DR3 e IMCCE SkyBoT autorizados, con plazo total y caché | Recomendación |
+| D14 | AllWISE W1/W2 como cuadro de referencia, desactivado por defecto | Verificado en vivo el 2026-11-12 (buscador y recorte IBE) |
+| D15 | Una "visita" es una exposición del mismo detector | Simplificación; agrupar por día queda pendiente |
+| D16 | Gaia hasta G < 17,5, máximo 60 marcas | Densidad de campo observada |
+| D17 | El cubo de PSF se conserva | Sin decisión de almacenamiento |
+
+Pruebas lentas (`@pytest.mark.slow`, 200 ensayos): se excluyen por defecto y corren
+en CI con `-m "slow or not slow"`.
+
 Riesgos abiertos:
 
 - **Cobertura real de SPHEREx para los cinco objetivos: sin verificar.** Si una

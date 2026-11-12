@@ -1,6 +1,6 @@
-"""Spectral engine: aperture profile vs wavelength from the WCS-WAVE table.
+"""Spectral engine: aperture profile vs wavelength from the WCS-WAVE lookup table.
 
-Visualization-grade: WCS-WAVE maps pixel rows to wavelength for the linear
+Visualization-grade: WCS-WAVE maps each pixel to a wavelength for the linear
 variable filter. Science-grade fluxes require the CWAVE/CBAND calibration
 products — the engine says so explicitly and never invents a profile.
 No molecular identification is performed.
@@ -11,41 +11,26 @@ from typing import Any
 import numpy as np
 
 from app.logging import get_logger
-from app.services.fits_processing import FITSProcessingService
+from app.services.spherex_product import read_product
 
 log = get_logger("spectral")
 
 
 class SpectralAnalysisEngine:
-    def __init__(self) -> None:
-        self.fits = FITSProcessingService()
 
     def extract(self, data: bytes, meta: dict[str, Any], ra_deg: float, dec_deg: float) -> dict[str, Any]:
-        from astropy.io import fits  # type: ignore[import-untyped]
-
+        product = read_product(data)
         limitations = [
             "Visualization-grade profile from WCS-WAVE. Science-grade fluxes "
             "require CWAVE/CBAND calibration products for this detector/position.",
             "No molecular features are identified by this engine.",
+            "Zodiacal light (ZODI) was subtracted from IMAGE.",
         ]
-        with fits.open(io_bytes(data), memmap=False) as hdul:
-            hdu = hdul[1] if len(hdul) > 1 else hdul[0]
-            if hdu.data is None:
-                raise ValueError("IMAGE extension has no data.")
-            image = np.asarray(hdu.data, dtype=np.float64)
-            header = dict(hdu.header)
-            variance = None
-            if len(hdul) > 3 and hdul[3].data is not None:
-                candidate = np.asarray(hdul[3].data, dtype=np.float64)
-                variance = candidate if candidate.shape == image.shape else None
-            flags = None
-            if len(hdul) > 2 and hdul[2].data is not None:
-                candidate = np.asarray(hdul[2].data)
-                flags = candidate if candidate.shape == image.shape else None
-            wave = self._wavelength_axis(hdul, image.shape, limitations)
-
-        x, y = self._sky_to_pixel(header, ra_deg, dec_deg, image.shape, limitations)
-        samples = self._aperture_profile(image, variance, flags, x, y, wave)
+        limitations.extend(product.warnings)
+        image = product.science_image
+        x, y = self._sky_to_pixel(product, ra_deg, dec_deg, limitations)
+        wave = self._wavelength_axis(product, x, limitations)
+        samples = self._aperture_profile(image, product.variance, product.quality_mask, x, wave)
         return {
             "data_class": "COMPUTED_MEASUREMENT",
             "obs_id": str(meta.get("obs_id", "")),
@@ -55,79 +40,40 @@ class SpectralAnalysisEngine:
             "date_obs": str(meta.get("date_obs", "")),
             "pixel": {"x": x, "y": y},
             "wavelength_unit": "micron",
-            "flux_unit": str(header.get("BUNIT", "MJy/sr")),
+            "flux_unit": product.bunit or "MJy/sr",
             "samples": samples,
             "n_samples": len(samples),
             "limitations": limitations,
         }
 
     @staticmethod
-    def _wavelength_axis(hdul, shape, limitations: list[str]) -> np.ndarray | None:
-        """Best-effort wavelength vector from the WCS-WAVE binary table."""
-        if len(hdul) <= 5 or hdul[5].data is None:
-            limitations.append("WCS-WAVE extension missing; samples carry pixel rows instead.")
+    def _wavelength_axis(product, x: int, limitations: list[str]) -> np.ndarray | None:
+        """Wavelength of every image row along column x, from the WCS-WAVE lookup table."""
+        if product.wave_wcs is None:
+            limitations.append("WCS-WAVE unavailable; samples carry pixel rows instead.")
             return None
-        try:
-            table = hdul[5].data
-            names = [str(n).lower() for n in (table.dtype.names or [])]
-            wave_col = None
-            for candidate in ("wave", "wavelength", "lambda", "cwave"):
-                if candidate in names:
-                    wave_col = table.dtype.names[names.index(candidate)]
-                    break
-            if wave_col is None:
-                # Fall back to the first float column.
-                for name in table.dtype.names or []:
-                    column = np.asarray(table[name]).ravel()
-                    if np.issubdtype(column.dtype, np.floating) and column.size >= shape[0]:
-                        wave_col = name
-                        break
-            if wave_col is None:
-                limitations.append("WCS-WAVE has no usable wavelength column.")
-                return None
-            wave = np.asarray(table[wave_col], dtype=np.float64).ravel()
-            if wave.size != shape[0]:
-                limitations.append(
-                    f"WCS-WAVE length ({wave.size}) != image rows ({shape[0]}); "
-                    "resampled by index."
-                )
-                index = np.linspace(0, wave.size - 1, shape[0]).round().astype(int)
-                wave = wave[index]
-            # Convert likely units to micron (best effort, recorded).
-            if np.nanmedian(wave) > 50:
-                wave = wave / 1000.0  # nm -> um
-                limitations.append("Wavelength rescaled nm -> micron by magnitude heuristic.")
-            return wave
-        except Exception as exc:  # noqa: BLE001
-            limitations.append(f"WCS-WAVE unreadable ({exc}); pixel rows used instead.")
-            return None
+        rows = np.arange(product.image.shape[0], dtype=float)
+        pixels = np.column_stack([np.full_like(rows, x, dtype=float), rows])
+        return product.wavelengths_at(pixels)[:, 0]
 
     @staticmethod
-    def _sky_to_pixel(header, ra_deg, dec_deg, shape, limitations) -> tuple[int, int]:
+    def _sky_to_pixel(product, ra_deg, dec_deg, limitations) -> tuple[int, int]:
+        shape = product.image.shape
         try:
-            from astropy.wcs import WCS  # type: ignore[import-untyped]
-
-            wcs = WCS(dict(header))
-            if not wcs.has_celestial:
-                raise ValueError("no celestial WCS")
-            x, y = wcs.all_world2pix([[ra_deg, dec_deg]], 0)[0]
-            x = int(np.clip(round(x), 0, shape[1] - 1))
-            y = int(np.clip(round(y), 0, shape[0] - 1))
-            return x, y
+            x, y = product.pixel_of(ra_deg, dec_deg)
+            return int(np.clip(round(x), 0, shape[1] - 1)), int(np.clip(round(y), 0, shape[0] - 1))
         except Exception as exc:  # noqa: BLE001
             limitations.append(f"WCS unavailable ({exc}); cutout center used.")
             return shape[1] // 2, shape[0] // 2
 
     @staticmethod
-    def _aperture_profile(image, variance, flags, x, y, wave) -> list[dict[str, Any]]:
+    def _aperture_profile(image, variance, quality, x, wave) -> list[dict[str, Any]]:
         half = 2
         x0, x1 = max(x - half, 0), min(x + half + 1, image.shape[1])
         samples: list[dict[str, Any]] = []
         for row in range(image.shape[0]):
             strip = image[row, x0:x1].astype(np.float64)
-            ok = np.isfinite(strip)
-            if flags is not None:
-                ok &= np.asarray(flags[row, x0:x1]) == 0
+            ok = np.isfinite(strip) & quality[row, x0:x1]
             if not ok.any():
                 continue
             flux = float(np.median(strip[ok]))
@@ -143,7 +89,101 @@ class SpectralAnalysisEngine:
         return samples
 
 
-def io_bytes(data: bytes):
-    import io
+SPECTRUM_LABEL = "relative spectrophotometry, no aperture correction"
 
-    return io.BytesIO(data)
+
+def spectrophotometry(
+    exposures: list[tuple[dict[str, Any], Any]],
+    ra_deg: float,
+    dec_deg: float,
+    positions: list[tuple[float, float]] | None = None,
+) -> dict[str, Any]:
+    """Flux against wavelength from aperture photometry of every exposure at the target pixel."""
+    from app.services.photometry import aperture_photometry
+    from app.services.sia2_gateway import _mjd_to_iso
+
+    points: list[dict[str, Any]] = []
+    for index, (meta, product) in enumerate(exposures):
+        ra, dec = positions[index] if positions else (ra_deg, dec_deg)
+        measured = aperture_photometry(product, ra, dec)
+        if not measured.get("ok"):
+            continue
+        try:
+            wave, bandwidth = product.wavelength_at(measured["x"], measured["y"])
+        except ValueError:
+            continue
+        if not np.isfinite(wave):
+            continue
+        points.append({
+            "mjd": product.mjd_obs,
+            "date_iso": _mjd_to_iso(product.mjd_obs),
+            "detector": product.detector,
+            "obs_id": str(meta.get("obs_id") or product.obs_id),
+            "wavelength_um": float(wave),
+            "bandwidth_um": float(bandwidth),
+            "flux_jy": measured["flux_jy"],
+            "flux_jy_err": measured["flux_jy_err"],
+            "snr": measured["snr"],
+            "flagged": measured["flagged"],
+        })
+    points.sort(key=lambda p: p["wavelength_um"])
+    return {
+        "label": SPECTRUM_LABEL,
+        "points": points,
+        "n_points": len(points),
+        "color": color_thermometer(points),
+        "limitations": [
+            "Zodiacal light was subtracted from every exposure.",
+            "Different dates are shown in different colours: brightness changes over time are not "
+            "spectral shape.",
+            "No aperture correction is applied.",
+        ],
+    }
+
+
+COLOR_REFERENCES = [
+    {"max_index": -0.5, "text": "flux density falls steeply towards long wavelengths, as in ordinary stars at these wavelengths"},
+    {"max_index": 0.15, "text": "flatter than an ordinary star: redder than expected for a star"},
+    {"max_index": 0.6, "text": "red: more flux at long wavelengths"},
+    {"max_index": 1.01, "text": "very red: almost all the flux is at long wavelengths, as expected for a cold object"},
+]
+
+
+def color_thermometer(points: list[dict[str, Any]]) -> dict[str, Any]:
+    """Normalised colour index (F_long - F_short) / (F_long + F_short) between the two ends of the band."""
+    usable = [p for p in points if not p["flagged"] and p["detector"] is not None]
+    by_detector: dict[int, list[dict[str, Any]]] = {}
+    for p in usable:
+        by_detector.setdefault(p["detector"], []).append(p)
+    if len(by_detector) < 2:
+        return {"available": False, "reason": "Needs exposures from at least two detectors."}
+
+    def level(group):
+        flux = np.array([p["flux_jy"] for p in group])
+        err = np.array([p["flux_jy_err"] for p in group])
+        mean = float(np.mean(flux))
+        sigma = float(np.sqrt(np.sum(err**2)) / len(flux))
+        if len(flux) > 1:
+            sigma = max(sigma, float(np.std(flux, ddof=1) / np.sqrt(len(flux))))
+        return mean, sigma, float(np.mean([p["wavelength_um"] for p in group]))
+
+    levels = {d: level(g) for d, g in by_detector.items()}
+    ordered = sorted(levels, key=lambda d: (levels[d][2], d))
+    short, long = ordered[0], ordered[-1]
+    f_short, e_short, w_short = levels[short]
+    f_long, e_long, w_long = levels[long]
+    total = f_long + f_short
+    if total <= 0:
+        return {"available": False, "reason": "No positive flux at either end of the band."}
+    index = (f_long - f_short) / total
+    error = 2.0 * float(np.hypot(f_short * e_long, f_long * e_short)) / total**2
+    reading = next(r["text"] for r in COLOR_REFERENCES if index < r["max_index"])
+    return {
+        "available": True,
+        "index": float(index),
+        "index_err": error,
+        "short": {"detector": short, "wavelength_um": w_short, "flux_jy": f_short, "flux_jy_err": e_short},
+        "long": {"detector": long, "wavelength_um": w_long, "flux_jy": f_long, "flux_jy_err": e_long},
+        "reading": reading,
+        "reference_note": "Qualitative reference only; this is not a calibrated spectral classification.",
+    }

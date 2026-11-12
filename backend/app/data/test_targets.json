@@ -1,0 +1,110 @@
+{
+  "targets": [
+    {
+      "key": "barnard",
+      "name": "Barnard's Star",
+      "aliases": [
+        "barnard",
+        "barnard star",
+        "barnards star",
+        "gj 699",
+        "gj699"
+      ],
+      "hint": "High proper motion nearby star",
+      "phenomenon": "motion",
+      "catalog_id": "GJ 699",
+      "ra_deg": 269.4520769586187,
+      "dec_deg": 4.693364966576667,
+      "pmra_mas_yr": -801.551,
+      "pmdec_mas_yr": 10362.394,
+      "parallax_mas": 546.9759,
+      "epoch": "J2000",
+      "catalog": "SIMBAD",
+      "verified_on": "2026-11-11"
+    },
+    {
+      "key": "epsindi",
+      "name": "Epsilon Indi B",
+      "aliases": [
+        "epsilon indi b",
+        "eps indi b",
+        "eps ind b",
+        "epsilon indi",
+        "epsilon ind b"
+      ],
+      "hint": "Brown dwarf companion",
+      "phenomenon": "motion",
+      "catalog_id": "* eps Ind B",
+      "ra_deg": 331.04414658852124,
+      "dec_deg": -56.782844195116105,
+      "pmra_mas_yr": 3981.977,
+      "pmdec_mas_yr": -2466.832,
+      "parallax_mas": 270.658,
+      "epoch": "J2000",
+      "catalog": "SIMBAD",
+      "verified_on": "2026-11-11"
+    },
+    {
+      "key": "wise0855",
+      "name": "WISE 0855",
+      "aliases": [
+        "wise 0855",
+        "wise 0855-0714",
+        "wise j085510.83-071442.5",
+        "wisea j085510.74-071442.5",
+        "wise0855"
+      ],
+      "hint": "Coldest known brown dwarf",
+      "phenomenon": "motion",
+      "catalog_id": "WISE J085510.83-071442.5",
+      "ra_deg": 133.81890825,
+      "dec_deg": -7.247048,
+      "pmra_mas_yr": -8123.7,
+      "pmdec_mas_yr": 673.2,
+      "parallax_mas": 439.0,
+      "epoch": "J2000",
+      "catalog": "SIMBAD",
+      "verified_on": "2026-11-11"
+    },
+    {
+      "key": "rwaur",
+      "name": "RW Aurigae",
+      "aliases": [
+        "rw aurigae",
+        "rw aur",
+        "v* rw aur"
+      ],
+      "hint": "Young variable star",
+      "phenomenon": "variability",
+      "catalog_id": "V* RW Aur",
+      "ra_deg": 76.95652603458333,
+      "dec_deg": 30.401438173888888,
+      "pmra_mas_yr": 7.23,
+      "pmdec_mas_yr": -20.33,
+      "parallax_mas": 15.42,
+      "epoch": "J2000",
+      "catalog": "SIMBAD",
+      "verified_on": "2026-11-11"
+    },
+    {
+      "key": "rdra",
+      "name": "R Draconis",
+      "aliases": [
+        "r draconis",
+        "r dra",
+        "v* r dra"
+      ],
+      "hint": "Long-period variable",
+      "phenomenon": "variability",
+      "catalog_id": "V* R Dra",
+      "ra_deg": 248.16761083295,
+      "dec_deg": 66.75497941722,
+      "pmra_mas_yr": -20.643,
+      "pmdec_mas_yr": 6.149,
+      "parallax_mas": 1.2509,
+      "epoch": "J2000",
+      "catalog": "SIMBAD",
+      "verified_on": "2026-11-11"
+    }
+  ]
+}

@@ -298,7 +298,7 @@ function CameraRig({
   reducedMotion,
   fov,
 }: Pick<SkyProps, "focus" | "resetNonce" | "reducedMotion" | "fov">) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const goal = useRef<THREE.Vector3 | null>(null);
   const lastNonce = useRef<number | null>(null);
@@ -308,7 +308,8 @@ function CameraRig({
   useEffect(() => {
     perspective.fov = fov;
     perspective.updateProjectionMatrix();
-  }, [fov, perspective]);
+    invalidate();
+  }, [fov, perspective, invalidate]);
 
   useEffect(() => {
     if (focus && focus.nonce !== lastNonce.current) {
@@ -316,15 +317,17 @@ function CameraRig({
       const [x, y, z] = radecToVec3(focus.ra, focus.dec, 1);
       const dir = new THREE.Vector3(x, y, z);
       const dist = Math.max(camera.position.length(), 8);
-      goal.current = dir.multiplyScalar(dist);
+      // The camera sits inside the sphere, so it must be opposite the target to look at it.
+      goal.current = dir.multiplyScalar(-dist);
       if (reducedMotion) {
         camera.position.copy(goal.current);
         camera.lookAt(0, 0, 0);
         controls?.update();
         goal.current = null;
       }
+      invalidate();
     }
-  }, [focus, reducedMotion, camera, controls]);
+  }, [focus, reducedMotion, camera, controls, invalidate]);
 
   useEffect(() => {
     if (resetNonce !== lastReset.current) {
@@ -333,14 +336,16 @@ function CameraRig({
       camera.lookAt(0, 0, 0);
       controls?.update();
       goal.current = null;
+      invalidate();
     }
-  }, [resetNonce, camera, controls]);
+  }, [resetNonce, camera, controls, invalidate]);
 
   useFrame(() => {
     if (!goal.current) return;
     camera.position.lerp(goal.current, 0.09);
     camera.lookAt(0, 0, 0);
     if (camera.position.distanceTo(goal.current) < 0.15) goal.current = null;
+    else invalidate();
   });
   return null;
 }
@@ -348,10 +353,16 @@ function CameraRig({
 function Scene(props: SkyProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const [autoRotate, setAutoRotate] = useState(false);
+  const invalidate = useThree((s) => s.invalidate);
+  const rotating = autoRotate && !props.reducedMotion;
 
   useEffect(() => {
     if (props.reducedMotion) setAutoRotate(false);
   }, [props.reducedMotion]);
+
+  useFrame(() => {
+    if (rotating) invalidate();
+  });
 
   return (
     <>
@@ -364,6 +375,7 @@ function Scene(props: SkyProps) {
       />
       <OrbitControls
         ref={controlsRef}
+        makeDefault
         target={[0, 0, 0]}
         enablePan={false}
         enableDamping
@@ -371,7 +383,7 @@ function Scene(props: SkyProps) {
         rotateSpeed={0.55}
         minDistance={6}
         maxDistance={92}
-        autoRotate={autoRotate && !props.reducedMotion}
+        autoRotate={rotating}
         autoRotateSpeed={0.4}
       />
       <Grid visible={props.layers.grid} />
@@ -421,6 +433,9 @@ export default function CelestialSphere(props: SkyProps & { fallback: React.Reac
     <SkyErrorBoundary fallback={props.fallback}>
       <Canvas
         dpr={[1, 2]}
+        frameloop="demand"
+        aria-label="Esfera celeste interactiva: arrastra para girar y usa la rueda para acercar"
+        role="group"
         camera={{ fov: props.fov, near: 0.1, far: 2000, position: [0, 12, 42] }}
         gl={{ antialias: true, alpha: false }}
         onCreated={({ gl }) => {

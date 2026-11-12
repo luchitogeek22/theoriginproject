@@ -17,6 +17,7 @@ os.environ.update(
         "SUPABASE_URL": "",
         "SUPABASE_ANON_KEY": "",
         "SUPABASE_JWT_SECRET": "",
+        "DISCOVER_COLLECTIONS": "false",
     }
 )
 
@@ -30,3 +31,7 @@ def pytest_configure(config):
         raise RuntimeError(
             "Test isolation failed: refusing to run against a non-temporary database."
         )
+
+    from app.database import init_db
+
+    init_db()

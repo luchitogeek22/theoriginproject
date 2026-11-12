@@ -1,16 +1,15 @@
 "use client";
 
-/** ASTRA Copilot: rule-based interpretation assistant.
- * Answers ONLY from loaded measurements and metadata. Labels every claim as
- * measured / inferred / explanatory. Never invents data.
- */
+/** Rule-based interpretation assistant.
+ * Answers ONLY from the current job's measurements and loaded metadata.
+ * "MEDIDO" is reserved for values computed by the scientific engine. */
 
 import { useState } from "react";
 import { MessageCircleQuestion, Send } from "lucide-react";
 import { useResearch } from "@/lib/store";
 
 interface Answer {
-  kind: "measured" | "inferred" | "explanatory";
+  kind: "measured" | "archive" | "inferred" | "explanatory";
   text: string;
 }
 
@@ -23,12 +22,14 @@ const SUGGESTED = [
 
 function badge(kind: Answer["kind"]): string {
   if (kind === "measured") return "MEDIDO";
+  if (kind === "archive") return "ARCHIVO";
   if (kind === "inferred") return "INFERENCIA";
   return "EXPLICACIÓN";
 }
 
 export default function CopilotPanel() {
-  const { target, search, selected, candidates } = useResearch();
+  const { target, search, selected, candidates, currentJobId } = useResearch();
+  const jobCandidates = currentJobId ? candidates.filter((c) => c.job_id === currentJobId) : [];
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<Array<{ q: string; a: Answer[] }>>([]);
 
@@ -36,15 +37,15 @@ export default function CopilotPanel() {
     const q = question.toLowerCase();
     if (q.includes("cuánt") || q.includes("observaciones se han")) {
       if (!search) {
-        return [{ kind: "measured", text: "Aún no se ha consultado el archivo. Busca un objetivo para contar sus observaciones reales." }];
+        return [{ kind: "archive", text: "Aún no se ha consultado el archivo. Busca un objetivo para contar sus observaciones reales." }];
       }
       return [
-        { kind: "measured", text: `Se encontraron ${search.count} observaciones (consulta del ${new Date(search.queried_at).toLocaleString()}${search.cached ? ", desde caché" : ""}).` },
+        { kind: "archive", text: `Se encontraron ${search.count} observaciones (consulta del ${new Date(search.queried_at).toLocaleString()}${search.cached ? ", desde caché" : ""}).` },
         { kind: "explanatory", text: "Cada observación es una imagen real del archivo SPHEREx con su fecha y detector. Sin observaciones no hay comparación posible." },
       ];
     }
     if (q.includes("muev") || q.includes("moverse") || q.includes("desplaz")) {
-      const astro = candidates.find((c) => c.kind.includes("moving"));
+      const astro = jobCandidates.find((c) => c.kind.includes("moving"));
       const parts: Answer[] = [
         { kind: "explanatory", text: "Un desplazamiento aparente entre dos épocas puede ser movimiento propio real, pero también un artefacto de alineación, distinta PSF o ruido." },
       ];
@@ -52,7 +53,7 @@ export default function CopilotPanel() {
         parts.unshift({ kind: "measured", text: `El motor midió ${astro.separation_arcsec.toFixed(2)}″ ± ${astro.separation_err_arcsec?.toFixed(2) ?? "?"}″ entre épocas (candidato ${astro.id}, SNR ${astro.snr?.toFixed(1) ?? "—"}).` });
         parts.push({ kind: "inferred", text: "Si el desplazamiento supera claramente su incertidumbre y se repite en más épocas, un movimiento real es una hipótesis razonable a validar." });
       } else {
-        parts.unshift({ kind: "measured", text: "No hay ninguna medición de desplazamiento en esta investigación todavía." });
+        parts.unshift({ kind: "archive", text: "No hay ninguna medición de desplazamiento del análisis actual." });
       }
       return parts;
     }
@@ -65,13 +66,13 @@ export default function CopilotPanel() {
     if (q.includes("brillo") || q.includes("variaci")) {
       return [
         { kind: "explanatory", text: "Las variaciones de brillo comparan flujo calibrado (MJy/sr) entre épocas compatibles: mismo detector y respuesta espectral comparable." },
-        { kind: "measured", text: target ? `Objetivo actual: ${target.name}. Las mediciones aparecen tras ejecutar un análisis temporal.` : "Sin objetivo seleccionado no hay mediciones que interpretar." },
+        { kind: "archive", text: target ? `Objetivo actual: ${target.name}. Las mediciones aparecen tras ejecutar un análisis temporal.` : "Sin objetivo seleccionado no hay mediciones que interpretar." },
       ];
     }
     if (q.includes("quép") || q.includes("qué estoy") || q.includes("viendo")) {
-      if (!target) return [{ kind: "measured", text: "Ningún objetivo seleccionado. Busca por nombre o coordenadas para empezar." }];
+      if (!target) return [{ kind: "archive", text: "Ningún objetivo seleccionado. Busca por nombre o coordenadas para empezar." }];
       return [
-        { kind: "measured", text: `Observas la región de ${target.name} (${target.ra_deg.toFixed(5)}°, ${target.dec_deg.toFixed(5)}°), resuelta por ${target.resolver || "el servicio de resolución"}.` },
+        { kind: "archive", text: `Observas la región de ${target.name} (${target.ra_deg.toFixed(5)}°, ${target.dec_deg.toFixed(5)}°), resuelta por ${target.resolver || "el servicio de resolución"}.` },
         { kind: "explanatory", text: "Los contornos cian son huellas de observaciones SPHEREx reales; la estrella dorada marca tu objetivo." },
       ];
     }
@@ -90,10 +91,10 @@ export default function CopilotPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-starlight">
-        <MessageCircleQuestion size={16} className="text-pulse" /> ASTRA Copilot
+        <MessageCircleQuestion size={16} className="text-pulse" /> Asistente de interpretación
       </div>
       <p className="mb-3 text-[11px] text-mutedstar">
-        Explica tus resultados. Etiqueta cada afirmación: medido, inferencia o explicación.
+        Explica tus resultados. Etiqueta cada afirmación: medido (solo cálculos del motor), dato del archivo, inferencia o explicación.
       </p>
       <div className="mb-3 flex flex-1 flex-col gap-3 overflow-y-auto pr-1" style={{ maxHeight: 320 }}>
         {history.length === 0 && (
@@ -127,7 +128,8 @@ export default function CopilotPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask(input)}
-          placeholder="Pregunta sobre tus mediciones…"
+          placeholder="Pregunta sobre tus resultados…"
+          aria-label="Pregunta para el asistente"
           className="w-full rounded border border-line bg-deep px-2 py-1.5 text-xs text-starlight outline-none placeholder:text-mutedstar/60 focus:border-pulse"
         />
         <button onClick={() => ask(input)} aria-label="Enviar pregunta" className="rounded border border-line px-2 text-pulse hover:bg-panel">

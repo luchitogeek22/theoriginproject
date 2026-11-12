@@ -30,8 +30,9 @@ from app.config import get_settings
 LEEWAY_SECONDS = 30
 JWKS_TTL_SECONDS = 3600
 JWKS_TIMEOUT_SECONDS = 10
+JWKS_MIN_REFRESH_SECONDS = 60
 
-_jwks_cache = {"keys": {}, "fetched_at": 0.0}
+_jwks_cache = {"keys": {}, "fetched_at": 0.0, "attempted_at": 0.0}
 
 
 @dataclass
@@ -80,10 +81,15 @@ def _refresh_jwks() -> dict[str, dict]:
 
 def _get_jwks_key(kid: str) -> dict:
     keys = _jwks_cache["keys"]
-    if kid in keys and time.time() - _jwks_cache["fetched_at"] < JWKS_TTL_SECONDS:
+    now = time.time()
+    if kid in keys and now - _jwks_cache["fetched_at"] < JWKS_TTL_SECONDS:
         return keys[kid]
-    if kid in _refresh_jwks():
-        return _jwks_cache["keys"][kid]
+    if now - _jwks_cache["attempted_at"] >= JWKS_MIN_REFRESH_SECONDS:
+        _jwks_cache["attempted_at"] = now
+        if kid in _refresh_jwks():
+            return _jwks_cache["keys"][kid]
+    elif kid in keys:
+        return keys[kid]
     raise HTTPException(status_code=401, detail="Unknown token signing key.")
 
 
@@ -120,7 +126,17 @@ def _verify_es256(header: dict, signing_input: bytes, signature: bytes) -> None:
         raise HTTPException(status_code=401, detail="Invalid session signature.") from exc
 
 
-def verify_supabase_jwt(token: str, secret: str) -> dict:
+def _check_audience_and_issuer(claims: dict, audience: str, issuer: str) -> None:
+    if audience:
+        claimed = claims.get("aud")
+        audiences = claimed if isinstance(claimed, list) else [claimed]
+        if audience not in audiences:
+            raise HTTPException(status_code=401, detail="Session token is for another audience.")
+    if issuer and claims.get("iss") != issuer:
+        raise HTTPException(status_code=401, detail="Session token has an unexpected issuer.")
+
+
+def verify_supabase_jwt(token: str, secret: str, audience: str = "", issuer: str = "") -> dict:
     """Validate a Supabase access token. Returns its claims or raises 401."""
     parts = token.split(".")
     if len(parts) != 3:
@@ -152,13 +168,21 @@ def verify_supabase_jwt(token: str, secret: str) -> dict:
     exp = claims.get("exp")
     if not isinstance(exp, (int, float)) or float(exp) < time.time() - LEEWAY_SECONDS:
         raise HTTPException(status_code=401, detail="Session expired. Sign in again.")
+    _check_audience_and_issuer(claims, audience, issuer)
     return claims
 
 
 def _user_from_header(auth: str, secret: str) -> UserInfo:
     if not auth.startswith("Bearer ") or len(auth) <= 7:
         raise HTTPException(status_code=401, detail="Missing Bearer token. Sign in first.")
-    claims = verify_supabase_jwt(auth[7:].strip(), secret)
+    settings = get_settings()
+    supabase_url = getattr(settings, "supabase_url", "").rstrip("/")
+    claims = verify_supabase_jwt(
+        auth[7:].strip(),
+        secret,
+        audience=getattr(settings, "supabase_jwt_audience", ""),
+        issuer=f"{supabase_url}/auth/v1" if supabase_url else "",
+    )
     return UserInfo(user_id=str(claims["sub"]), email=str(claims.get("email", "")))
 
 

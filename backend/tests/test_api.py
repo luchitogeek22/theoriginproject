@@ -27,12 +27,12 @@ def test_resolve_manual_coordinates():
     assert body["resolver"] == "manual"
 
 
-def test_resolve_wise0855_pinned():
+def test_resolve_wise0855_uses_the_j2000_catalog_position():
     response = client.get("/api/v1/targets/resolve", params={"name": "WISE 0855"})
     assert response.status_code == 200
     body = response.json()
-    assert body["ra_deg"] == 133.795129
-    assert body["dec_deg"] == -7.245147
+    assert body["ra_deg"] == pytest.approx(133.81890825)
+    assert body["dec_deg"] == pytest.approx(-7.247048)
 
 
 def test_resolve_empty_rejected():

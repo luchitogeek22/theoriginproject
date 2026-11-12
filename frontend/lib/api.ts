@@ -3,11 +3,13 @@
 import type {
   Candidate,
   Cutout,
+  DataCollections,
   DataSource,
   JobStatus,
-  Observation,
   ReferenceStar,
   SearchResult,
+  SequenceRequest,
+  VetResult,
   SpectralSample,
   Target,
 } from "./types";
@@ -26,7 +28,7 @@ export function resolveBase(value: string | undefined, production: boolean): str
 }
 
 export function parseErrorBody(status: number, contentType: string, body: string): string {
-  const fallback = `Request failed (${status}).`;
+  const fallback = `La petición falló (${status}).`;
   if (!contentType.toLowerCase().includes("json")) return fallback;
   let parsed: unknown;
   try {
@@ -55,7 +57,7 @@ function formatValidationItem(item: unknown): string {
 const BASE = resolveBase(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV === "production");
 
 const NOT_CONFIGURED =
-  "The API address is not configured. Set NEXT_PUBLIC_API_URL to the backend URL (https://...).";
+  "La dirección de la API no está configurada. Define NEXT_PUBLIC_API_URL con la URL del backend (https://...).";
 
 export class ApiError extends Error {
   status: number;
@@ -86,7 +88,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
-    throw new ApiError(0, "Backend unreachable. Is the scientific service running?");
+    throw new ApiError(0, "No se pudo contactar con el servicio científico. Comprueba que esté en marcha.");
   }
   const contentType = res.headers.get("content-type") ?? "";
   if (!res.ok) {
@@ -97,25 +99,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!contentType.toLowerCase().includes("json")) {
     throw new ApiError(
       res.status,
-      "The server returned a non-JSON response. Check that NEXT_PUBLIC_API_URL points to the backend."
+      "El servidor devolvió una respuesta que no es JSON. Comprueba que NEXT_PUBLIC_API_URL apunte al backend."
     );
   }
   try {
     return (await res.json()) as T;
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
-    throw new ApiError(res.status, "The server returned an invalid JSON response.");
+    throw new ApiError(res.status, "El servidor devolvió un JSON no válido.");
   }
 }
 
 export const apiUrl = (path: string) =>
   path.startsWith("http") ? path : BASE === null ? "" : `${BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 
+export const assetUrl = apiUrl;
+
 export const api = {
-  health: () => request<{ status: string }>("/api/v1/health"),
   dataSources: () =>
-    request<{ sources: DataSource[]; archive_note: string }>("/api/v1/data-sources/status"),
-  resolveTarget: (body: { name?: string; ra_deg?: number; dec_deg?: number; catalog_id?: string }) =>
+    request<{ sources: DataSource[]; archive_note: string; collections?: DataCollections }>("/api/v1/data-sources/status"),
+  resolveTarget: (body: { query?: string; name?: string; ra_deg?: number; dec_deg?: number; catalog_id?: string }) =>
     request<Target>("/api/v1/targets/resolve", { method: "POST", body: JSON.stringify(body) }),
   searchObservations: (body: {
     ra_deg: number;
@@ -124,7 +127,6 @@ export const api = {
     collections?: string[];
     maxrec?: number;
   }) => request<SearchResult>("/api/v1/observations/search", { method: "POST", body: JSON.stringify(body) }),
-  getObservation: (id: number) => request<Observation>(`/api/v1/observations/${id}`),
   createCutout: (
     body: { observation_id: number; ra_deg: number; dec_deg: number; size_arcmin: number },
     init?: RequestInit
@@ -134,16 +136,29 @@ export const api = {
       body: JSON.stringify(body),
       ...init,
     }),
-  analyzeTemporal: (body: { cutout_a_id: number; cutout_b_id: number; ra_deg?: number; dec_deg?: number }) =>
-    request<JobStatus>("/api/v1/analysis/temporal", { method: "POST", body: JSON.stringify(body) }),
   analyzeDifferential: (body: { cutout_a_id: number; cutout_b_id: number }) =>
     request<JobStatus>("/api/v1/analysis/differential", { method: "POST", body: JSON.stringify(body) }),
   analyzeSpectral: (body: { cutout_id: number; ra_deg: number; dec_deg: number }) =>
     request<JobStatus>("/api/v1/analysis/spectral", { method: "POST", body: JSON.stringify(body) }),
-  jobStatus: (jobId: string) => request<JobStatus>(`/api/v1/jobs/${jobId}`),
-  jobResults: <T = Record<string, unknown>>(jobId: string) =>
+  createSequence: (body: SequenceRequest, init?: RequestInit) =>
+    request<JobStatus>("/api/v1/sequences", { method: "POST", body: JSON.stringify(body), ...init }),
+  createShiftStack: (
+    body: { ra_deg: number; dec_deg: number; size_arcmin: number; detector?: number },
+    init?: RequestInit
+  ) => request<JobStatus>("/api/v1/sequences/shift-stack", { method: "POST", body: JSON.stringify(body), ...init }),
+  createSpectrum: (body: { ra_deg: number; dec_deg: number; size_arcmin?: number }, init?: RequestInit) =>
+    request<JobStatus>("/api/v1/spectra", { method: "POST", body: JSON.stringify(body), ...init }),
+  vetCandidate: (candidateId: number, init?: RequestInit) =>
+    request<VetResult>("/api/v1/analysis/vet", {
+      method: "POST",
+      body: JSON.stringify({ candidate_id: candidateId }),
+      ...init,
+    }),
+  jobStatus: (jobId: string, init?: RequestInit) => request<JobStatus>(`/api/v1/jobs/${jobId}`, init),
+  jobResults: <T = Record<string, unknown>>(jobId: string, init?: RequestInit) =>
     request<{ job_id: string; kind: string; status: string; result: T; error: string }>(
-      `/api/v1/jobs/${jobId}/results`
+      `/api/v1/jobs/${jobId}/results`,
+      init
     ),
   candidates: (limit = 100) => request<Candidate[]>(`/api/v1/candidates?limit=${limit}`),
   referenceStars: () => request<ReferenceStar[]>("/api/v1/sky/reference-stars"),
@@ -175,9 +190,9 @@ export async function pollJob<T>(
       return full.result;
     }
     if (status.status === "failed") {
-      throw new ApiError(500, status.error || "Analysis failed on the scientific service.");
+      throw new ApiError(500, status.error || "El análisis falló en el servicio científico.");
     }
-    if (Date.now() > deadline) throw new ApiError(504, "Analysis timed out. Try again later.");
+    if (Date.now() > deadline) throw new ApiError(504, "El análisis excedió el tiempo de espera. Inténtalo más tarde.");
     await new Promise((r) => setTimeout(r, interval));
   }
 }

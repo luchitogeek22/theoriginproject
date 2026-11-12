@@ -20,7 +20,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import (
     decode_dss_signature,
-    encode_dss_signature,
 )
 
 from fastapi import HTTPException
@@ -117,3 +116,91 @@ def test_es256_expired_rejected():
             _es256_token(private, "test-kid", _claims(exp=time.time() - 3600)), ""
         )
     assert exc.value.status_code == 401
+
+
+def test_wrong_audience_is_rejected():
+    token = _hs256_token("test-secret", _claims(aud="anon"))
+    with pytest.raises(HTTPException) as exc:
+        auth.verify_supabase_jwt(token, "test-secret", audience="authenticated")
+    assert exc.value.status_code == 401
+
+
+def test_missing_audience_is_rejected_when_one_is_required():
+    with pytest.raises(HTTPException) as exc:
+        auth.verify_supabase_jwt(
+            _hs256_token("test-secret", _claims()), "test-secret", audience="authenticated"
+        )
+    assert exc.value.status_code == 401
+
+
+def test_expected_audience_is_accepted_as_string_or_list():
+    for aud in ("authenticated", ["other", "authenticated"]):
+        claims = auth.verify_supabase_jwt(
+            _hs256_token("test-secret", _claims(aud=aud)), "test-secret", audience="authenticated"
+        )
+        assert claims["sub"] == "user-123"
+
+
+def test_wrong_issuer_is_rejected_and_right_issuer_accepted():
+    issuer = "https://proj.supabase.co/auth/v1"
+    bad = _hs256_token("test-secret", _claims(aud="authenticated", iss="https://evil.example"))
+    with pytest.raises(HTTPException) as exc:
+        auth.verify_supabase_jwt(bad, "test-secret", audience="authenticated", issuer=issuer)
+    assert exc.value.status_code == 401
+    good = _hs256_token("test-secret", _claims(aud="authenticated", iss=issuer))
+    claims = auth.verify_supabase_jwt(good, "test-secret", audience="authenticated", issuer=issuer)
+    assert claims["iss"] == issuer
+
+
+def test_configured_audience_and_issuer_are_enforced_on_requests(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        auth,
+        "get_settings",
+        lambda: SimpleNamespace(
+            supabase_jwt_secret="test-secret",
+            supabase_url="https://proj.supabase.co",
+            supabase_jwt_audience="authenticated",
+        ),
+    )
+    wrong = _hs256_token("test-secret", _claims(aud="anon", iss="https://proj.supabase.co/auth/v1"))
+    with pytest.raises(HTTPException) as exc:
+        auth._user_from_header(f"Bearer {wrong}", "test-secret")
+    assert exc.value.status_code == 401
+    right = _hs256_token(
+        "test-secret", _claims(aud="authenticated", iss="https://proj.supabase.co/auth/v1")
+    )
+    assert auth._user_from_header(f"Bearer {right}", "test-secret").user_id == "user-123"
+
+
+def test_unknown_kids_trigger_a_single_jwks_refresh(monkeypatch):
+    calls = []
+
+    def fake_fetch(url):
+        calls.append(url)
+        return {"keys": []}
+
+    monkeypatch.setattr(auth, "_fetch_jwks", fake_fetch)
+    auth._jwks_cache["keys"] = {}
+    auth._jwks_cache["fetched_at"] = 0.0
+    auth._jwks_cache["attempted_at"] = 0.0
+    private, _ = _es256_key_and_jwk("whatever")
+    for index in range(10):
+        token = _es256_token(private, f"unknown-{index}", _claims())
+        with pytest.raises(HTTPException) as exc:
+            auth.verify_supabase_jwt(token, "")
+        assert exc.value.status_code == 401
+    assert len(calls) == 1
+
+
+def test_jwks_can_refresh_again_after_the_minimum_interval(monkeypatch):
+    calls = []
+    monkeypatch.setattr(auth, "_fetch_jwks", lambda url: calls.append(url) or {"keys": []})
+    auth._jwks_cache["keys"] = {}
+    auth._jwks_cache["fetched_at"] = 0.0
+    auth._jwks_cache["attempted_at"] = time.time() - auth.JWKS_MIN_REFRESH_SECONDS - 1
+    private, _ = _es256_key_and_jwk("whatever")
+    with pytest.raises(HTTPException):
+        auth.verify_supabase_jwt(_es256_token(private, "unknown", _claims()), "")
+    assert len(calls) == 1

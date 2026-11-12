@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Layers, RotateCcw } from "lucide-react";
 import SkyFallback2D from "./SkyFallback2D";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useResearch } from "@/lib/store";
 import type { Candidate, Observation, ReferenceStar } from "@/lib/types";
 import type { SkyLayers } from "./CelestialSphere";
@@ -42,6 +42,7 @@ export default function SkyView({ observations, controls = true, onSelectObserva
   const [resetNonce, setResetNonce] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -52,14 +53,26 @@ export default function SkyView({ observations, controls = true, onSelectObserva
   }, []);
 
   useEffect(() => {
-    api.referenceStars().then(setStars).catch(() => setStars([]));
-    api.candidates().then(setCandidates).catch(() => setCandidates([]));
+    let cancelled = false;
+    const describe = (what: string, e: unknown) =>
+      `${what}: ${e instanceof ApiError ? e.message : "error inesperado"}`;
+    api
+      .referenceStars()
+      .then((rows) => !cancelled && setStars(rows))
+      .catch((e) => !cancelled && setLoadErrors((prev) => [...prev, describe("Estrellas de referencia", e)]));
+    api
+      .candidates()
+      .then((rows) => !cancelled && setCandidates(rows))
+      .catch((e) => !cancelled && setLoadErrors((prev) => [...prev, describe("Candidatos", e)]));
+    return () => {
+      cancelled = true;
+    };
   }, [setCandidates]);
 
   const selectCandidate = useCallback(
     (c: Candidate) => {
       sessionStorage.setItem("origin-candidate", String(c.id));
-      router.push("/discoveries");
+      router.push("/candidates");
     },
     [router]
   );
@@ -90,6 +103,20 @@ export default function SkyView({ observations, controls = true, onSelectObserva
           />
         }
       />
+      {loadErrors.length > 0 && (
+        <div
+          role="alert"
+          className="absolute left-2 top-2 max-w-xs rounded border border-red-400/40 bg-abyss/95 p-2 text-[11px] text-red-300"
+        >
+          <p className="font-semibold">No se pudieron cargar datos del servicio</p>
+          <ul className="mt-0.5">
+            {loadErrors.map((m, i) => (
+              <li key={i}>· {m}</li>
+            ))}
+          </ul>
+          <p className="mt-1 text-mutedstar">La esfera muestra solo lo que sí se cargó.</p>
+        </div>
+      )}
       {controls && (
         <div className="absolute right-2 top-2 flex flex-col items-end gap-1.5">
           <div className="flex gap-1.5">
@@ -117,7 +144,7 @@ export default function SkyView({ observations, controls = true, onSelectObserva
                   ["grid", "Malla de coordenadas"],
                   ["references", "Estrellas de referencia (catálogo)"],
                   ["footprints", "Huellas SPHEREx consultadas"],
-                  ["candidates", "Candidatos medidos"],
+                  ["candidates", "Candidatos"],
                   ["labels", "Etiquetas"],
                 ] as Array<[keyof SkyLayers, string]>
               ).map(([key, label]) => (

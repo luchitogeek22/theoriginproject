@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Crosshair, Loader2, Search } from "lucide-react";
 import { ApiError, api } from "@/lib/api";
 import { useResearch } from "@/lib/store";
+import { sequenceUrl } from "@/lib/sequenceParams";
 import { VALIDATION_TARGETS } from "@/lib/targets";
 
-/** Target search: name / RA DEC / catalog id. Resolves via backend (SIMBAD). */
+/** Target search: the text goes to the backend, which parses coordinates or resolves names. */
 export default function SearchBar({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { setTarget, setSearch, clearSelected, requestFocus } = useResearch();
@@ -21,18 +22,15 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
     setBusy(true);
     setError("");
     try {
-      // "RA DEC" numeric pair?
-      const parts = q.split(/[\s,;]+/);
-      let target;
-      if (parts.length === 2 && parts.every((p) => Number.isFinite(Number(p)))) {
-        target = await api.resolveTarget({ ra_deg: Number(parts[0]), dec_deg: Number(parts[1]) });
-      } else {
-        target = await api.resolveTarget({ name: q });
-      }
+      const target = await api.resolveTarget({ query: q });
       setTarget(target);
       setSearch(null);
       clearSelected();
       requestFocus(target.ra_deg, target.dec_deg);
+      if (!compact) {
+        router.push(sequenceUrl(target));
+        return;
+      }
       const search = await api.searchObservations({
         ra_deg: target.ra_deg,
         dec_deg: target.dec_deg,
@@ -41,7 +39,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
       setSearch(search);
       router.push("/living-sky");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Search failed");
+      setError(e instanceof ApiError ? e.message : "La búsqueda falló");
     } finally {
       setBusy(false);
     }

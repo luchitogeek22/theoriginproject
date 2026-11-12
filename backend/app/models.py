@@ -32,6 +32,7 @@ class Observation(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     obs_id: Mapped[str] = mapped_column(String(512), index=True)
+    product_id: Mapped[str] = mapped_column(String(512), index=True, default="")
     collection: Mapped[str] = mapped_column(String(128), index=True)
     ra_deg: Mapped[float | None] = mapped_column(Float, nullable=True)
     dec_deg: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -64,6 +65,8 @@ class Cutout(Base):
     sha256: Mapped[str] = mapped_column(String(64), default="")
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
     source_url: Mapped[str] = mapped_column(Text, default="")
+    cache_key: Mapped[str] = mapped_column(String(64), index=True, default="")
+    processing_version: Mapped[str] = mapped_column(String(32), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -76,6 +79,10 @@ class AnalysisJob(Base):
     params_json: Mapped[str] = mapped_column(Text, default="{}")
     result_json: Mapped[str] = mapped_column(Text, default="{}")
     error: Mapped[str] = mapped_column(Text, default="")
+    stage: Mapped[str] = mapped_column(String(64), default="")
+    done: Mapped[int] = mapped_column(Integer, default=0)
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    input_hash: Mapped[str] = mapped_column(String(64), index=True, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
@@ -112,6 +119,7 @@ class ResearchSession(Base):
     dec_deg: Mapped[float | None] = mapped_column(Float, nullable=True)
     payload_json: Mapped[str] = mapped_column(Text, default="{}")
     verification_hash: Mapped[str] = mapped_column(String(64), default="")
+    hash_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     user_id: Mapped[str | None] = mapped_column(String(64), nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(

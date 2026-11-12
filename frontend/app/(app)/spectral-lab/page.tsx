@@ -16,6 +16,7 @@ interface PlotlyLike {
   purge: (el: HTMLElement) => void;
 }
 import { mjdToDate } from "@/lib/coords";
+import SpectrumPanel from "@/components/SpectrumPanel";
 import { useResearch } from "@/lib/store";
 
 export default function SpectralLab() {
@@ -74,7 +75,7 @@ export default function SpectralLab() {
           mode: "lines+markers",
           marker: { size: 4, color: "#46d8ff" },
           line: { color: "#46d8ff", width: 1.5 },
-          name: "flujo medido",
+          name: "perfil espacial",
         },
       ],
       {
@@ -108,7 +109,7 @@ export default function SpectralLab() {
       const res = await pollJob<SpectralResult>(job.job_id);
       setResult(res);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Spectral extraction failed");
+      setError(e instanceof ApiError ? e.message : "La extracción del perfil falló");
     } finally {
       setBusy(false);
     }
@@ -124,7 +125,7 @@ export default function SpectralLab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `spectrum_${cutoutId}.csv`;
+    a.download = `spatial_profile_${cutoutId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -136,9 +137,9 @@ export default function SpectralLab() {
     <div className="scroll-thin h-full overflow-y-auto p-3 md:p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-bold text-starlight">
-          Spectral Lab{" "}
+          Laboratorio espectral{" "}
           <span className="text-xs font-normal text-mutedstar">
-            102 canales SPHEREx (0.75–5 µm) · perfiles medidos, no simulados
+            perfil espacial de una exposición SPHEREx · no es un espectro completo
           </span>
         </h1>
         <div className="flex items-center gap-1.5">
@@ -163,7 +164,7 @@ export default function SpectralLab() {
             disabled={!target || cutoutId === "" || busy}
             className="flex items-center gap-1.5 rounded bg-pulse px-3 py-1.5 text-xs font-bold text-abyss hover:brightness-110 disabled:opacity-40"
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : null} Extraer espectro
+            {busy ? <Loader2 size={13} className="animate-spin" /> : null} Extraer perfil espacial
           </button>
           <button
             onClick={exportCsv}
@@ -177,7 +178,7 @@ export default function SpectralLab() {
       {error && <p className="text-xs text-red-300">{error}</p>}
       {cutouts.length === 0 && (
         <p className="mt-4 text-sm text-mutedstar">
-          Prepara recortes en Time Explorer para extraer un espectro medido.
+          Prepara recortes (Explorador temporal, comparación manual) para extraer el perfil espacial de una exposición.
         </p>
       )}
 
@@ -197,7 +198,7 @@ export default function SpectralLab() {
         <div ref={plotRef} style={{ width: "100%", height: 420 }} />
         {(!result || result.samples.length === 0) && (
           <p className="p-4 text-center text-xs text-mutedstar">
-            Sin muestras no hay curva. Ejecuta una extracción sobre un recorte real.
+            Sin muestras no hay curva. Ejecuta una extracción sobre un recorte real. El resultado es un perfil espacial de una sola exposición, no un espectro de 102 canales.
           </p>
         )}
       </div>
@@ -217,6 +218,14 @@ export default function SpectralLab() {
             modelos y referencias apropiadas.
           </p>
         </div>
+      )}
+
+      {target ? (
+        <SpectrumPanel ra={target.propagated_ra_deg ?? target.ra_deg} dec={target.propagated_dec_deg ?? target.dec_deg} />
+      ) : (
+        <p className="mt-4 text-xs text-mutedstar">
+          Elige un objetivo para medir su espectro al vuelo (espectrofotometría relativa, distinta del perfil espacial de arriba).
+        </p>
       )}
     </div>
   );

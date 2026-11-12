@@ -26,21 +26,45 @@ class Settings(BaseSettings):
     s3_region: str = "us-east-1"
 
     irsa_sia2_url: str = "https://irsa.ipac.caltech.edu/SIA"
+    irsa_tap_url: str = "https://irsa.ipac.caltech.edu/TAP/sync"
+    discover_collections: bool = True
+    collection_discovery_ttl_seconds: int = 86400
+    collection_discovery_timeout_seconds: float = 180.0
+    collection_discovery_retry_seconds: int = 300
     irsa_collections: str = "spherex_qr3,spherex_qr3_deep,spherex_qr2,spherex_qr2_deep"
     irsa_timeout_seconds: float = 30.0
+    irsa_connect_timeout_seconds: float = 5.0
+    irsa_search_deadline_seconds: float = 60.0
     irsa_maxrec: int = 500
-    download_limit_mb: int = 512
+    download_limit_mb: int = 64
+    download_concurrency: int = 2
+    download_pause_seconds: float = 0.5
+    download_max_attempts: int = 4
+    download_backoff_seconds: float = 2.0
+    download_backoff_cap_seconds: float = 20.0
+    processing_version: str = "1"
     download_allowed_host_suffixes: str = ".ipac.caltech.edu"
     sia_cache_ttl_seconds: int = 3600
+    sia_partial_ttl_seconds: int = 60
+    sia_negative_ttl_seconds: int = 45
 
     simbad_timeout_seconds: float = 20.0
 
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_jwt_secret: str = ""
+    supabase_jwt_audience: str = "authenticated"
 
     rate_limit_per_minute: int = 120
+    trusted_proxy_hops: int = 1
+    max_body_bytes: int = 1024 * 1024
     max_concurrent_jobs: int = 4
+    max_queued_jobs: int = 20
+    detection_min_pixels: int = 2
+    catalog_timeout_seconds: float = 25.0
+    wise_ibe_url: str = "https://irsa.ipac.caltech.edu/ibe"
+    catalog_cache_ttl_seconds: int = 86400
+    alignment_error_pix: float = 0.1
 
     @property
     def collection_list(self) -> list[str]:

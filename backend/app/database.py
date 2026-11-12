@@ -59,8 +59,16 @@ def init_db() -> None:
         os.makedirs(parent, exist_ok=True)
     Base.metadata.create_all(bind=engine)
     _ensure_column("research_sessions", "verification_hash", "VARCHAR(64) DEFAULT ''")
+    _ensure_column("research_sessions", "hash_version", "INTEGER DEFAULT 1")
     _ensure_column("research_sessions", "user_id", "VARCHAR(64)")
     _ensure_column("candidates", "user_id", "VARCHAR(64)")
+    _ensure_column("observations", "product_id", "VARCHAR(512) DEFAULT ''")
+    _ensure_column("analysis_jobs", "stage", "VARCHAR(64) DEFAULT ''")
+    _ensure_column("analysis_jobs", "done", "INTEGER DEFAULT 0")
+    _ensure_column("analysis_jobs", "total", "INTEGER DEFAULT 0")
+    _ensure_column("analysis_jobs", "input_hash", "VARCHAR(64) DEFAULT ''")
+    _ensure_column("cutouts", "cache_key", "VARCHAR(64) DEFAULT ''")
+    _ensure_column("cutouts", "processing_version", "VARCHAR(32) DEFAULT ''")
     enable_row_level_security(engine)
 
 

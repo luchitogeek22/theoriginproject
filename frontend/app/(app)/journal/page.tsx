@@ -11,6 +11,13 @@ import { useResearch } from "@/lib/store";
 
 const LS_SAVED = "origin-saved-research";
 
+const ANALYSIS_METHODS = [
+  "SIA2 cone search via SPHERExDataGateway (collections pinned per query)",
+  "Spatial cutout at target position (6 arcmin default)",
+  "WCS reprojection + background match + variance-propagated difference",
+  "photutils segmentation detection; centroid astrometry per epoch",
+];
+
 export default function Journal() {
   const router = useRouter();
   const { target, search, selected, cutouts, candidates } = useResearch();
@@ -19,6 +26,8 @@ export default function Journal() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<Array<{ id: string; title: string }>>([]);
   const [lastSaved, setLastSaved] = useState("");
+  const currentJob = candidates.length > 0 ? candidates[0].job_id : "";
+  const currentCandidates = candidates.filter((c) => c.job_id === currentJob);
 
   useEffect(() => {
     try {
@@ -54,13 +63,18 @@ export default function Journal() {
         })),
         search_meta: search ? { queried_at: search.queried_at, cached: search.cached, collections: search.collections_queried } : null,
         cutouts: cutouts.map((c) => ({ cutout_id: c.cutout_id, sha256: c.sha256, source_url: c.source_url })),
-        candidates: candidates.map((c) => ({ id: c.id, kind: c.kind, snr: c.snr, separation_arcsec: c.separation_arcsec })),
-        methods: [
-          "SIA2 cone search via SPHERExDataGateway (collections pinned per query)",
-          "Spatial cutout at target position (6 arcmin default)",
-          "WCS reprojection + background match + variance-propagated difference",
-          "photutils segmentation detection; centroid astrometry per epoch",
-        ],
+        candidates: currentCandidates.map((c) => ({
+          id: c.id,
+          job_id: c.job_id,
+          kind: c.kind,
+          ra_deg: c.ra_deg,
+          dec_deg: c.dec_deg,
+          snr: c.snr,
+          separation_arcsec: c.separation_arcsec,
+          delta_mag: c.delta_mag,
+          quality: c.quality,
+        })),
+        methods: currentJob ? ANALYSIS_METHODS : [],
         measurements: [],
         limitations: [
           "Visualization-grade spectral profiles use WCS-WAVE, not CWAVE/CBAND",
@@ -100,7 +114,7 @@ export default function Journal() {
           {target && (
             <div className="text-xs text-mutedstar">
               <p><b className="text-starlight">{target.name}</b> — {target.ra_deg.toFixed(5)}°, {target.dec_deg.toFixed(5)}° ({target.resolver})</p>
-              <p className="mt-1">{selected.length} observaciones seleccionadas · {cutouts.length} recortes · {candidates.length} candidatos</p>
+              <p className="mt-1">{selected.length} observaciones seleccionadas · {cutouts.length} recortes · {currentCandidates.length} candidatos</p>
               <ul className="mt-1 flex max-h-40 flex-col gap-0.5 overflow-y-auto">
                 {selected.map((o, i) => (
                   <li key={i} className="truncate">· {o.obs_id} [{o.collection}] {o.date_obs}</li>

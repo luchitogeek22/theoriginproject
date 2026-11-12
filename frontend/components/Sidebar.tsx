@@ -13,12 +13,12 @@ import {
 import AuthButton from "@/components/AuthButton";
 
 const ITEMS = [
-  { href: "/", label: "Observatory", icon: Telescope },
-  { href: "/living-sky", label: "Living Sky", icon: Orbit },
-  { href: "/time-explorer", label: "Time Explorer", icon: Clock3 },
-  { href: "/spectral-lab", label: "Spectral Lab", icon: FlaskConical },
-  { href: "/discoveries", label: "Discoveries", icon: Sparkles },
-  { href: "/journal", label: "Journal", icon: BookOpenText },
+  { href: "/", label: "Observatorio", icon: Telescope },
+  { href: "/living-sky", label: "Cielo vivo", icon: Orbit },
+  { href: "/time-explorer", label: "Explorador temporal", icon: Clock3 },
+  { href: "/spectral-lab", label: "Laboratorio espectral", icon: FlaskConical },
+  { href: "/candidates", label: "Candidatos", icon: Sparkles },
+  { href: "/journal", label: "Diario", icon: BookOpenText },
 ];
 
 export default function Sidebar() {
@@ -27,10 +27,10 @@ export default function Sidebar() {
     <nav className="flex w-14 flex-col items-center gap-1 border-r border-line bg-deep/80 py-3 md:w-44 md:items-stretch md:px-2" aria-label="Principal">
       <div className="mb-3 hidden px-2 md:block">
         <p className="text-[13px] font-bold tracking-wide text-starlight">THE ORIGIN PROJECT</p>
-        <p className="text-[10px] text-mutedstar">Explore the universe. Understand its changes.</p>
+        <p className="text-[10px] text-mutedstar">Explora el universo. Comprende sus cambios.</p>
       </div>
       {ITEMS.map(({ href, label, icon: Icon }) => {
-        const active = path === href;
+        const active = href === "/" ? path === href : path === href || path.startsWith(`${href}/`);
         return (
           <Link
             key={href}

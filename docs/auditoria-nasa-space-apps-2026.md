@@ -1205,3 +1205,71 @@ IRSA; [ayuda de espectrofotometría de SPHEREx](https://irsa.ipac.caltech.edu/on
 [productos de datos de SPHEREx](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products);
 [capacidades de recorte](https://irsa.ipac.caltech.edu/data/SPHEREx/docs/cutout_tool.html);
 SIMBAD (espejo de Harvard); catálogo AllWISE (`allwise_p3as_psd`).
+
+---
+
+## 16. Verificación con datos reales de la implementación (2026-11-12)
+
+Corrida de punta a punta por HTTP contra IRSA (backend local con base y almacenamiento
+temporales; navegador no usado). Todo lo de esta sección se observó; lo que no se
+observó figura en 16.5.
+
+### 16.1 Flujo de secuencia: los cinco objetivos
+
+`backend/scripts/warm_targets.py` pidió cada objetivo con y sin cuadro AllWISE de
+referencia: **10 de 10 secuencias completadas**, entre 9 y 12 cuadros de un solo
+detector, ordenados por fecha y alineados. Con la ruta hacia IRSA cortada (otro
+proceso con `IRSA_SIA2_URL` apuntando a un puerto cerrado y la misma caché), los cinco
+enlaces siguieron respondiendo su secuencia real etiquetada como servida desde caché
+(criterio de WP-31).
+
+### 16.2 Hallazgos que cambiaron el código
+
+| Hallazgo | Cambio |
+|---|---|
+| El recorte de WISE llega en gzip | El lector descomprime antes de abrir |
+| Pedir un objetivo rápido por su posición J2000 deja los recortes a ~200″ de él | Los recortes y la rejilla se centran en la posición propagada a la época media |
+| El detector con más épocas era D1 a D3 (0,8 a 2,4 µm), donde una enana Y no se ve; la curva de luz era ruido (±51 %) | El modo movimiento usa D6 por defecto (nota en `limitations`); la curva avisa cuando el objetivo no se detecta por separado (`target_detected`) |
+| La búsqueda a ciegas dio `detected=True` en D1 por estrellas estáticas que cambian de flujo con la longitud de onda | Resta de fuentes estáticas con ganancia propia por fuente y por visita; una velocidad en el borde de la rejilla nunca es detección |
+| El TAP de IRSA tarda 60 a 90 s (agregado sobre 1,6 millones de filas) | El descubrimiento de colecciones corre en segundo plano; las peticiones usan el último valor o la lista configurada |
+
+### 16.3 Movimiento lento: lo que la búsqueda a ciegas no puede hacer
+
+En la ventana de ~1 año de SPHEREx, WISE 0855 se mueve **1,3 px**, Epsilon Indi B 1,1 px y
+Barnard 1,9 px. Por debajo de ~1,5 px un móvil no se distingue de una fuente estática, así
+que la búsqueda no explora velocidades tan bajas. Para objetos con movimiento propio
+conocido se añadió la **comprobación dirigida**: apilar siguiendo ese movimiento y comparar
+el pico en la posición prevista con las demás posiciones del mismo apilado (nulo empírico de
+2100 posiciones, sin supuesto gaussiano).
+
+| Objetivo (D6, 12 visitas) | σ en la posición prevista | p empírico | Desfase del pico |
+|---|---|---|---|
+| WISE 0855 | 11,8 | < 0,001 (1 de 2100) | 0,0 px |
+| Epsilon Indi B | 155,6 | < 0,001 | 0,0 px |
+| Barnard's Star | 677,6 | < 0,001 | 0,0 px |
+
+Lectura honesta: Barnard y Epsilon Indi B son brillantes, la prueba es sobre todo una
+validación de que el movimiento propio de catálogo y la alineación son correctos. **WISE 0855
+es la prueba difícil**: es débil (SNR 2,6 a 4,2 por cuadro) y aun así el pico cae exactamente
+en el píxel previsto. Es una señal compatible con el objeto, no una detección confirmada: el
+p mínimo está limitado por el número de posiciones de comparación y el movimiento se supone
+lineal y el de catálogo correcto.
+
+### 16.4 R Draconis satura todos los detectores
+
+El núcleo de R Draconis queda saturado o marcado en D1, D3, D5 y D6 (píxel central sin dato, bits
+`TRANSIENT`, `OVERFLOW`, `SUR_ERROR` y `BLOOM`; valores centrales de ~900 a ~8000 MJy/sr frente a un
+fondo de ~0,5). La fotometría de apertura da 0 de 5 a 6 puntos usables en D3, D5 y D6. Se añadió
+**fotometría de las alas de la PSF**: el perfil radial de cada cuadro (r de 5 a 13 px, solo píxeles
+sin bandera) se ajusta con una plantilla común a todos los cuadros, de modo que cambiar la máscara no
+cambia la amplitud. Son valores relativos, no un flujo, y la curva lo dice. En D1: 10 de 10 puntos
+válidos, de 0,63 a 1,64 del valor mediano (2025-08 a 2026-09). Sin estrellas de comparación en esa corrida
+porque Gaia no respondió, así que la curva es absoluta.
+
+### 16.5 No verificado
+
+- Nada se miró en un navegador (reproductor, Aladin, exportación WebM, iframe, portapapeles).
+- Gaia se consultó de verdad solo en los campos de los cinco objetivos; SkyBoT nunca contra el servicio real.
+- La curva de RW Aurigae sale relativa (4 estrellas de comparación, amplitud ±48 % en D1, sin corrección de color); la de R Draconis sale absoluta porque no hay estrellas de comparación medibles.
+- No se probó ninguna secuencia en detectores distintos de los que eligió el motor.
+- La prueba con personas sin formación (WP-32) está pendiente: `docs/demo.md` tiene la tabla vacía.

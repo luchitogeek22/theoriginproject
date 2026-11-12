@@ -13,11 +13,11 @@ export default function ModeToggle() {
           role="tab"
           aria-selected={mode === m}
           onClick={() => setMode(m)}
-          className={`rounded px-2.5 py-1 capitalize transition-colors ${
+          className={`rounded px-2.5 py-1 transition-colors ${
             mode === m ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
           }`}
         >
-          {m === "explore" ? "Explore" : "Investigate"}
+          {m === "explore" ? "Explorar" : "Investigar"}
         </button>
       ))}
     </div>

@@ -37,3 +37,18 @@ def test_normalize_row_keeps_provenance():
 
 def test_query_hash_stable():
     assert query_hash(1.0, 2.0, 10.0, ["b", "a"]) == query_hash(1.0, 2.0, 10.0, ["a", "b"])
+
+
+def test_query_hash_changes_with_every_parameter():
+    base = dict(ra=1.0, dec=2.0, radius_arcmin=10.0, collections=["a"])
+    reference = query_hash(**base)
+    for change in (
+        {"t_min_mjd": 60000.0}, {"t_max_mjd": 60100.0}, {"maxrec": 10},
+        {"service_url": "https://other.example/SIA"}, {"radius_arcmin": 11.0},
+    ):
+        assert query_hash(**{**base, **change}) != reference
+
+
+def test_time_with_only_one_end_is_an_open_interval():
+    assert build_sia2_params(1, 2, 0.1, "c", 10, t_min_mjd=60000.0)["TIME"] == "60000.000000 +Inf"
+    assert build_sia2_params(1, 2, 0.1, "c", 10, t_max_mjd=60100.0)["TIME"] == "-Inf 60100.000000"

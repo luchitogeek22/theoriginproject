@@ -22,6 +22,8 @@ interface ResearchState {
   addCutout: (c: Cutout) => void;
   candidates: Candidate[];
   setCandidates: (c: Candidate[]) => void;
+  currentJobId: string | null;
+  setCurrentJobId: (id: string | null) => void;
   focusTarget: { ra: number; dec: number; nonce: number } | null;
   requestFocus: (ra: number, dec: number) => void;
   reset: () => void;
@@ -46,6 +48,7 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<Observation[]>([]);
   const [cutouts, setCutouts] = useState<Cutout[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<{ ra: number; dec: number; nonce: number } | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -71,7 +74,10 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
       mode,
       setMode,
       target,
-      setTarget,
+      setTarget: (t) => {
+        setTarget(t);
+        setCurrentJobId(null);
+      },
       search,
       setSearch,
       selected,
@@ -86,6 +92,8 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
       addCutout: (c) => setCutouts((prev) => (prev.some((p) => p.cutout_id === c.cutout_id) ? prev : [...prev, c])),
       candidates,
       setCandidates,
+      currentJobId,
+      setCurrentJobId,
       focusTarget,
       requestFocus: (ra, dec) => setFocusTarget((f) => ({ ra, dec, nonce: (f?.nonce ?? 0) + 1 })),
       reset: () => {
@@ -93,12 +101,13 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
         setSearch(null);
         setSelected([]);
         setCutouts([]);
+        setCurrentJobId(null);
         try {
           localStorage.removeItem(LS_KEY);
         } catch { /* noop */ }
       },
     }),
-    [mode, target, search, selected, cutouts, candidates, focusTarget]
+    [mode, target, search, selected, cutouts, candidates, currentJobId, focusTarget]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

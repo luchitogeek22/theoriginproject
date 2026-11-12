@@ -1,0 +1,9 @@
+{
+  "note": "DOIs of IRSA SPHEREx quick-release collections; collections missing here report 'see IRSA documentation'.",
+  "dois": {
+    "spherex_qr2": "10.26131/IRSA804",
+    "spherex_qr2_deep": "10.26131/IRSA804",
+    "spherex_qr3": "10.26131/IRSA805",
+    "spherex_qr3_deep": "10.26131/IRSA805"
+  }
+}
