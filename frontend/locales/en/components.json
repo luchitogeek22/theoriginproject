@@ -144,27 +144,86 @@
   "glossary": {
     "title": "Glossary",
     "terms": {
-      "spherex": { "term": "SPHEREx", "definition": "NASA space telescope that maps the whole sky in the infrared in many colors." },
-      "irsa": { "term": "IRSA", "definition": "The NASA/IPAC archive where SPHEREx data are stored." },
-      "exposure": { "term": "Exposure", "definition": "A single shot from the telescope: one detector, one date, one patch of sky." },
-      "detector": { "term": "Detector", "definition": "Each of the six SPHEREx sensors; each one sees the same sky in a different color range." },
-      "wavelength": { "term": "Wavelength", "definition": "The infrared “color” of the measured light, in micrometers (µm)." },
-      "properMotion": { "term": "Proper motion", "definition": "Slow shift of a star across the sky over the years." },
-      "zodiacalLight": { "term": "Zodiacal light", "definition": "Background of sunlight scattered by Solar System dust; it is subtracted." },
-      "flag": { "term": "Flag", "definition": "Mark on an unreliable pixel (cosmic ray, saturation, dead pixel)." },
-      "coverage": { "term": "Coverage", "definition": "Part of the cutout that has real data." },
-      "lightCurve": { "term": "Light curve", "definition": "Plot of an object’s brightness over time." },
-      "brownDwarf": { "term": "Brown dwarf", "definition": "An object larger than a planet and smaller than a star: it never manages to ignite hydrogen." },
-      "candidate": { "term": "Candidate", "definition": "Signal to review; not a confirmed discovery." }
+      "spherex": {
+        "term": "SPHEREx",
+        "definition": "NASA space telescope that maps the whole sky in the infrared in many colors."
+      },
+      "irsa": {
+        "term": "IRSA",
+        "definition": "The NASA/IPAC archive where SPHEREx data are stored."
+      },
+      "exposure": {
+        "term": "Exposure",
+        "definition": "A single shot from the telescope: one detector, one date, one patch of sky."
+      },
+      "detector": {
+        "term": "Detector",
+        "definition": "Each of the six SPHEREx sensors; each one sees the same sky in a different color range."
+      },
+      "wavelength": {
+        "term": "Wavelength",
+        "definition": "The infrared “color” of the measured light, in micrometers (µm)."
+      },
+      "properMotion": {
+        "term": "Proper motion",
+        "definition": "Slow shift of a star across the sky over the years."
+      },
+      "zodiacalLight": {
+        "term": "Zodiacal light",
+        "definition": "Background of sunlight scattered by Solar System dust; it is subtracted."
+      },
+      "flag": {
+        "term": "Flag",
+        "definition": "Mark on an unreliable pixel (cosmic ray, saturation, dead pixel)."
+      },
+      "coverage": {
+        "term": "Coverage",
+        "definition": "Part of the cutout that has real data."
+      },
+      "lightCurve": {
+        "term": "Light curve",
+        "definition": "Plot of an object’s brightness over time."
+      },
+      "brownDwarf": {
+        "term": "Brown dwarf",
+        "definition": "An object larger than a planet and smaller than a star: it never manages to ignite hydrogen."
+      },
+      "candidate": {
+        "term": "Candidate",
+        "definition": "Signal to review; not a confirmed discovery."
+      }
     }
   },
   "resultBadge": {
-    "observation": { "label": "OBSERVATION", "title": "Data measured by SPHEREx, exactly as they are in the archive." },
-    "calculation": { "label": "CALCULATION", "title": "Result calculated by this tool from the observations." },
-    "candidate": { "label": "CANDIDATE", "title": "Signal flagged for review. Not a confirmed discovery." }
+    "observation": {
+      "label": "OBSERVATION",
+      "title": "Data measured by SPHEREx, exactly as they are in the archive."
+    },
+    "calculation": {
+      "label": "CALCULATION",
+      "title": "Result calculated by this tool from the observations."
+    },
+    "candidate": {
+      "label": "CANDIDATE",
+      "title": "Signal flagged for review. Not a confirmed discovery."
+    }
   },
   "authButton": {
     "signIn": "Sign in",
     "signOut": "Sign out"
+  },
+  "archiveStatus": {
+    "label": "Archive status",
+    "online": "online",
+    "checking": "checking…",
+    "offline": "offline",
+    "latency": "Latency",
+    "latencyValue": "{ms} ms",
+    "release": "Release",
+    "utc": "UTC",
+    "details": "Archive details",
+    "recheck": "Check again",
+    "sourceUp": "{name}: {latency} ms",
+    "sourceDown": "{name}: {detail}"
   }
 }

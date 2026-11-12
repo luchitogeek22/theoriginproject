@@ -144,27 +144,86 @@
   "glossary": {
     "title": "Glosario",
     "terms": {
-      "spherex": { "term": "SPHEREx", "definition": "Telescopio espacial de la NASA que mapea todo el cielo en infrarrojo con muchos colores." },
-      "irsa": { "term": "IRSA", "definition": "Archivo de la NASA/IPAC donde se guardan los datos de SPHEREx." },
-      "exposure": { "term": "Exposición", "definition": "Una toma del telescopio: un detector, una fecha, un trozo de cielo." },
-      "detector": { "term": "Detector", "definition": "Cada uno de los seis sensores de SPHEREx; cada uno ve el mismo cielo con otro rango de color." },
-      "wavelength": { "term": "Longitud de onda", "definition": "El «color» infrarrojo de la luz medida, en micrómetros (µm)." },
-      "properMotion": { "term": "Movimiento propio", "definition": "Desplazamiento lento de una estrella en el cielo a lo largo de los años." },
-      "zodiacalLight": { "term": "Luz zodiacal", "definition": "Fondo de luz solar dispersada por polvo del Sistema Solar; se resta." },
-      "flag": { "term": "Bandera", "definition": "Marca de un píxel poco fiable (rayo cósmico, saturación, píxel muerto)." },
-      "coverage": { "term": "Cobertura", "definition": "Parte del recorte que tiene datos reales." },
-      "lightCurve": { "term": "Curva de luz", "definition": "Gráfico del brillo de un objeto a lo largo del tiempo." },
-      "brownDwarf": { "term": "Enana marrón", "definition": "Objeto más grande que un planeta y más pequeño que una estrella: no llega a encender hidrógeno." },
-      "candidate": { "term": "Candidato", "definition": "Señal por revisar; no es un descubrimiento confirmado." }
+      "spherex": {
+        "term": "SPHEREx",
+        "definition": "Telescopio espacial de la NASA que mapea todo el cielo en infrarrojo con muchos colores."
+      },
+      "irsa": {
+        "term": "IRSA",
+        "definition": "Archivo de la NASA/IPAC donde se guardan los datos de SPHEREx."
+      },
+      "exposure": {
+        "term": "Exposición",
+        "definition": "Una toma del telescopio: un detector, una fecha, un trozo de cielo."
+      },
+      "detector": {
+        "term": "Detector",
+        "definition": "Cada uno de los seis sensores de SPHEREx; cada uno ve el mismo cielo con otro rango de color."
+      },
+      "wavelength": {
+        "term": "Longitud de onda",
+        "definition": "El «color» infrarrojo de la luz medida, en micrómetros (µm)."
+      },
+      "properMotion": {
+        "term": "Movimiento propio",
+        "definition": "Desplazamiento lento de una estrella en el cielo a lo largo de los años."
+      },
+      "zodiacalLight": {
+        "term": "Luz zodiacal",
+        "definition": "Fondo de luz solar dispersada por polvo del Sistema Solar; se resta."
+      },
+      "flag": {
+        "term": "Bandera",
+        "definition": "Marca de un píxel poco fiable (rayo cósmico, saturación, píxel muerto)."
+      },
+      "coverage": {
+        "term": "Cobertura",
+        "definition": "Parte del recorte que tiene datos reales."
+      },
+      "lightCurve": {
+        "term": "Curva de luz",
+        "definition": "Gráfico del brillo de un objeto a lo largo del tiempo."
+      },
+      "brownDwarf": {
+        "term": "Enana marrón",
+        "definition": "Objeto más grande que un planeta y más pequeño que una estrella: no llega a encender hidrógeno."
+      },
+      "candidate": {
+        "term": "Candidato",
+        "definition": "Señal por revisar; no es un descubrimiento confirmado."
+      }
     }
   },
   "resultBadge": {
-    "observation": { "label": "OBSERVACIÓN", "title": "Datos medidos por SPHEREx tal como están en el archivo." },
-    "calculation": { "label": "CÁLCULO", "title": "Resultado calculado por esta herramienta a partir de las observaciones." },
-    "candidate": { "label": "CANDIDATO", "title": "Señal marcada para revisar. No es un descubrimiento confirmado." }
+    "observation": {
+      "label": "OBSERVACIÓN",
+      "title": "Datos medidos por SPHEREx tal como están en el archivo."
+    },
+    "calculation": {
+      "label": "CÁLCULO",
+      "title": "Resultado calculado por esta herramienta a partir de las observaciones."
+    },
+    "candidate": {
+      "label": "CANDIDATO",
+      "title": "Señal marcada para revisar. No es un descubrimiento confirmado."
+    }
   },
   "authButton": {
     "signIn": "Entrar",
     "signOut": "Cerrar sesión"
+  },
+  "archiveStatus": {
+    "label": "Estado del archivo",
+    "online": "en línea",
+    "checking": "comprobando…",
+    "offline": "sin conexión",
+    "latency": "Latencia",
+    "latencyValue": "{ms} ms",
+    "release": "Entrega",
+    "utc": "UTC",
+    "details": "Detalles del archivo",
+    "recheck": "Volver a comprobar",
+    "sourceUp": "{name}: {latency} ms",
+    "sourceDown": "{name}: {detail}"
   }
 }

@@ -22,6 +22,11 @@ module.exports = {
         nebula: "#9675FF",
         stellar: "#F4F6FC",
       },
+      // The approved "cobalto noche" system has three roles. `colors.pulse` (#2456b8) stays the
+      // fill (bg-pulse, gradients); as text or a border it would only reach ~2.8:1 on the dark
+      // panels, so those utilities get their own shade of the same blue.
+      textColor: { pulse: "#6f9be8" }, // ~7:1 on abyss/deep/panel
+      borderColor: { pulse: "#2f62c6" }, // ≥3:1 non-text contrast for focus/hover borders
       fontFamily: {
         // IBM Plex Sans everywhere, loaded via next/font in app/[locale]/layout.tsx.
         sans: ["var(--font-sans)", "'IBM Plex Sans'", "system-ui", "-apple-system", "sans-serif"],

@@ -5,10 +5,9 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import { Clock3, Crosshair, Orbit, Play, RefreshCw } from "lucide-react";
+import { Clock3, Crosshair, Orbit, Play } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SkyBackdrop from "@/components/SkyBackdrop";
-import { DataRelease, StatusDot, useDataSources } from "@/components/StatusBanner";
 import TargetCurve from "@/components/TargetCurve";
 import { api } from "@/lib/api";
 import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
@@ -22,7 +21,6 @@ export default function Home() {
   const targetCopy = useTargetCopy();
   const router = useRouter();
   const { target } = useResearch();
-  const { sources, note, collections, error, loading, refresh } = useDataSources();
   const prefetched = useRef(new Set<string>());
   const [leaving, setLeaving] = useState(false);
 
@@ -126,31 +124,8 @@ export default function Home() {
           </ul>
         </section>
 
-        <div className="pointer-events-auto flex flex-wrap items-end justify-between gap-2">
-          <div className="max-w-md rounded-xl border border-line/70 bg-deep/60 p-3 text-[11px] backdrop-blur-md">
-            <div className="mb-1 flex items-center justify-between gap-3">
-              <span className="font-semibold text-starlight">SPHEREx · IRSA</span>
-              <button
-                onClick={() => void refresh()}
-                className="flex items-center gap-1 text-mutedstar hover:text-starlight"
-                title={t("recheckTitle")}
-              >
-                <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> {t("recheck")}
-              </button>
-            </div>
-            {loading && <p className="text-mutedstar">{t("querying")}</p>}
-            {error && <p className="text-red-300">{error}</p>}
-            {sources?.map((s) => (
-              <p key={s.name} className="flex items-center gap-1.5 text-mutedstar">
-                <StatusDot ok={s.reachable} pending={loading} />
-                {s.reachable
-                  ? t("sourceAvailable", { name: s.name, latency: s.latency_ms ?? "—" })
-                  : t("sourceUnavailable", { name: s.name, detail: s.detail })}
-              </p>
-            ))}
-            <DataRelease collections={collections} />
-            {note && <p className="mt-1 text-mutedstar/70">{note}</p>}
-          </div>
+        <div className="pointer-events-auto flex flex-wrap items-end justify-end gap-2">
+          {/* Archive status moved to the sidebar (components/ArchiveStatus.tsx). */}
           {target && (
             <Link
               href="/journal"

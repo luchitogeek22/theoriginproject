@@ -9,6 +9,7 @@ import {
   Sparkles,
   Telescope,
 } from "lucide-react";
+import ArchiveStatus from "@/components/ArchiveStatus";
 import AuthButton from "@/components/AuthButton";
 import { Link, usePathname } from "@/i18n/navigation";
 
@@ -89,6 +90,7 @@ export default function Sidebar() {
       })}
 
       <div className="mt-auto flex flex-col gap-2">
+        <ArchiveStatus />
         <div className="border-t border-line/60 pt-2">
           <AuthButton />
         </div>
