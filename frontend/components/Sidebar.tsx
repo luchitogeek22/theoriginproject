@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BookOpenText,
   Clock3,
@@ -11,25 +10,28 @@ import {
   Telescope,
 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+import { Link, usePathname } from "@/i18n/navigation";
 
 const ITEMS = [
-  { href: "/", label: "Observatorio", icon: Telescope },
-  { href: "/living-sky", label: "Cielo vivo", icon: Orbit },
-  { href: "/time-explorer", label: "Explorador temporal", icon: Clock3 },
-  { href: "/spectral-lab", label: "Laboratorio espectral", icon: FlaskConical },
-  { href: "/candidates", label: "Candidatos", icon: Sparkles },
-  { href: "/journal", label: "Diario", icon: BookOpenText },
-];
+  { href: "/", key: "observatory", icon: Telescope },
+  { href: "/living-sky", key: "livingSky", icon: Orbit },
+  { href: "/time-explorer", key: "timeExplorer", icon: Clock3 },
+  { href: "/spectral-lab", key: "spectralLab", icon: FlaskConical },
+  { href: "/candidates", key: "candidates", icon: Sparkles },
+  { href: "/journal", key: "journal", icon: BookOpenText },
+] as const;
 
 export default function Sidebar() {
   const path = usePathname();
+  const t = useTranslations();
   return (
-    <nav className="flex w-14 flex-col items-center gap-1 border-r border-line bg-deep/80 py-3 md:w-44 md:items-stretch md:px-2" aria-label="Principal">
+    <nav className="flex w-14 flex-col items-center gap-1 border-r border-line bg-deep/80 py-3 md:w-44 md:items-stretch md:px-2" aria-label={t("nav.label")}>
       <div className="mb-3 hidden px-2 md:block">
-        <p className="text-[13px] font-bold tracking-wide text-starlight">THE ORIGIN PROJECT</p>
-        <p className="text-[10px] text-mutedstar">Explora el universo. Comprende sus cambios.</p>
+        <p className="text-[13px] font-bold tracking-wide text-starlight">{t("common.brand")}</p>
+        <p className="text-[10px] text-mutedstar">{t("nav.tagline")}</p>
       </div>
-      {ITEMS.map(({ href, label, icon: Icon }) => {
+      {ITEMS.map(({ href, key, icon: Icon }) => {
+        const label = t(`nav.${key}`);
         const active = href === "/" ? path === href : path === href || path.startsWith(`${href}/`);
         return (
           <Link
@@ -48,7 +50,7 @@ export default function Sidebar() {
       <div className="mt-auto flex flex-col gap-1">
         <AuthButton />
         <div className="hidden px-2 text-[10px] leading-snug text-mutedstar/70 md:block">
-          Datos reales SPHEREx vía NASA/IPAC IRSA. Iniciativa educativa independiente.
+          {t("nav.footer")}
         </div>
       </div>
     </nav>

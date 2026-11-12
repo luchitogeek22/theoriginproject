@@ -1,3 +1,7 @@
+const createNextIntlPlugin = require("next-intl/plugin");
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const baseHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -15,10 +19,12 @@ const nextConfig = {
   transpilePackages: ["three"],
   async headers() {
     return [
-      { source: "/:path((?!time-explorer/?$).*)", headers: securityHeaders },
+      // The time explorer stays embeddable in every language: `/time-explorer`, `/es/time-explorer`.
+      { source: "/:path((?!(?:[a-z][a-z]/)?time-explorer/?$).*)", headers: securityHeaders },
       { source: "/time-explorer", headers: embeddableHeaders },
+      { source: "/:locale([a-z][a-z])/time-explorer", headers: embeddableHeaders },
     ];
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

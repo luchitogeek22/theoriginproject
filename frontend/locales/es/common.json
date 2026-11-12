@@ -1,0 +1,85 @@
+{
+  "common": {
+    "brand": "THE ORIGIN PROJECT",
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "search": "Buscar",
+    "goHome": "Ir al inicio"
+  },
+  "metadata": {
+    "siteName": "The Origin Project",
+    "site": {
+      "title": "THE ORIGIN PROJECT — Explora el universo. Comprende sus cambios.",
+      "description": "Observatorio interactivo sobre observaciones reales de SPHEREx (NASA): explora el cielo, viaja en el tiempo y comprende la evidencia."
+    },
+    "observatory": {
+      "title": "Observatorio — The Origin Project",
+      "description": "Explora el cielo con observaciones reales de SPHEREx y elige un objetivo para investigar."
+    },
+    "livingSky": {
+      "title": "Cielo vivo — The Origin Project",
+      "description": "Mira cómo cambia el cielo entre las épocas de SPHEREx."
+    },
+    "timeExplorer": {
+      "title": "Explorador temporal — The Origin Project",
+      "description": "Viaja en el tiempo sobre exposiciones reales de SPHEREx y mira cómo los objetos se mueven o cambian de brillo."
+    },
+    "spectralLab": {
+      "title": "Laboratorio espectral — The Origin Project",
+      "description": "Arma un espectro a partir de la fotometría SPHEREx de un objetivo en distintas longitudes de onda."
+    },
+    "candidates": {
+      "title": "Candidatos — The Origin Project",
+      "description": "Candidatos a cambio detectados en observaciones de SPHEREx, con su evidencia."
+    },
+    "journal": {
+      "title": "Diario — The Origin Project",
+      "description": "Tus investigaciones guardadas."
+    },
+    "login": {
+      "title": "Iniciar sesión — The Origin Project",
+      "description": "Inicia sesión para guardar tus investigaciones en el diario."
+    },
+    "demo": {
+      "title": "Demo guiada — The Origin Project",
+      "description": "Un recorrido guiado por la plataforma con objetivos validados."
+    },
+    "landing": {
+      "title": "The Origin Project — Explora el universo. Descubre lo que cambia.",
+      "description": "Una plataforma científica interactiva para explorar observaciones reales de SPHEREx e investigar el universo dinámico. Creada para el NASA Space Apps Challenge 2026."
+    }
+  },
+  "nav": {
+    "label": "Principal",
+    "tagline": "Explora el universo. Comprende sus cambios.",
+    "observatory": "Observatorio",
+    "livingSky": "Cielo vivo",
+    "timeExplorer": "Explorador temporal",
+    "spectralLab": "Laboratorio espectral",
+    "candidates": "Candidatos",
+    "journal": "Diario",
+    "footer": "Datos reales SPHEREx vía NASA/IPAC IRSA. Iniciativa educativa independiente.",
+    "headerNote": "Observatorio interactivo · datos SPHEREx (NASA/IPAC IRSA)"
+  },
+  "mode": {
+    "label": "Modo",
+    "explore": "Explorar",
+    "investigate": "Investigar"
+  },
+  "language": {
+    "label": "Idioma",
+    "change": "Cambiar idioma, actual: {language}"
+  },
+  "errors": {
+    "title": "Algo salió mal",
+    "body": "La pantalla tuvo un error inesperado. Tu investigación guardada no se ha borrado.",
+    "reference": "Referencia: {digest}."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La dirección no existe o fue movida."
+  }
+}

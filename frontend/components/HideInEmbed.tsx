@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 
 function Gate({ children }: { children: React.ReactNode }) {
   const path = usePathname();
