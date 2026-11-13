@@ -1,0 +1,96 @@
+{
+  "errors": {
+    "apiNotConfigured": "The API address is not configured. Set NEXT_PUBLIC_API_URL to the backend URL (https://...).",
+    "apiUnreachable": "Could not reach the science service. Check that it is running.",
+    "requestFailed": "The request failed ({status}).",
+    "notJson": "The server returned a response that is not JSON. Check that NEXT_PUBLIC_API_URL points to the backend.",
+    "invalidJson": "The server returned invalid JSON.",
+    "analysisFailed": "The analysis failed in the science service.",
+    "analysisTimeout": "The analysis timed out. Please try again later.",
+    "jobFailed": "The job failed in the science service.",
+    "exportCors": "A frame could not be read (CORS). The image server must allow this page's origin, so it cannot be exported from this browser.",
+    "exportNoCanvas": "This browser cannot draw on a canvas.",
+    "exportPng": "The PNG image could not be generated.",
+    "exportRecorder": "The video recorder failed.",
+    "exportEmptyVideo": "The video came out empty."
+  },
+  "export": {
+    "attribution": "Data: NASA/IPAC IRSA, SPHEREx",
+    "noWavelength": "not available",
+    "frameFile": "frame"
+  },
+  "motion": {
+    "compass": {
+      "north": "north",
+      "northeast": "northeast",
+      "east": "east",
+      "southeast": "southeast",
+      "south": "south",
+      "southwest": "southwest",
+      "west": "west",
+      "northwest": "northwest"
+    },
+    "span": {
+      "days": "{count, plural, one {# day} other {# days}}",
+      "months": "{count, plural, one {# month} other {# months}}"
+    },
+    "stage": {
+      "sending": "Sending the request",
+      "queued": "Queued",
+      "searching": "Searching observations",
+      "selecting": "Choosing visits",
+      "downloading": "Downloading frames",
+      "rendering": "Aligning and drawing",
+      "photometry": "Measuring brightness",
+      "referenceFrame": "Looking for the WISE frame",
+      "storing": "Saving",
+      "processing": "Processing frames"
+    },
+    "progress": "{label}: {done} of {total}"
+  },
+  "targets": {
+    "barnard": { "hint": "High proper motion nearby star", "hook": "Watch Barnard's Star move" },
+    "epsindi": { "hint": "Brown dwarf companion", "hook": "See Epsilon Indi B, two brown dwarfs next to a star" },
+    "wise0855": { "hint": "Coldest known brown dwarf", "hook": "See WISE 0855, the coldest brown dwarf" },
+    "rwaur": { "hint": "Young variable star", "hook": "See RW Aurigae, a young star that changes brightness" },
+    "rdra": { "hint": "Long-period variable", "hook": "Watch R Draconis pulse" }
+  },
+  "limitations": {
+    "detectorsExcluded": "Detectors {excluded} were excluded: a sequence uses one detector ({detector}) because SPHEREx detectors cannot be mixed.",
+    "epochsShown": "{available} epochs available; {shown} evenly spaced ones are shown (maximum {max}).",
+    "noiseUnits": "Each frame is shown in units of its own noise: useful to see motion, not to compare brightness between frames.",
+    "physicalScale": "One physical scale for all frames: brightness changes between frames are real.",
+    "motionDetector": "Motion mode uses detector D6 by default (about 4.4 to 5 µm): cold objects such as brown dwarfs are brighter at long wavelengths.",
+    "framesMissing": "{count, plural, one {# frame} other {# frames}} could not be downloaded and are missing.",
+    "singleEpoch": "Only one epoch is available, so no change over time can be seen here.",
+    "noFrames": "No frames available to build a sequence at this position.",
+    "productsWithoutDetector": "{count, plural, one {# product} other {# products}} without a detector were excluded.",
+    "brightnessWavelength": "Brightness mode keeps frames at the same wavelength: {kept} of {total} are within ±{tolerance} µm of {wavelength} µm.",
+    "wiseUnavailable": "The WISE reference frame could not be retrieved.",
+    "gaiaUnavailable": "Gaia could not be reached: there are no comparison stars or catalogue marks.",
+    "noProperMotion": "No proper motion known for this position: photometry uses a fixed position.",
+    "curvePerDetector": "One curve per detector; detectors are never mixed. No aperture correction.",
+    "saturatedCore": "The target saturates its core in this detector: the curve uses the amplitude of the PSF wings (relative values, not a flux).",
+    "notDetected": "The target is not detected individually in each frame (median SNR {snr}); the curve mostly shows noise.",
+    "targetFlagged": "The target is flagged (saturation or unusable pixels) in {flagged} of {total} frames in detector {detector}; try another detector.",
+    "notMeasured": "The target could not be measured in these frames.",
+    "absoluteFlux": "absolute flux (no valid comparison stars): not corrected for common changes",
+    "relativeFlux": "relative to comparison stars",
+    "fewGaiaStars": "Only {count, plural, one {# Gaia star was} other {# Gaia stars were}} measurable here (at least 3 unflagged with SNR ≥ 10 are needed), so the curve is absolute.",
+    "archiveNotice": "Archive notice: {notice}",
+    "servedFromCache": "Queried on {date}, served from cache",
+    "linearMotion": "Linear motion over the observation window is assumed; a valid approximation for distant objects over a year and a half.",
+    "staticSources": "Pixels that are significantly bright in the median of all visits were treated as static sources and subtracted (each with its own brightness per visit); movers slower than one PSF over the whole window may be subtracted with them.",
+    "minVelocity": "Velocities below {velocity}″/yr (less than {pixels} px over the window) are not searched: they cannot be told apart from static residuals.",
+    "velocityEdge": "The best velocity lies at the edge of the searched range; widen the range before trusting it.",
+    "gridReduced": "Velocity grid reduced to {grid} to bound the computing cost.",
+    "minVisits": "At least {required} visits are required; found {found}.",
+    "pValue": "The empirical p-value compares the predicted position with random positions of the same stack; it assumes the catalogue proper motion is correct and the motion is linear.",
+    "smallMotion": "Total predicted motion over the window is {pixels} px: below about 1.5 px a blind search cannot separate a mover from a static source, but a known motion can still be checked.",
+    "zodiImage": "Zodiacal light (ZODI) was subtracted from the image.",
+    "zodiEvery": "Zodiacal light was subtracted from every exposure.",
+    "dateColours": "Different dates are shown in different colours: a brightness change over time is not spectral shape.",
+    "noApertureCorrection": "No aperture correction is applied.",
+    "noWcs": "No celestial WCS: detections have no sky coordinates."
+  }
+}

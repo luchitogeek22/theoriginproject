@@ -1,14 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { PIPELINE } from "../content";
 import { useSectionProgress } from "../hooks";
 import PipelineVisual from "../ui/PipelineVisual";
 
-const STATUS_LABEL = { available: "Available", validating: "Being validated" } as const;
-
 export default function Pipeline() {
+  const t = useTranslations("landing.pipeline");
   const ref = useRef<HTMLElement>(null);
   const progress = useSectionProgress(ref);
   const [picked, setPicked] = useState<number | null>(null);
@@ -31,13 +31,13 @@ export default function Pipeline() {
 
   return (
     <section ref={ref} id="evidence" data-chapter aria-labelledby="evidence-title" className="relative md:h-[340vh]">
-      <div className="flex min-h-[100svh] md:sticky md:top-0 items-center px-4 py-20 md:px-10">
+      <div className="landing-gutter flex min-h-[100svh] md:sticky md:top-0 items-center py-20">
         <div className="grid w-full gap-10 md:grid-cols-12 md:items-center">
           <div className="landing-scrim md:col-span-5">
-            <h2 id="evidence-title" className="landing-h2">From observation to evidence</h2>
+            <h2 id="evidence-title" className="landing-h2">{t("title")}</h2>
             <ol className="mt-6 grid gap-1">
               {PIPELINE.map((s, i) => (
-                <li key={s.title}>
+                <li key={s.visual}>
                   <button
                     type="button"
                     onClick={() => jump(i)}
@@ -45,7 +45,7 @@ export default function Pipeline() {
                     className="landing-focus landing-step"
                   >
                     <span className="font-mono text-xs text-stellar/40">{i + 1}</span>
-                    <span>{s.title}</span>
+                    <span>{t(`steps.${s.visual}.title`)}</span>
                   </button>
                 </li>
               ))}
@@ -63,18 +63,17 @@ export default function Pipeline() {
               >
                 <PipelineVisual kind={step.visual} />
                 <div className="mt-5 flex items-center gap-3">
-                  <span className={`landing-status landing-status--${step.status}`}>{STATUS_LABEL[step.status]}</span>
+                  <span className={`landing-status landing-status--${step.status}`}>{t(`status.${step.status}`)}</span>
                   <span className="font-mono text-xs text-stellar/40">
-                    Step {active + 1} of {PIPELINE.length}
+                    {t("stepOf", { current: active + 1, total: PIPELINE.length })}
                   </span>
                 </div>
-                <h3 className="mt-3 font-display text-xl text-stellar">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-stellar/75">{step.detail}</p>
+                <h3 className="mt-3 font-display text-xl text-stellar">{t(`steps.${step.visual}.title`)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-stellar/75">{t(`steps.${step.visual}.detail`)}</p>
               </motion.div>
             </AnimatePresence>
             <p className="mt-4 text-xs text-stellar/45">
-              Diagrams explain each step; they are not real data. &ldquo;Available&rdquo; means usable in the app today.
-              &ldquo;Being validated&rdquo; means built and still being checked against real SPHEREx data.
+              {t("note")}
             </p>
           </div>
         </div>

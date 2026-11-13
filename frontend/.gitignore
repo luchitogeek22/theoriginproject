@@ -1,0 +1,6 @@
+
+.e2e-tmp/
+test-results/
+playwright-report/
+.next-e2e/
+.next-shot/

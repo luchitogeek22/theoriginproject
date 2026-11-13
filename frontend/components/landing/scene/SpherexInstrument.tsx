@@ -26,8 +26,8 @@ export default function SpherexInstrument() {
   const resources = useMemo(() => {
     const shell = new THREE.MeshStandardMaterial({ color: "#d5dbec", metalness: 0.75, roughness: 0.28, side: THREE.DoubleSide, transparent: true });
     const bus = new THREE.MeshStandardMaterial({ color: "#2a3350", metalness: 0.5, roughness: 0.5, transparent: true });
-    const aperture = new THREE.MeshBasicMaterial({ color: "#42D9F5", transparent: true });
-    const beamMat = new THREE.MeshBasicMaterial({ color: "#42D9F5", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    const aperture = new THREE.MeshBasicMaterial({ color: "#6f9be8", transparent: true });
+    const beamMat = new THREE.MeshBasicMaterial({ color: "#6f9be8", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     const beamGeo = new THREE.CylinderGeometry(0.9, 0.04, 1, 32, 1, true);
     beamGeo.translate(0, 0.5, 0);
     const shields = [0, 1, 2].map((i) => new THREE.CylinderGeometry(1.0 - i * 0.12, 0.42 - i * 0.04, 0.9, 40, 1, true));

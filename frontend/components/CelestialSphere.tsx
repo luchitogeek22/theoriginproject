@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
+import { useTranslations } from "next-intl";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { DEG, parsePolygonRegion, radecToVec3 } from "@/lib/coords";
@@ -298,7 +299,7 @@ function CameraRig({
   reducedMotion,
   fov,
 }: Pick<SkyProps, "focus" | "resetNonce" | "reducedMotion" | "fov">) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const goal = useRef<THREE.Vector3 | null>(null);
   const lastNonce = useRef<number | null>(null);
@@ -308,7 +309,8 @@ function CameraRig({
   useEffect(() => {
     perspective.fov = fov;
     perspective.updateProjectionMatrix();
-  }, [fov, perspective]);
+    invalidate();
+  }, [fov, perspective, invalidate]);
 
   useEffect(() => {
     if (focus && focus.nonce !== lastNonce.current) {
@@ -316,15 +318,17 @@ function CameraRig({
       const [x, y, z] = radecToVec3(focus.ra, focus.dec, 1);
       const dir = new THREE.Vector3(x, y, z);
       const dist = Math.max(camera.position.length(), 8);
-      goal.current = dir.multiplyScalar(dist);
+      // The camera sits inside the sphere, so it must be opposite the target to look at it.
+      goal.current = dir.multiplyScalar(-dist);
       if (reducedMotion) {
         camera.position.copy(goal.current);
         camera.lookAt(0, 0, 0);
         controls?.update();
         goal.current = null;
       }
+      invalidate();
     }
-  }, [focus, reducedMotion, camera, controls]);
+  }, [focus, reducedMotion, camera, controls, invalidate]);
 
   useEffect(() => {
     if (resetNonce !== lastReset.current) {
@@ -333,25 +337,39 @@ function CameraRig({
       camera.lookAt(0, 0, 0);
       controls?.update();
       goal.current = null;
+      invalidate();
     }
-  }, [resetNonce, camera, controls]);
+  }, [resetNonce, camera, controls, invalidate]);
 
   useFrame(() => {
     if (!goal.current) return;
     camera.position.lerp(goal.current, 0.09);
     camera.lookAt(0, 0, 0);
     if (camera.position.distanceTo(goal.current) < 0.15) goal.current = null;
+    else invalidate();
   });
   return null;
 }
 
-function Scene(props: SkyProps) {
+/** Drift button text, resolved outside the Canvas because drei's <Html> has no intl context. */
+interface DriftLabels {
+  start: string;
+  stop: string;
+}
+
+function Scene(props: SkyProps & { driftLabels: DriftLabels }) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const [autoRotate, setAutoRotate] = useState(false);
+  const invalidate = useThree((s) => s.invalidate);
+  const rotating = autoRotate && !props.reducedMotion;
 
   useEffect(() => {
     if (props.reducedMotion) setAutoRotate(false);
   }, [props.reducedMotion]);
+
+  useFrame(() => {
+    if (rotating) invalidate();
+  });
 
   return (
     <>
@@ -364,6 +382,7 @@ function Scene(props: SkyProps) {
       />
       <OrbitControls
         ref={controlsRef}
+        makeDefault
         target={[0, 0, 0]}
         enablePan={false}
         enableDamping
@@ -371,7 +390,7 @@ function Scene(props: SkyProps) {
         rotateSpeed={0.55}
         minDistance={6}
         maxDistance={92}
-        autoRotate={autoRotate && !props.reducedMotion}
+        autoRotate={rotating}
         autoRotateSpeed={0.4}
       />
       <Grid visible={props.layers.grid} />
@@ -393,7 +412,7 @@ function Scene(props: SkyProps) {
             onClick={() => setAutoRotate((v) => !v)}
             className="rounded border border-line bg-abyss/80 px-2 py-1 text-[11px] text-mutedstar hover:text-starlight"
           >
-            {autoRotate ? "Detener deriva" : "Deriva lenta"}
+            {autoRotate ? props.driftLabels.stop : props.driftLabels.start}
           </button>
         </Html>
       )}
@@ -415,19 +434,23 @@ class SkyErrorBoundary extends React.Component<
 }
 
 export default function CelestialSphere(props: SkyProps & { fallback: React.ReactNode }) {
+  const t = useTranslations("celestialSphere");
   const [glFailed, setGlFailed] = useState(false);
   if (glFailed) return <>{props.fallback}</>;
   return (
     <SkyErrorBoundary fallback={props.fallback}>
       <Canvas
         dpr={[1, 2]}
+        frameloop="demand"
+        aria-label={t("canvasLabel")}
+        role="group"
         camera={{ fov: props.fov, near: 0.1, far: 2000, position: [0, 12, 42] }}
         gl={{ antialias: true, alpha: false }}
         onCreated={({ gl }) => {
           if (!gl.getContext()) setGlFailed(true);
         }}
       >
-        <Scene {...props} />
+        <Scene {...props} driftLabels={{ start: t("driftStart"), stop: t("driftStop") }} />
       </Canvas>
     </SkyErrorBoundary>
   );

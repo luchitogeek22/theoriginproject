@@ -38,11 +38,11 @@ Salen directamente del enunciado. Sin estos no hay entrega válida.
 
 | ID | Requisito | Frase del enunciado |
 |----|-----------|---------------------|
-| R1 | Herramienta web pública, sin barreras de acceso | "public-facing web tool" |
-| R2 | Entrada por coordenadas RA / Dec | "Users will enter the coordinates of a patch of sky" |
-| R3 | Imágenes reales de SPHEREx de ese trozo de cielo | "display images of the sky from the SPHEREx mission" |
-| R4 | Secuencia temporal reproducida como video | "a series of images of that patch like a little video" |
-| R5 | El cambio se percibe rápido y sin ser experto | "easy for anyone to quickly see how they change over time" |
+| R1 | Parcial | 2026-11-12: en un Chromium real, sin iniciar sesión, la portada y los cinco enlaces cargan la secuencia (`frontend/e2e`, 19 pruebas). Falta observarlo en el despliegue público. |
+| R2 | Cumple | Observado en Chromium: `?q=08h55m10.831s -7d14m42.53s` se resuelve y la URL pasa a coordenadas numéricas; `?ra=&dec=` y nombres funcionan; una consulta inválida da un mensaje claro. |
+| R3 | Cumple | Observado en Chromium: los cuadros mostrados son recortes reales de SPHEREx (IRSA) de los cinco objetivos, con fecha, detector, longitud de onda, banderas y colección por cuadro. Servidos desde la caché de secuencias reales con IRSA cortado. |
+| R4 | Cumple | Observado en Chromium: la secuencia se reproduce y la imagen cambia en cada paso; hay pausa, anterior, siguiente, velocidad, teclado, parpadeo A/B y vista antes/después. |
+| R5 | Parcial | De la portada al video hay un clic (observado); la demo guiada y la frase "se movió X″ hacia el <rumbo>" ayudan a entenderlo. Falta la prueba con personas sin formación (tabla vacía en `docs/demo.md`). |
 | R6 | Funciona en los cinco objetivos de prueba | "Test your tool on..." |
 
 ## Objetivos de prueba
@@ -70,15 +70,15 @@ Cada una resuelta bien suma frente a otros equipos.
 
 | ID | Consideración | Por qué importa |
 |----|---------------|-----------------|
-| C1 | Fácil de actualizar con nuevas entregas de datos | Los datos de SPHEREx llegan rápido |
-| C2 | Uso creativo de las 102 bandas; sumar los datos de cada uno de los 6 detectores para mejorar señal/ruido | Hace visibles objetos débiles |
-| C3 | Espectros generados al vuelo | "Extra kudos" explícito en el enunciado |
-| C4 | Sumar o restar imágenes de épocas distintas | Facilita descubrir objetos en movimiento |
-| C5 | Campo de visión configurable | Campos grandes siguen objetos más rápidos, a costa de transferencia |
-| C6 | Superposición de datos de otros telescopios (Gaia, WISE) | Contexto y referencia de posiciones |
-| C7 | Consulta por coordenadas en la URL | Permite incrustar la herramienta en otros sitios |
-| C8 | Metadatos visibles, como banderas de contaminación | Evita confundir artefactos con descubrimientos |
-| C9 | Apoyarse en herramientas públicas (Astropy, Aladin de CDS) | No reinventar lo que ya existe |
+| C1 | Parcial | Las colecciones se descubren por TAP (`spherex.obscore`, verificado en vivo: qr2, qr2_deep, qr3, qr3_deep; la consulta tarda 60 a 90 s y corre en segundo plano) con la lista configurada como respaldo, y los DOI salen de una tabla de datos. |
+| C2 | Parcial | Un solo detector por secuencia (nunca se mezclan); la suma ponderada existe en el motor, la interfaz solo la expone en el modo Planeta X. |
+| C3 | Parcial | Espectrofotometría relativa y termómetro de color implementados y probados con datos sintéticos; sin datos reales ni navegador. |
+| C4 | Parcial | Apilado ponderado y búsqueda por desplazamiento implementados y probados con datos sintéticos; sin datos reales ni navegador. |
+| C5 | Parcial | Campo de visión configurable (2 a 60 arcmin) reflejado en la URL, con sugerencia cuando el desplazamiento supera la mitad del campo. No visto en navegador. |
+| C6 | Parcial | Gaia DR3 (marcas y trayectorias) y cuadro AllWISE W2 implementados; el WISE se verificó contra IRSA; Gaia contra el servicio real solo para el campo de WISE 0855. Aladin sin verificar en navegador. |
+| C7 | Parcial | `?ra=&dec=&fov=&mode=&detector=&ref=&frame=&embed=` y `?q=`; cabeceras verificadas en el servidor de Next (`/time-explorer` se puede incrustar, el resto mantiene `DENY`). El iframe no se probó en un navegador. |
+| C8 | Parcial | Fracción con banderas y cobertura por cuadro, y verificación de candidatos con siete comprobaciones; sin verificar en navegador. |
+| C9 | Parcial | Astropy, reproject, photutils, astroquery (Gaia, SkyBoT) y Aladin Lite 3.6.1 fijo; Aladin no se verificó en navegador. |
 
 ## Implicancias técnicas a validar
 
@@ -150,11 +150,11 @@ y contra datos reales. Estados: `Por verificar`, `Cumple`, `Parcial`, `Falta`.
 | R3 | Parcial | WP-05 (2026-11-11): los datos reales existen y son accesibles para los cinco objetivos. La app no los lee bien: IRSA rechaza su URL de recorte (HTTP 422) y baja el detector completo, y el mapeo de SIA2 no reconoce detector ni fecha. Ver auditoría NASA §15. |
 | R4 | Por verificar | |
 | R5 | Por verificar | |
-| R6 — Barnard's Star | Falta | Datos (WP-05): 195 exposiciones, 2025-08 a 2026-09; movimiento máximo 1,9 px. En la app, `FLAGS == 0` deja 0 % de píxeles válidos en su recorte. |
-| R6 — Epsilon Indi B | Falta | Datos (WP-05): 249 exposiciones, 2025-04 a 2026-10; movimiento máximo 1,1 px. En la app queda 22 % de píxeles válidos. |
-| R6 — WISE 0855 | Falta | Datos (WP-05): 133 exposiciones, 2025-05 a 2026-05; movimiento máximo 1,35 px. Un apilado externo muestra una señal sugerente (no confirmada) en su posición prevista; la app no genera ninguna secuencia. |
-| R6 — RW Aurigae | Falta | Datos (WP-05): 171 exposiciones, 373 días por detector. La app no tiene escala compartida ni fotometría; 32 % de píxeles válidos. |
-| R6 — R Draconis | Falta | Datos (WP-05): unas 1300 exposiciones (`qr2`, `qr2_deep`, `qr3_deep`), 478 días. La app trunca a 200 o 500 filas por colección y deja 0 % de píxeles válidos. |
+| R6 — Barnard's Star | Parcial | 2026-11-12: 12 cuadros reales de D6 (2025-08 a 2026-09), desplazamiento previsto 11,4″ con marcas de Gaia; el apilado siguiendo su movimiento propio tiene el pico exactamente en el píxel previsto (σ 678). No visto en navegador. |
+| R6 — Epsilon Indi B | Parcial | 2026-11-12: 12 cuadros reales de D6 (2025-04 a 2026-09), desplazamiento previsto 6,6″; apilado con su movimiento propio con el pico en el píxel previsto (σ 156). La separación del par de enanas marrones no se verificó. No visto en navegador. |
+| R6 — WISE 0855 | Parcial | 2026-11-12: 12 cuadros reales de D6 (2025-05 a 2026-05) y cuadro AllWISE W2 real. Es débil (SNR mediana 3,4 por cuadro): el apilado siguiendo su movimiento propio da el pico en el píxel previsto con σ 11,8 y p empírico < 0,001; señal compatible, no detección confirmada. La búsqueda a ciegas no lo encuentra (movimiento de 1,3 px en la ventana). No visto en navegador. |
+| R6 — RW Aurigae | Parcial | 2026-11-12: 9 cuadros reales de D1 (0,77 a 0,88 µm, 2025-09 a 2026-09) y curva de luz relativa a 4 estrellas de Gaia (amplitud aparente ±48 %, sin corrección de color). No visto en navegador. |
+| R6 — R Draconis | Parcial | 2026-11-12: 10 cuadros reales de D1 (2025-08 a 2026-09). La estrella satura el núcleo en D1, D3, D5 y D6; con fotometría de las alas de la PSF (valores relativos) los 10 puntos son válidos y varían de 0,63 a 1,64 del valor mediano, coherente con una variable de largo periodo. Curva absoluta (Gaia no respondió en esa corrida). No visto en navegador. |
 | C1 | Parcial | WP-05: QR2 y QR3 son periodos consecutivos y se pueden descubrir por TAP; la app los fija en configuración y SIA2 no distingue una colección inexistente de una sin cobertura. |
 | C2 | Por verificar | |
 | C3 | Por verificar | |

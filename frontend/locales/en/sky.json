@@ -1,0 +1,120 @@
+{
+  "aladinViewer": {
+    "ariaLabel": "Aladin Lite sky map",
+    "loading": "Loading the sky map (Aladin Lite {version})…",
+    "errorTitle": "Sky map unavailable",
+    "errorBody": "Aladin Lite could not be loaded ({reason}). The image sequence still works; check your connection to aladin.cds.unistra.fr and reload the page.",
+    "reason": {
+      "timeout": "timed out while loading the script",
+      "download": "the script could not be downloaded",
+      "noApi": "the script loaded but did not expose the API",
+      "unknown": "unknown failure"
+    },
+    "markerCatalog": "Target",
+    "layers": {
+      "gaia": "Gaia DR3 (G flux)",
+      "wise": "WISE (color)"
+    },
+    "issues": {
+      "recenter": "The viewer could not recenter on the requested position.",
+      "marker": "The target marker could not be drawn.",
+      "enable": "The {layer} layer could not be enabled.",
+      "disable": "The {layer} layer could not be disabled."
+    }
+  },
+  "spectrumPanel": {
+    "title": "On-the-fly spectrum",
+    "intro": "Measures the target's flux in exposures from the six SPHEREx detectors and sorts it by wavelength. This is relative spectrophotometry, without aperture correction.",
+    "measure": "Measure the target's spectrum",
+    "remeasure": "Repeat the measurement",
+    "stages": {
+      "queued": "Queued",
+      "searching": "Searching the archive for observations",
+      "downloading": "Downloading cutouts",
+      "measuring": "Measuring the flux",
+      "sending": "Sending the request"
+    },
+    "cancelled": "You stopped waiting for this measurement.",
+    "noPoints": "There are no usable measurements for this position.",
+    "caption": "Relative spectrophotometry, without aperture correction.",
+    "plotTitle": "Relative spectrophotometry of {count, plural, one {# measurement} other {# measurements}}",
+    "plotDesc": "{count, plural, one {# measurement} other {# measurements}} between {min} and {max} microns, on {dates, plural, one {# date} other {# dates}}.",
+    "plotDescFlagged": "{count} flagged, drawn hollow.",
+    "plotDescFlux": "Flux between {min} and {max} Jy.",
+    "axisX": "wavelength (µm)",
+    "axisY": "flux (Jy)",
+    "pointTitle": "{date} · detector {detector} · {wavelength} µm · {flux} Jy",
+    "pointFlagged": "flagged",
+    "legendLabel": "Legend by date",
+    "legendFlagged": "hollow = flagged ({count})",
+    "colorUnavailable": "Color thermometer unavailable: {reason}",
+    "colorNoReason": "no reason given",
+    "colorTitle": "Color thermometer: {index} ± {err}",
+    "bluer": "−1 (bluer)",
+    "redder": "+1 (redder)"
+  },
+  "lightCurve": {
+    "sectionLabel": "Target light curve",
+    "title": "Light curve",
+    "absoluteWarning": "Absolute flux: not corrected for common changes. A brightness change here may come from the instrument.",
+    "notDetected": "The target is not detected separately in each frame: the curve mostly reflects noise. For faint objects, use the stack.",
+    "notDetectedSnr": "The target is not detected separately in each frame (median SNR {snr}): the curve mostly reflects noise. For faint objects, use the stack.",
+    "summary": "{used} of {total} epochs with a measurement. Minimum {min}, maximum {max}, amplitude {amp} {method, select, psf {(relative amplitude of the PSF wings, normalized to the median)} relative {(relative flux, normalized to the median)} other {(absolute flux)}}.",
+    "noUsable": "No epoch has a usable measurement.",
+    "plotTitle": "Light curve of {count, plural, one {# epoch} other {# epochs}}",
+    "axisX": "observation date",
+    "axisY": "{method, select, psf {relative amplitude of the PSF wings} relative {relative flux} other {absolute flux}}",
+    "legendMeasure": "measurement ± error",
+    "legendScatter": "reference noise (±{scatter}, {count, plural, one {# comparison star} other {# comparison stars}})",
+    "legendUnused": "no usable measurement (flag or outside coverage): frames {frames}"
+  },
+  "skyView": {
+    "loadingSphere": "Loading celestial sphere…",
+    "loadError": "{source}: {message}",
+    "unexpectedError": "unexpected error",
+    "sources": {
+      "referenceStars": "Reference stars",
+      "candidates": "Candidates"
+    },
+    "loadErrorTitle": "Could not load data from the service",
+    "loadErrorNote": "The sphere shows only what did load.",
+    "layersButton": "Layers",
+    "reset": "Reset view",
+    "layers": {
+      "grid": "Coordinate grid",
+      "references": "Reference stars (catalog)",
+      "footprints": "Queried SPHEREx footprints",
+      "candidates": "Candidates",
+      "labels": "Labels"
+    },
+    "fov": "Field of view",
+    "reducedMotion": "Reduced motion",
+    "hint": "Celestial sphere: directions, not distances. Drag to explore · scroll to zoom."
+  },
+  "celestialSphere": {
+    "canvasLabel": "Interactive celestial sphere: drag to rotate and use the wheel to zoom",
+    "driftStop": "Stop drift",
+    "driftStart": "Slow drift"
+  },
+  "skyScene": {
+    "role": {
+      "motion": "moves",
+      "brightness": "changes brightness"
+    },
+    "openSequence": "{name}: {role}. Open its sequence."
+  },
+  "skyFallback": {
+    "notice": "WebGL unavailable — alternative 2D view with the same data.",
+    "ariaLabel": "2D sky map",
+    "projection": "Equirectangular projection. Directions are the same as in the 3D sphere."
+  },
+  "skyMapBackdrop": {
+    "ariaLabel": "Sky map with the five challenge targets",
+    "role": {
+      "motion": "moves",
+      "brightness": "changes brightness"
+    },
+    "openSequence": "{name}: {role}. Open its sequence.",
+    "caption": "The five targets in the real sky; the faint band is the Milky Way. Click one to see its video."
+  }
+}

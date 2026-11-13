@@ -8,7 +8,7 @@ html, body {
   height: 100%;
 }
 
-::selection { background: #46d8ff33; }
+::selection { background: #2456b833; }
 
 canvas { display: block; }
 

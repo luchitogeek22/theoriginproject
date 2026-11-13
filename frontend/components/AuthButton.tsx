@@ -3,12 +3,14 @@
 /** Session button for the sidebar: email + logout, or login link. */
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { LogIn, LogOut } from "lucide-react";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabaseBrowser } from "@/lib/supabase/client";
 
 export default function AuthButton() {
+  const t = useTranslations("authButton");
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -38,7 +40,7 @@ export default function AuthButton() {
         className="flex w-full items-center gap-2 rounded px-2 py-2 text-xs text-mutedstar hover:bg-panel hover:text-starlight"
       >
         <LogIn size={17} />
-        <span className="hidden md:inline">Entrar</span>
+        <span className="hidden md:inline">{t("signIn")}</span>
       </button>
     );
   }
@@ -46,7 +48,8 @@ export default function AuthButton() {
   const logout = async () => {
     await supabaseBrowser()?.auth.signOut();
     setEmail(null);
-    router.push("/");
+    // Back to the app's own home, not the public landing — "/" no longer means Observatory.
+    router.push("/observatory");
     router.refresh();
   };
 
@@ -57,8 +60,8 @@ export default function AuthButton() {
       </span>
       <button
         onClick={() => void logout()}
-        title="Cerrar sesión"
-        aria-label="Cerrar sesión"
+        title={t("signOut")}
+        aria-label={t("signOut")}
         className="text-mutedstar hover:text-starlight"
       >
         <LogOut size={17} />

@@ -8,6 +8,8 @@ import { SIM_MOVER_SHIFT_PX, simulatedBrightness as brightness } from "../simula
 
 /** Illustrative field only: a simulated patch with one moving source and one variable source. */
 
+const DESKTOP_SCALE = 0.7;
+const DESKTOP_X = 5.6;
 const WIDTH = 16;
 const HEIGHT = 10;
 const PIXEL = 0.5;
@@ -62,8 +64,8 @@ function makeMaterial() {
 }
 
 const WHITE = new THREE.Color("#F4F6FC");
-const ION = new THREE.Color("#42D9F5");
-const NEBULA = new THREE.Color("#9675FF");
+const ION = new THREE.Color("#6f9be8");
+const NEBULA = new THREE.Color("#6f9be8");
 
 export default function EpochField() {
   const root = useRef<THREE.Group>(null);
@@ -102,11 +104,11 @@ export default function EpochField() {
 
     const backGeo = new THREE.PlaneGeometry(WIDTH, HEIGHT);
     const frameGeo = new THREE.EdgesGeometry(backGeo);
-    const frameMat = new THREE.LineBasicMaterial({ color: "#42D9F5", transparent: true, opacity: 0 });
+    const frameMat = new THREE.LineBasicMaterial({ color: "#6f9be8", transparent: true, opacity: 0 });
     const backMat = new THREE.MeshBasicMaterial({ color: "#0B1020", transparent: true, opacity: 0, depthWrite: false });
 
     const ringGeo = new THREE.RingGeometry(0.62, 0.66, 48);
-    const ringMat = new THREE.MeshBasicMaterial({ color: "#42D9F5", transparent: true, opacity: 0, depthWrite: false });
+    const ringMat = new THREE.MeshBasicMaterial({ color: "#6f9be8", transparent: true, opacity: 0, depthWrite: false });
     return { fieldGeo, specialGeo, fieldMat, specialMat, gridGeo, gridMat, frameGeo, frameMat, backGeo, backMat, ringGeo, ringMat };
   }, []);
 
@@ -127,7 +129,8 @@ export default function EpochField() {
     const presence = mix(a.epochPanel, b.epochPanel, t);
     g.visible = presence > 0.01;
     if (!g.visible) return;
-    g.position.x = damp(g.position.x, stage.compact ? 0 : 4.2, 4, dt);
+    g.position.x = damp(g.position.x, stage.compact ? 0 : DESKTOP_X, 4, dt);
+    g.scale.setScalar(stage.compact ? 1 : DESKTOP_SCALE);
     g.position.y = stage.compact ? -5.5 : 0;
 
     const instant = stage.reducedMotion;
@@ -177,7 +180,7 @@ export default function EpochField() {
   });
 
   return (
-    <group ref={root} position={[4.2, 0, -60]}>
+    <group ref={root} position={[DESKTOP_X, 0, -60]}>
       <mesh geometry={resources.backGeo} material={resources.backMat} />
       <lineSegments geometry={resources.gridGeo} material={resources.gridMat} />
       <lineSegments geometry={resources.frameGeo} material={resources.frameMat} />

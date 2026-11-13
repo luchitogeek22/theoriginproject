@@ -1,36 +1,62 @@
 "use client";
 
-/** Aladin Lite v3 interactive sky viewer (official CDS embed).
- *
- * Loads the official script once per page lifetime, mounts the viewer into
- * #aladin-lite-div, and smoothly flies to (ra, dec) whenever they change
- * (e.g. after resolving Mars at 145.1227, 15.7976).
- */
-
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
-export const ALADIN_SCRIPT_URL =
-  "https://aladin.u-strasbg.fr/AladinLite/api/v3/latest/aladin.js";
-/** Verified fallback (npm bundle v3.9.2): used only if the official host fails. */
-export const ALADIN_SCRIPT_FALLBACK_URL =
-  "https://cdn.jsdelivr.net/npm/aladin-lite@3.9.2-beta/dist/aladin.js";
-/** Full HiPS IDs (Aladin resolves these; short aliases like "2MASS/J" may not). */
-export const ALADIN_DEFAULT_SURVEY = "P/2MASS/J";
-export const ALADIN_DEFAULT_FOV_DEG = 1.5;
-/** Galactic center: pleasant default while no target is selected. */
-export const ALADIN_DEFAULT_RA = 266.4051;
-export const ALADIN_DEFAULT_DEC = -29.0078;
+export const ALADIN_VERSION = "3.6.1";
+export const ALADIN_SCRIPT_URL = `https://aladin.cds.unistra.fr/AladinLite/api/v3/${ALADIN_VERSION}/aladin.js`;
+export const ALADIN_BASE_SURVEY = "P/2MASS/color";
+
+const SCRIPT_TIMEOUT_MS = 15000;
+const POLL_TIMEOUT_MS = 8000;
+
+/** HiPS overlays; their visible names live in the `aladinViewer.layers` messages. */
+export const CATALOG_LAYERS = {
+  gaia: { hips: "CDS/P/DM/flux-G/I/355/gaiadr3" },
+  wise: { hips: "P/allWISE/color" },
+} as const;
+
+export type CatalogLayerKey = keyof typeof CATALOG_LAYERS;
+
+type LoadFailureReason = "timeout" | "download" | "noApi";
+
+/** Loader failure with a translatable reason; `message` stays in English for logs. */
+class AladinLoadError extends Error {
+  constructor(
+    readonly reason: LoadFailureReason,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+type LayerIssue =
+  | { kind: "recenter" | "marker" }
+  | { kind: "enable" | "disable"; layer: CatalogLayerKey };
+
+interface AladinLayer {
+  setOpacity?: (value: number) => void;
+}
+
+interface AladinCatalog {
+  addSources: (sources: unknown[]) => void;
+  removeAll: () => void;
+}
 
 interface AladinInstance {
   gotoRaDec: (ra: number, dec: number) => void;
-  setImageSurvey?: (survey: string) => void;
-  setFoV?: (fovDeg: number) => void;
-  setFov?: (fovDeg: number) => void;
+  setFoV: (fovDeg: number) => void;
+  setOverlayImageLayer: (layer: AladinLayer, name: string) => void;
+  removeImageLayer: (name: string) => void;
+  addCatalog: (catalog: AladinCatalog) => void;
 }
 
 interface AladinGlobal {
   init: Promise<unknown>;
-  aladin: (target: string, options: Record<string, unknown>) => AladinInstance;
+  aladin: (selector: string, options: Record<string, unknown>) => AladinInstance;
+  imageHiPS: (id: string, options?: Record<string, unknown>) => AladinLayer;
+  catalog: (options: Record<string, unknown>) => AladinCatalog;
+  source: (ra: number, dec: number, data?: Record<string, unknown>) => unknown;
 }
 
 declare global {
@@ -39,30 +65,7 @@ declare global {
   }
 }
 
-interface Props {
-  ra: number;
-  dec: number;
-  survey?: string;
-  fov?: number;
-  /** Container id. Override when mounting more than one viewer per page. */
-  containerId?: string;
-  className?: string;
-}
-
-/** Aladin API resolves once per page lifetime, shared across mounts/remounts. */
 let apiPromise: Promise<AladinGlobal> | null = null;
-
-const TAG_LOAD_TIMEOUT_MS = 15000;
-const GLOBAL_POLL_TIMEOUT_MS = 6000;
-const GLOBAL_POLL_INTERVAL_MS = 100;
-const OFFICIAL_HEAD_START_MS = 3000;
-const IMPORT_TIMEOUT_MS = 25000;
-
-export type AladinLoadStage = "official" | "mirror";
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
 
 function validApi(value: unknown): value is AladinGlobal {
   if (!value || typeof value !== "object") return false;
@@ -70,253 +73,233 @@ function validApi(value: unknown): value is AladinGlobal {
   return typeof api.aladin === "function" && !!api.init && typeof api.init.then === "function";
 }
 
-/** Inject a classic <script> tag. Resolves once loaded (the API may appear later). */
-function injectScriptTag(src: string): Promise<void> {
+function injectScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve(); // another mount is handling it; the poll below waits for window.A
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+    if (existing) {
+      resolve();
       return;
     }
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    const timer = window.setTimeout(() => {
-      script.onload = null;
-      script.onerror = null;
-      reject(new Error(`Timed out loading the Aladin Lite script: ${src}`));
-    }, TAG_LOAD_TIMEOUT_MS);
+    const timer = window.setTimeout(() => reject(new AladinLoadError("timeout", "timed out while loading the script")), SCRIPT_TIMEOUT_MS);
     script.onload = () => {
       window.clearTimeout(timer);
       resolve();
     };
     script.onerror = () => {
       window.clearTimeout(timer);
-      reject(new Error(`Could not load the Aladin Lite script: ${src}`));
+      script.remove();
+      reject(new AladinLoadError("download", "the script could not be downloaded"));
     };
     document.head.appendChild(script);
   });
 }
 
-/** Wait for a classic (UMD) bundle to define window.A. */
-function pollWindowA(timeoutMs: number): Promise<AladinGlobal> {
+function waitForGlobal(): Promise<AladinGlobal> {
   return new Promise((resolve, reject) => {
     const started = Date.now();
     const poller = window.setInterval(() => {
       if (validApi(window.A)) {
         window.clearInterval(poller);
         resolve(window.A);
-      } else if (Date.now() - started > timeoutMs) {
+      } else if (Date.now() - started > POLL_TIMEOUT_MS) {
         window.clearInterval(poller);
-        reject(new Error("window.A never appeared"));
+        reject(new AladinLoadError("noApi", "the script loaded but did not expose the API"));
       }
-    }, GLOBAL_POLL_INTERVAL_MS);
+    }, 100);
   });
 }
 
-/** Load an ES-module bundle via native dynamic import (never bundled). */
-async function loadViaImport(src: string): Promise<AladinGlobal> {
-  let mod: unknown;
-  try {
-    mod = await Promise.race([
-      import(/* webpackIgnore: true */ src),
-      delay(IMPORT_TIMEOUT_MS).then(() => {
-        throw new Error("import timed out");
-      }),
-    ]);
-  } catch (e) {
-    throw new Error(
-      `Could not import the Aladin Lite module: ${src} (${e instanceof Error ? e.message : String(e)})`
-    );
-  }
-  const candidate =
-    mod && typeof mod === "object" && "default" in mod
-      ? (mod as { default?: unknown }).default ?? mod
-      : mod;
-  if (!validApi(candidate)) {
-    throw new Error(`Aladin Lite module has no usable API: ${src}`);
-  }
-  await candidate.init;
-  return candidate;
-}
-
-async function loadOneSource(src: string, tryTagFirst: boolean): Promise<AladinGlobal> {
-  if (tryTagFirst) {
-    await injectScriptTag(src); // network failure -> propagate to the next source
-    try {
-      const api = await pollWindowA(GLOBAL_POLL_TIMEOUT_MS);
-      await api.init;
-      return api;
-    } catch {
-      // Tag loaded but no global: fall through to the ES-module import.
-    }
-  }
-  return loadViaImport(src);
-}
-
-function loadAladinApi(onStage?: (stage: AladinLoadStage) => void): Promise<AladinGlobal> {
-  if (typeof window === "undefined") return Promise.reject(new Error("window unavailable"));
+function loadAladin(): Promise<AladinGlobal> {
   if (validApi(window.A)) return window.A.init.then(() => window.A as AladinGlobal);
   if (apiPromise) return apiPromise;
   apiPromise = (async () => {
-    console.info("[aladin] trying official host");
-    onStage?.("official");
-    const official = loadOneSource(ALADIN_SCRIPT_URL, true);
-    const headStart = await Promise.race([
-      official.then(
-        (api): { api: AladinGlobal } | { error: unknown } => ({ api }),
-        (e: unknown): { api: AladinGlobal } | { error: unknown } => ({ error: e })
-      ),
-      delay(OFFICIAL_HEAD_START_MS).then(
-        (): { api: AladinGlobal } | { error: unknown } | { pending: true } => ({ pending: true })
-      ),
-    ]);
-    if ("api" in headStart) {
-      console.info("[aladin] ready via official host");
-      return headStart.api;
-    }
-    if ("error" in headStart) {
-      const message =
-        headStart.error instanceof Error ? headStart.error.message : String(headStart.error);
-      console.warn(`[aladin] official host failed: ${message}`);
-      onStage?.("mirror");
-      console.info("[aladin] trying jsDelivr mirror");
-      // The npm mirror is a verified ES module: import it directly.
-      return loadOneSource(ALADIN_SCRIPT_FALLBACK_URL, false);
-    }
-    // Official is slow but not dead: race it against the mirror.
-    onStage?.("mirror");
-    console.info("[aladin] official host is slow, racing with jsDelivr mirror");
-    const mirror = loadOneSource(ALADIN_SCRIPT_FALLBACK_URL, false);
-    return await new Promise<AladinGlobal>((resolve, reject) => {
-      const failures: string[] = [];
-      const onFailure = (label: string) => (e: unknown) => {
-        failures.push(`${label}: ${e instanceof Error ? e.message : String(e)}`);
-        if (failures.length === 2) reject(new Error(failures.join(" | ")));
-      };
-      official.then(
-        (api) => {
-          console.info("[aladin] ready via official host");
-          resolve(api);
-        },
-        onFailure("official")
-      );
-      mirror.then(
-        (api) => {
-          console.info("[aladin] ready via jsDelivr mirror");
-          resolve(api);
-        },
-        onFailure("mirror")
-      );
-    });
+    await injectScript(ALADIN_SCRIPT_URL);
+    const api = await waitForGlobal();
+    await api.init;
+    return api;
   })();
   apiPromise.catch(() => {
-    apiPromise = null; // allow retry after failure
+    apiPromise = null;
   });
   return apiPromise;
+}
+
+export interface AladinMarker {
+  ra: number;
+  dec: number;
+  label: string;
+}
+
+interface Props {
+  ra: number;
+  dec: number;
+  fovArcmin: number;
+  marker?: AladinMarker | null;
+  containerId?: string;
+  className?: string;
 }
 
 export default function AladinViewer({
   ra,
   dec,
-  survey = ALADIN_DEFAULT_SURVEY,
-  fov = ALADIN_DEFAULT_FOV_DEG,
+  fovArcmin,
+  marker = null,
   containerId = "aladin-lite-div",
   className = "",
 }: Props) {
+  const t = useTranslations("aladinViewer");
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<AladinInstance | null>(null);
+  const apiRef = useRef<AladinGlobal | null>(null);
+  const markerCatalogRef = useRef<AladinCatalog | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [error, setError] = useState("");
-  const [stage, setStage] = useState<AladinLoadStage>("official");
-  const targetRef = useRef({ ra, dec, survey, fov });
-  targetRef.current = { ra, dec, survey, fov };
+  // A coded reason is translated at render; any other loader error keeps its own message.
+  const [error, setError] = useState<{ reason: LoadFailureReason | "unknown"; detail?: string } | null>(null);
+  const [active, setActive] = useState<Record<CatalogLayerKey, boolean>>({ gaia: false, wise: false });
+  const [layerError, setLayerError] = useState<LayerIssue | null>(null);
+  const initial = useRef({ ra, dec, fovArcmin });
+  initial.current = { ra, dec, fovArcmin };
 
-  // Mount once: load the script, then init the viewer into the container.
   useEffect(() => {
     let cancelled = false;
     const container = containerRef.current;
     if (!container) return;
     setStatus("loading");
-    setError("");
-    setStage("official");
-    loadAladinApi(setStage)
+    setError(null);
+    loadAladin()
       .then((api) => {
         if (cancelled || !containerRef.current) return;
-        container.innerHTML = ""; // fresh mount (StrictMode safe)
-        const current = targetRef.current;
+        container.innerHTML = "";
+        const start = initial.current;
         const instance = api.aladin(`#${containerId}`, {
-          survey: current.survey,
-          fov: current.fov,
-          target: `${current.ra} ${current.dec}`,
+          survey: ALADIN_BASE_SURVEY,
+          fov: start.fovArcmin / 60,
+          target: `${start.ra} ${start.dec}`,
           cooFrame: "J2000",
-          showReticle: true,
-          reticleColor: "#46d8ff",
-          reticleSize: 22,
+          showReticle: false,
           showZoomControl: true,
           showFullscreenControl: true,
-          showGotoControl: true,
-          showLayersControl: true,
+          showGotoControl: false,
+          showLayersControl: false,
           showShareControl: false,
           showSettingsControl: false,
-          showContextMenu: true,
+          showContextMenu: false,
           log: false,
         });
-        if (cancelled) return;
+        apiRef.current = api;
         instanceRef.current = instance;
         setStatus("ready");
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        console.error("[aladin] failed:", e);
-        setError(e instanceof Error ? e.message : "Aladin Lite failed to load");
+        if (e instanceof AladinLoadError) setError({ reason: e.reason });
+        else setError({ reason: "unknown", detail: e instanceof Error && e.message ? e.message : undefined });
         setStatus("error");
       });
     return () => {
       cancelled = true;
       instanceRef.current = null;
+      markerCatalogRef.current = null;
+      setActive({ gaia: false, wise: false });
     };
   }, [containerId]);
 
-  // Fly to new coordinates (and refresh survey/zoom) whenever props change.
   useEffect(() => {
     const instance = instanceRef.current;
-    if (status !== "ready" || !instance) return;
-    if (!Number.isFinite(ra) || !Number.isFinite(dec)) return;
+    if (status !== "ready" || !instance || !Number.isFinite(ra) || !Number.isFinite(dec)) return;
     try {
       instance.gotoRaDec(ra, dec);
-      if (survey) instance.setImageSurvey?.(survey);
-      if (Number.isFinite(fov)) {
-        if (instance.setFoV) instance.setFoV(fov);
-        else if (instance.setFov) instance.setFov(fov);
-      }
-    } catch (e) {
-      /* Keep the current view instead of crashing. */
-      console.warn("[aladin] gotoRaDec failed:", e);
+      instance.setFoV(fovArcmin / 60);
+    } catch {
+      setLayerError({ kind: "recenter" });
     }
-  }, [ra, dec, survey, fov, status]);
+  }, [ra, dec, fovArcmin, status]);
+
+  useEffect(() => {
+    const instance = instanceRef.current;
+    const api = apiRef.current;
+    if (status !== "ready" || !instance || !api) return;
+    try {
+      if (!markerCatalogRef.current) {
+        const catalog = api.catalog({ name: t("markerCatalog"), shape: "circle", sourceSize: 22, color: "#ffd166" });
+        instance.addCatalog(catalog);
+        markerCatalogRef.current = catalog;
+      }
+      markerCatalogRef.current.removeAll();
+      if (marker) {
+        markerCatalogRef.current.addSources([api.source(marker.ra, marker.dec, { name: marker.label })]);
+      }
+    } catch {
+      setLayerError({ kind: "marker" });
+    }
+  }, [marker?.ra, marker?.dec, marker?.label, status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggle = (key: CatalogLayerKey) => {
+    const instance = instanceRef.current;
+    const api = apiRef.current;
+    if (!instance || !api) return;
+    const next = !active[key];
+    setLayerError(null);
+    try {
+      if (next) {
+        const layer = api.imageHiPS(CATALOG_LAYERS[key].hips, { name: t(`layers.${key}`) });
+        instance.setOverlayImageLayer(layer, key);
+        layer.setOpacity?.(0.65);
+      } else {
+        instance.removeImageLayer(key);
+      }
+      setActive((a) => ({ ...a, [key]: next }));
+    } catch {
+      setLayerError({ kind: next ? "enable" : "disable", layer: key });
+    }
+  };
+
+  const layerErrorText = !layerError
+    ? ""
+    : layerError.kind === "enable" || layerError.kind === "disable"
+      ? t(`issues.${layerError.kind}`, { layer: t(`layers.${layerError.layer}`) })
+      : t(`issues.${layerError.kind}`);
+  const errorReason = error ? (error.detail ?? t(`reason.${error.reason}`)) : "";
 
   return (
-    <div className={`relative h-full w-full bg-abyss ${className}`}>
-      <div id={containerId} ref={containerRef} className="h-full w-full" />
-      {status === "loading" && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <p className="rounded border border-line bg-abyss/85 px-3 py-1.5 text-xs text-mutedstar">
-            {stage === "official"
-              ? "Cargando Aladin Lite… (aladin.u-strasbg.fr)"
-              : "Cargando Aladin Lite… (espejo jsDelivr)"}
-          </p>
-        </div>
-      )}
-      {status === "error" && (
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-          <div className="max-w-sm rounded border border-line bg-deep p-4 text-center">
-            <p className="text-sm font-semibold text-starlight">Visor no disponible</p>
-            <p className="mt-1 text-xs text-mutedstar">
-              {error}. Revisa tu conexión con aladin.u-strasbg.fr.
+    <div className={`flex h-full w-full flex-col ${className}`}>
+      <div className="relative min-h-0 flex-1 bg-abyss">
+        <div id={containerId} ref={containerRef} className="h-full w-full" aria-label={t("ariaLabel")} />
+        {status === "loading" && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <p className="rounded border border-line bg-abyss/85 px-3 py-1.5 text-xs text-mutedstar">
+              {t("loading", { version: ALADIN_VERSION })}
             </p>
           </div>
-        </div>
-      )}
+        )}
+        {status === "error" && (
+          <div className="absolute inset-0 flex items-center justify-center p-4" role="alert">
+            <div className="max-w-sm rounded border border-line bg-deep p-4 text-center">
+              <p className="text-sm font-semibold text-starlight">{t("errorTitle")}</p>
+              <p className="mt-1 text-xs text-mutedstar">{t("errorBody", { reason: errorReason })}</p>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 border-t border-line bg-deep px-2 py-1.5 text-[11px] text-mutedstar">
+        {(Object.keys(CATALOG_LAYERS) as CatalogLayerKey[]).map((key) => (
+          <label key={key} className="flex cursor-pointer items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={active[key]}
+              disabled={status !== "ready"}
+              onChange={() => toggle(key)}
+              className="accent-[#46d8ff]"
+            />
+            {t(`layers.${key}`)}
+          </label>
+        ))}
+        {marker && <span className="text-gold">● {marker.label}</span>}
+        {layerErrorText && <span className="text-red-300">{layerErrorText}</span>}
+      </div>
     </div>
   );
 }

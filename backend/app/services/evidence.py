@@ -9,15 +9,14 @@ database write access, and it is never presented as such.
 """
 
 import hashlib
+import json
+import pathlib
 from datetime import datetime, timezone
 from typing import Any
 
-SPHEREX_DOIS = {
-    "spherex_qr3": "10.26131/IRSA805",
-    "spherex_qr3_deep": "10.26131/IRSA805",
-    "spherex_qr2": "10.26131/IRSA804",
-    "spherex_qr2_deep": "10.26131/IRSA804",
-}
+SPHEREX_DOIS = json.loads(
+    (pathlib.Path(__file__).resolve().parent.parent / "data" / "collection_dois.json").read_text()
+)["dois"]
 
 ACKNOWLEDGMENT = (
     "This work uses data from the SPHEREx mission, archived at the NASA/IPAC "
@@ -29,8 +28,22 @@ ACKNOWLEDGMENT = (
 ARCHIVE_DOCS = "https://caltech-ipac.github.io/spherex-archive-documentation/"
 
 
-def build_canonical_string(session: dict[str, Any]) -> str:
-    """Deterministic integrity input. Order-independent (sorted ids)."""
+COVERS_V1 = (
+    "target name, RA/DEC, sorted (collection, obs_id) list, candidate count and ids"
+)
+COVERS_V2 = (
+    "title, target name, RA/DEC and the entire payload: observations, "
+    "measurements, candidates with their job ids, cutout SHA-256 digests, "
+    "methods, limitations and processing_version"
+)
+CURRENT_HASH_VERSION = 2
+
+
+def covers_text(hash_version: int) -> str:
+    return COVERS_V2 if hash_version >= 2 else COVERS_V1
+
+
+def _canonical_v1(session: dict[str, Any]) -> str:
     payload = session.get("payload", {})
     if not isinstance(payload, dict):
         payload = {}
@@ -55,6 +68,27 @@ def build_canonical_string(session: dict[str, Any]) -> str:
     return "|".join(parts)
 
 
+def _canonical_v2(session: dict[str, Any]) -> str:
+    payload = session.get("payload", {})
+    body = {
+        "title": session.get("title") or "",
+        "target_name": session.get("target_name") or "",
+        "ra_deg": session.get("ra_deg"),
+        "dec_deg": session.get("dec_deg"),
+        "payload": payload if isinstance(payload, dict) else {},
+    }
+    encoded = json.dumps(
+        body, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
+    return f"origin-v2|{encoded}"
+
+
+def build_canonical_string(session: dict[str, Any]) -> str:
+    if int(session.get("hash_version") or 1) >= 2:
+        return _canonical_v2(session)
+    return _canonical_v1(session)
+
+
 def compute_verification_hash(session: dict[str, Any]) -> tuple[str, str]:
     """Return (sha256_hex, canonical_string) for a research session view."""
     canonical = build_canonical_string(session)
@@ -62,9 +96,41 @@ def compute_verification_hash(session: dict[str, Any]) -> tuple[str, str]:
     return digest, canonical
 
 
+def _dicts(items: Any) -> list[dict[str, Any]]:
+    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+
+
+def _candidate_entry(candidate: dict[str, Any]) -> dict[str, Any]:
+    evidence = candidate.get("evidence") if isinstance(candidate.get("evidence"), dict) else {}
+    vetting = evidence.get("vetting") if isinstance(evidence.get("vetting"), dict) else None
+    entry: dict[str, Any] = {
+        "id": candidate.get("id"),
+        "kind": candidate.get("kind"),
+        "ra_deg": candidate.get("ra_deg"),
+        "dec_deg": candidate.get("dec_deg"),
+        "snr": candidate.get("snr"),
+        "job_id": candidate.get("job_id"),
+        "vetting": None,
+    }
+    if vetting:
+        entry["vetting"] = {
+            "category": vetting.get("category"),
+            "category_label": vetting.get("category_label"),
+            "reason": vetting.get("reason"),
+            "checks": [
+                {"name": c.get("name"), "status": c.get("status"), "summary": c.get("summary")}
+                for c in _dicts(vetting.get("checks"))
+            ],
+        }
+    return entry
+
+
 def build_report(session: dict[str, Any]) -> dict[str, Any]:
     payload = session.get("payload", {}) if isinstance(session, dict) else {}
-    observations = payload.get("observations", []) if isinstance(payload, dict) else []
+    if not isinstance(payload, dict):
+        payload = {}
+    observations = _dicts(payload.get("observations"))
+    hash_version = int(session.get("hash_version") or 1)
     collections = sorted({str(o.get("collection", "")) for o in observations if o.get("collection")})
     dois = {c: SPHEREX_DOIS.get(c, "see IRSA documentation") for c in collections}
     stored_hash = str(session.get("verification_hash", "") or "")
@@ -80,12 +146,10 @@ def build_report(session: dict[str, Any]) -> dict[str, Any]:
         },
         "integrity": {
             "algorithm": "SHA-256",
+            "hash_version": hash_version,
             "verification_hash": stored_hash,
             "canonical_string": canonical,
-            "covers": (
-                "target name, RA/DEC, sorted (collection, obs_id) list, "
-                "candidate count and ids"
-            ),
+            "covers": covers_text(hash_version),
             "match_stored_hash": (stored_hash == recomputed) if stored_hash else None,
             "verify_how": (
                 "Recompute SHA-256 over canonical_string, or call "
@@ -103,6 +167,7 @@ def build_report(session: dict[str, Any]) -> dict[str, Any]:
             }
             for o in observations
         ],
+        "candidates": [_candidate_entry(c) for c in _dicts(payload.get("candidates"))],
         "methods": payload.get("methods", []),
         "measurements": payload.get("measurements", []),
         "limitations": payload.get("limitations", []),
@@ -132,6 +197,22 @@ def report_markdown(report: dict[str, Any]) -> str:
         )
         if obs.get("access_url"):
             lines.append(f"  {obs.get('access_url')}")
+    lines += ["", "## Candidates and vetting"]
+    candidates = report.get("candidates", [])
+    if not candidates:
+        lines.append("- (none recorded)")
+    for cand in candidates:
+        lines.append(
+            f"- #{cand.get('id')} {cand.get('kind')} at ({cand.get('ra_deg')}, {cand.get('dec_deg')}) "
+            f"SNR={cand.get('snr')} job={cand.get('job_id')}"
+        )
+        vetting = cand.get("vetting")
+        if not vetting:
+            lines.append("  vetting: not run")
+            continue
+        lines.append(f"  category: {vetting.get('category_label')} - {vetting.get('reason')}")
+        for check in vetting.get("checks", []):
+            lines.append(f"  - {check.get('name')}: {check.get('status')} - {check.get('summary')}")
     lines += ["", "## Methods"]
     lines += [f"- {m}" for m in report.get("methods", [])] or ["- (none recorded)"]
     lines += ["", "## Measurements"]

@@ -120,9 +120,9 @@ export default function CelestialGrid() {
   const resources = useMemo(() => {
     const { grid, eq } = buildGrid();
     const { starGeo, lineGeo } = buildConstellations();
-    const gridMat = new THREE.LineBasicMaterial({ color: "#42D9F5", transparent: true, opacity: 0, depthWrite: false });
+    const gridMat = new THREE.LineBasicMaterial({ color: "#6f9be8", transparent: true, opacity: 0, depthWrite: false });
     const eqMat = new THREE.LineBasicMaterial({ color: "#4263FF", transparent: true, opacity: 0, depthWrite: false });
-    const lineMat = new THREE.LineBasicMaterial({ color: "#9675FF", transparent: true, opacity: 0, depthWrite: false });
+    const lineMat = new THREE.LineBasicMaterial({ color: "#6f9be8", transparent: true, opacity: 0, depthWrite: false });
     const starMat = new THREE.PointsMaterial({ color: "#F4F6FC", size: 3.5, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false });
     const scanGeo = new THREE.SphereGeometry(0.995, 96, 64);
     const scanMat = new THREE.ShaderMaterial({

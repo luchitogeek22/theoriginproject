@@ -20,7 +20,7 @@ export default function Experience({ compact }: { compact: boolean }) {
       <color attach="background" args={["#05060A"]} />
       <ambientLight intensity={0.35} />
       <directionalLight position={[6, 4, 5]} intensity={1.6} color="#e9efff" />
-      <directionalLight position={[-6, -2, -4]} intensity={0.4} color="#9675FF" />
+      <directionalLight position={[-6, -2, -4]} intensity={0.4} color="#6f9be8" />
       <Director />
       <Starfield count={compact ? 2600 : 7000} />
       <Nebula resolution={compact ? 128 : 256} />

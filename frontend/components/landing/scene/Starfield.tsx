@@ -36,7 +36,7 @@ void main(){
 }
 `;
 
-const PALETTE = ["#F4F6FC", "#F4F6FC", "#F4F6FC", "#42D9F5", "#9675FF", "#4263FF", "#ffd9b8"].map((c) => new THREE.Color(c));
+const PALETTE = ["#F4F6FC", "#F4F6FC", "#F4F6FC", "#6f9be8", "#8fb3f0", "#4263FF", "#ffd9b8"].map((c) => new THREE.Color(c));
 
 function mulberry32(seed: number) {
   let a = seed;

@@ -48,10 +48,10 @@ function cloudTexture(size: number) {
 }
 
 const CLOUDS: Array<{ pos: [number, number, number]; scale: number; color: string; opacity: number }> = [
-  { pos: [-220, 80, -380], scale: 520, color: "#9675FF", opacity: 0.16 },
+  { pos: [-220, 80, -380], scale: 520, color: "#6f9be8", opacity: 0.16 },
   { pos: [260, -60, -320], scale: 420, color: "#4263FF", opacity: 0.18 },
-  { pos: [40, 160, 340], scale: 480, color: "#42D9F5", opacity: 0.08 },
-  { pos: [-320, -140, 220], scale: 400, color: "#9675FF", opacity: 0.1 },
+  { pos: [40, 160, 340], scale: 480, color: "#6f9be8", opacity: 0.08 },
+  { pos: [-320, -140, 220], scale: 400, color: "#6f9be8", opacity: 0.1 },
 ];
 
 export default function Nebula({ resolution }: { resolution: number }) {

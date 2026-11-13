@@ -3,23 +3,30 @@
 /** Shared sky viewport: 3D sphere with 2D fallback, layers, FOV, reset. */
 
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Layers, RotateCcw } from "lucide-react";
 import SkyFallback2D from "./SkyFallback2D";
 import { api } from "@/lib/api";
+import { useErrorText } from "@/lib/errors";
 import { useResearch } from "@/lib/store";
 import type { Candidate, Observation, ReferenceStar } from "@/lib/types";
 import type { SkyLayers } from "./CelestialSphere";
 
+function SphereLoading() {
+  const t = useTranslations("skyView");
+  return <div className="flex h-full items-center justify-center text-xs text-mutedstar">{t("loadingSphere")}</div>;
+}
+
 const CelestialSphere = dynamic(() => import("./CelestialSphere"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center text-xs text-mutedstar">
-      Cargando esfera celeste…
-    </div>
-  ),
+  loading: () => <SphereLoading />,
 });
+
+type LoadSource = "referenceStars" | "candidates";
+
+const LAYER_KEYS: Array<keyof SkyLayers> = ["grid", "references", "footprints", "candidates", "labels"];
 
 interface Props {
   observations: Observation[];
@@ -28,6 +35,8 @@ interface Props {
 }
 
 export default function SkyView({ observations, controls = true, onSelectObservation }: Props) {
+  const t = useTranslations("skyView");
+  const errorText = useErrorText();
   const router = useRouter();
   const { target, candidates, setCandidates, focusTarget } = useResearch();
   const [stars, setStars] = useState<ReferenceStar[]>([]);
@@ -42,6 +51,7 @@ export default function SkyView({ observations, controls = true, onSelectObserva
   const [resetNonce, setResetNonce] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<Array<{ source: LoadSource; error: unknown }>>([]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -52,14 +62,24 @@ export default function SkyView({ observations, controls = true, onSelectObserva
   }, []);
 
   useEffect(() => {
-    api.referenceStars().then(setStars).catch(() => setStars([]));
-    api.candidates().then(setCandidates).catch(() => setCandidates([]));
+    let cancelled = false;
+    api
+      .referenceStars()
+      .then((rows) => !cancelled && setStars(rows))
+      .catch((e) => !cancelled && setLoadErrors((prev) => [...prev, { source: "referenceStars", error: e }]));
+    api
+      .candidates()
+      .then((rows) => !cancelled && setCandidates(rows))
+      .catch((e) => !cancelled && setLoadErrors((prev) => [...prev, { source: "candidates", error: e }]));
+    return () => {
+      cancelled = true;
+    };
   }, [setCandidates]);
 
   const selectCandidate = useCallback(
     (c: Candidate) => {
       sessionStorage.setItem("origin-candidate", String(c.id));
-      router.push("/discoveries");
+      router.push("/candidates");
     },
     [router]
   );
@@ -90,21 +110,37 @@ export default function SkyView({ observations, controls = true, onSelectObserva
           />
         }
       />
+      {loadErrors.length > 0 && (
+        <div
+          role="alert"
+          className="absolute left-2 top-2 max-w-xs rounded border border-red-400/40 bg-abyss/95 p-2 text-[11px] text-red-300"
+        >
+          <p className="font-semibold">{t("loadErrorTitle")}</p>
+          <ul className="mt-0.5">
+            {loadErrors.map((m, i) => (
+              <li key={i}>
+                · {t("loadError", { source: t(`sources.${m.source}`), message: errorText(m.error, t("unexpectedError")) })}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-mutedstar">{t("loadErrorNote")}</p>
+        </div>
+      )}
       {controls && (
         <div className="absolute right-2 top-2 flex flex-col items-end gap-1.5">
           <div className="flex gap-1.5">
             <button
               onClick={() => setShowLayers((v) => !v)}
-              title="Capas"
-              aria-label="Capas"
+              title={t("layersButton")}
+              aria-label={t("layersButton")}
               className="rounded border border-line bg-abyss/85 p-1.5 text-mutedstar hover:text-starlight"
             >
               <Layers size={15} />
             </button>
             <button
               onClick={() => setResetNonce((n) => n + 1)}
-              title="Restablecer vista"
-              aria-label="Restablecer vista"
+              title={t("reset")}
+              aria-label={t("reset")}
               className="rounded border border-line bg-abyss/85 p-1.5 text-mutedstar hover:text-starlight"
             >
               <RotateCcw size={15} />
@@ -112,15 +148,7 @@ export default function SkyView({ observations, controls = true, onSelectObserva
           </div>
           {showLayers && (
             <div className="rounded border border-line bg-abyss/95 p-2 text-[11px] text-mutedstar">
-              {(
-                [
-                  ["grid", "Malla de coordenadas"],
-                  ["references", "Estrellas de referencia (catálogo)"],
-                  ["footprints", "Huellas SPHEREx consultadas"],
-                  ["candidates", "Candidatos medidos"],
-                  ["labels", "Etiquetas"],
-                ] as Array<[keyof SkyLayers, string]>
-              ).map(([key, label]) => (
+              {LAYER_KEYS.map((key) => (
                 <label key={key} className="flex cursor-pointer items-center gap-2 py-0.5">
                   <input
                     type="checkbox"
@@ -128,11 +156,11 @@ export default function SkyView({ observations, controls = true, onSelectObserva
                     onChange={() => toggle(key)}
                     className="accent-[#46d8ff]"
                   />
-                  {label}
+                  {t(`layers.${key}`)}
                 </label>
               ))}
               <label className="mt-1 flex items-center gap-2 border-t border-line pt-1">
-                Campo de visión
+                {t("fov")}
                 <input
                   type="range"
                   min={25}
@@ -140,7 +168,7 @@ export default function SkyView({ observations, controls = true, onSelectObserva
                   value={fov}
                   onChange={(e) => setFov(Number(e.target.value))}
                   className="w-20"
-                  aria-label="Campo de visión"
+                  aria-label={t("fov")}
                 />
                 {fov}°
               </label>
@@ -151,14 +179,14 @@ export default function SkyView({ observations, controls = true, onSelectObserva
                   onChange={(e) => setReducedMotion(e.target.checked)}
                   className="accent-[#46d8ff]"
                 />
-                Movimiento reducido
+                {t("reducedMotion")}
               </label>
             </div>
           )}
         </div>
       )}
       <p className="pointer-events-none absolute bottom-1.5 left-2 text-[10px] text-mutedstar/80">
-        Esfera celeste: direcciones, no distancias. Arrastra para explorar · rueda para acercar.
+        {t("hint")}
       </p>
     </div>
   );

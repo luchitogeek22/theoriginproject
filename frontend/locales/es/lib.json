@@ -1,0 +1,96 @@
+{
+  "errors": {
+    "apiNotConfigured": "La dirección de la API no está configurada. Define NEXT_PUBLIC_API_URL con la URL del backend (https://...).",
+    "apiUnreachable": "No se pudo contactar con el servicio científico. Comprueba que esté en marcha.",
+    "requestFailed": "La petición falló ({status}).",
+    "notJson": "El servidor devolvió una respuesta que no es JSON. Comprueba que NEXT_PUBLIC_API_URL apunte al backend.",
+    "invalidJson": "El servidor devolvió un JSON no válido.",
+    "analysisFailed": "El análisis falló en el servicio científico.",
+    "analysisTimeout": "El análisis excedió el tiempo de espera. Inténtalo más tarde.",
+    "jobFailed": "El trabajo falló en el servicio científico.",
+    "exportCors": "No se pudo leer un cuadro (CORS). El servidor de imágenes debe permitir el origen de esta página, así que no se puede exportar desde este navegador.",
+    "exportNoCanvas": "Este navegador no permite dibujar en un lienzo.",
+    "exportPng": "No se pudo generar la imagen PNG.",
+    "exportRecorder": "El grabador de video falló.",
+    "exportEmptyVideo": "El video quedó vacío."
+  },
+  "export": {
+    "attribution": "Datos: NASA/IPAC IRSA, SPHEREx",
+    "noWavelength": "no disponible",
+    "frameFile": "cuadro"
+  },
+  "motion": {
+    "compass": {
+      "north": "norte",
+      "northeast": "noreste",
+      "east": "este",
+      "southeast": "sureste",
+      "south": "sur",
+      "southwest": "suroeste",
+      "west": "oeste",
+      "northwest": "noroeste"
+    },
+    "span": {
+      "days": "{count, plural, one {# día} other {# días}}",
+      "months": "{count, plural, one {# mes} other {# meses}}"
+    },
+    "stage": {
+      "sending": "Enviando la petición",
+      "queued": "En cola",
+      "searching": "Buscando observaciones",
+      "selecting": "Eligiendo visitas",
+      "downloading": "Descargando cuadros",
+      "rendering": "Alineando y dibujando",
+      "photometry": "Midiendo brillo",
+      "referenceFrame": "Buscando el cuadro WISE",
+      "storing": "Guardando",
+      "processing": "Procesando cuadros"
+    },
+    "progress": "{label}: {done} de {total}"
+  },
+  "targets": {
+    "barnard": { "hint": "Estrella cercana con gran movimiento propio", "hook": "Mira cómo se mueve la estrella de Barnard" },
+    "epsindi": { "hint": "Compañera enana marrón", "hook": "Mira Epsilon Indi B, dos enanas marrones junto a una estrella" },
+    "wise0855": { "hint": "La enana marrón más fría conocida", "hook": "Mira WISE 0855, la enana marrón más fría" },
+    "rwaur": { "hint": "Estrella variable joven", "hook": "Mira RW Aurigae, una estrella joven que cambia de brillo" },
+    "rdra": { "hint": "Variable de largo período", "hook": "Mira cómo late R Draconis" }
+  },
+  "limitations": {
+    "detectorsExcluded": "Se excluyeron los detectores {excluded}: una secuencia usa un solo detector ({detector}) porque los detectores de SPHEREx no se pueden mezclar.",
+    "epochsShown": "Hay {available} épocas disponibles; se muestran {shown} repartidas a lo largo del tiempo (máximo {max}).",
+    "noiseUnits": "Cada cuadro se muestra en unidades de su propio ruido: sirve para ver movimiento, no para comparar el brillo entre cuadros.",
+    "physicalScale": "Una sola escala física para todos los cuadros: los cambios de brillo entre cuadros son reales.",
+    "motionDetector": "El modo movimiento usa por defecto el detector D6 (cerca de 4,4 a 5 µm): los objetos fríos, como las enanas marrones, brillan más en longitudes de onda largas.",
+    "framesMissing": "No se {count, plural, one {pudo descargar # cuadro; falta} other {pudieron descargar # cuadros; faltan}} en la secuencia.",
+    "singleEpoch": "Solo hay una época disponible, así que aquí no se puede ver ningún cambio en el tiempo.",
+    "noFrames": "No hay cuadros disponibles para armar una secuencia en esta posición.",
+    "productsWithoutDetector": "Se {count, plural, one {excluyó # producto} other {excluyeron # productos}} sin detector conocido.",
+    "brightnessWavelength": "El modo brillo conserva cuadros de la misma longitud de onda: {kept} de {total} están a ±{tolerance} µm de {wavelength} µm.",
+    "wiseUnavailable": "No se pudo obtener el cuadro de referencia de WISE.",
+    "gaiaUnavailable": "No se pudo consultar Gaia: no hay estrellas de comparación ni marcas de catálogo.",
+    "noProperMotion": "No se conoce el movimiento propio de esta posición: la fotometría se hace en posición fija.",
+    "curvePerDetector": "Una curva por detector; nunca se mezclan detectores. Sin corrección de apertura.",
+    "saturatedCore": "El objetivo satura su núcleo en este detector: la curva usa la amplitud de las alas de la PSF (valores relativos, no un flujo).",
+    "notDetected": "El objetivo no se detecta por separado en cada cuadro (SNR mediana {snr}): la curva refleja sobre todo ruido.",
+    "targetFlagged": "El objetivo está marcado (saturación o píxeles inutilizables) en {flagged} de {total} cuadros del detector {detector}: prueba otro detector.",
+    "notMeasured": "No se pudo medir el objetivo en estos cuadros.",
+    "absoluteFlux": "flujo absoluto (sin estrellas de comparación válidas): no corregido por cambios comunes",
+    "relativeFlux": "relativo a estrellas de comparación",
+    "fewGaiaStars": "Solo {count, plural, one {# estrella de Gaia se pudo medir} other {# estrellas de Gaia se pudieron medir}} aquí (hacen falta al menos 3 sin banderas y con SNR ≥ 10), así que la curva es absoluta.",
+    "archiveNotice": "Aviso del archivo: {notice}",
+    "servedFromCache": "Consultado el {date}, desde caché",
+    "linearMotion": "Se supone movimiento lineal durante la ventana de observación; es una aproximación válida para objetos lejanos en año y medio.",
+    "staticSources": "Los píxeles muy brillantes en la mediana de todas las visitas se trataron como fuentes estáticas y se restaron (cada una con su propio brillo por visita); los móviles más lentos que una PSF en toda la ventana pueden restarse con ellas.",
+    "minVelocity": "No se buscan velocidades menores de {velocity}″/año (menos de {pixels} px en la ventana): no se distinguen de residuos estáticos.",
+    "velocityEdge": "La mejor velocidad está en el borde del rango buscado; amplía el rango antes de fiarte.",
+    "gridReduced": "La rejilla de velocidades se redujo a {grid} para acotar el costo de cálculo.",
+    "minVisits": "Se necesitan al menos {required} visitas; hay {found}.",
+    "pValue": "El valor p empírico compara la posición prevista con posiciones al azar del mismo apilado; supone que el movimiento propio de catálogo es correcto y que el movimiento es lineal.",
+    "smallMotion": "El movimiento previsto en la ventana es de {pixels} px: por debajo de ~1,5 px una búsqueda a ciegas no separa un móvil de una fuente estática, pero un movimiento conocido sí se puede comprobar.",
+    "zodiImage": "La luz zodiacal (ZODI) se restó de la imagen.",
+    "zodiEvery": "La luz zodiacal se restó de cada exposición.",
+    "dateColours": "Las fechas distintas se muestran con colores distintos: un cambio de brillo en el tiempo no es forma espectral.",
+    "noApertureCorrection": "No se aplica corrección de apertura.",
+    "noWcs": "Sin WCS celeste: las detecciones no tienen coordenadas en el cielo."
+  }
+}

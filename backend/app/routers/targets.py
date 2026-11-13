@@ -1,9 +1,11 @@
-"""Target resolution endpoints (GET + POST)."""
+"""Target resolution endpoints. GET is read-only; POST also records the resolution."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db, init_db
+from app.database import get_db
 from app.models import Target
 from app.schemas import TargetResolveRequest, TargetResolveResponse
 from app.services.targets import ResolutionError, TargetResolutionService
@@ -33,29 +35,39 @@ def _persist(db: Session, result: dict) -> int | None:
         return None
 
 
-def _resolve(payload: TargetResolveRequest, db: Session) -> TargetResolveResponse:
-    init_db()
+def _resolve(payload: TargetResolveRequest) -> dict:
     try:
-        result = service.resolve(payload.name, payload.ra_deg, payload.dec_deg,
-                                 payload.catalog_id)
+        return service.resolve(
+            name=payload.name,
+            ra_deg=payload.ra_deg,
+            dec_deg=payload.dec_deg,
+            catalog_id=payload.catalog_id,
+            query=payload.query,
+            obstime=payload.obstime,
+        )
     except ResolutionError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    record_id = _persist(db, result)
-    return TargetResolveResponse(record_id=record_id, **result)
 
 
 @router.get("/targets/resolve", response_model=TargetResolveResponse)
 def resolve_get(
-    name: str | None = None,
-    ra_deg: float | None = None,
-    dec_deg: float | None = None,
-    catalog_id: str | None = None,
-    db: Session = Depends(get_db),
+    query: str | None = Query(default=None, max_length=256),
+    name: str | None = Query(default=None, max_length=256),
+    ra_deg: float | None = Query(default=None, ge=0, lt=360),
+    dec_deg: float | None = Query(default=None, ge=-90, le=90),
+    catalog_id: str | None = Query(default=None, max_length=256),
+    obstime: date | None = None,
 ) -> TargetResolveResponse:
-    return _resolve(TargetResolveRequest(name=name, ra_deg=ra_deg, dec_deg=dec_deg,
-                                         catalog_id=catalog_id), db)
+    payload = TargetResolveRequest(
+        query=query, name=name, ra_deg=ra_deg, dec_deg=dec_deg,
+        catalog_id=catalog_id, obstime=obstime,
+    )
+    return TargetResolveResponse(**_resolve(payload))
 
 
 @router.post("/targets/resolve", response_model=TargetResolveResponse)
-def resolve_post(payload: TargetResolveRequest, db: Session = Depends(get_db)) -> TargetResolveResponse:
-    return _resolve(payload, db)
+def resolve_post(
+    payload: TargetResolveRequest, db: Session = Depends(get_db)
+) -> TargetResolveResponse:
+    result = _resolve(payload)
+    return TargetResolveResponse(record_id=_persist(db, result), **result)

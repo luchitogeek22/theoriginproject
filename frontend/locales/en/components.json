@@ -1,0 +1,229 @@
+{
+  "tutorial": {
+    "dialogLabel": "Tutorial",
+    "step": "Step {current} of {total}",
+    "close": "Close tutorial",
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get started",
+    "steps": {
+      "pick": {
+        "title": "Choose a target",
+        "body": "On the home page, tap one of the five cards (for example, Barnard’s Star) or search by name or coordinates. One click takes you straight to the video."
+      },
+      "watch": {
+        "title": "Watch the video",
+        "body": "The Time explorer plays real SPHEREx exposures of your target, sorted by date. Press Space to pause and the arrow keys to change frames. Choose Motion or Brightness mode depending on what you want to see."
+      },
+      "understand": {
+        "title": "Understand what you see",
+        "body": "Open “What am I seeing?” next to the video. Every result carries a label: OBSERVATION (measured data), CALCULATION (done by the tool) or CANDIDATE (a signal to review, never a discovery)."
+      },
+      "share": {
+        "title": "Share and export",
+        "body": "“Copy link” saves the target, the field, the mode and the exact frame. You can also export the video as WebM or download a frame as PNG, with the date and the detector in the footer."
+      }
+    }
+  },
+  "searchBar": {
+    "placeholder": "Name, “RA DEC” or catalog ID — try WISE 0855",
+    "ariaLabel": "Search target",
+    "submit": "Observe",
+    "error": "The search failed"
+  },
+  "vettingPanel": {
+    "title": "Vetting of candidate #{id}",
+    "loading": "Querying catalogs and checking the signal…",
+    "error": "Could not vet the candidate",
+    "disclaimer": "A category is not a confirmation: it is the result of seven automated checks. Anything that could not be checked never counts in the candidate’s favor.",
+    "categories": {
+      "known_object": "Known object",
+      "artifact_likely": "Likely artifact",
+      "unexplained_candidate": "Unexplained candidate",
+      "inconclusive": "Inconclusive: some check could not be run"
+    },
+    "status": {
+      "pass": "passes",
+      "fail": "fails",
+      "info": "informational",
+      "not_checked": "not checked"
+    },
+    "checks": {
+      "gaia_star": "Gaia star",
+      "solar_system": "Solar System object",
+      "quality_flags": "Quality flags",
+      "visits": "Detection across several visits",
+      "coherent_motion": "Coherent motion",
+      "point_source": "Point source",
+      "colour": "Color"
+    }
+  },
+  "copilotPanel": {
+    "title": "Interpretation assistant",
+    "intro": "Explains your results. It labels every statement: measured (engine calculations only), archive data, inference or explanation.",
+    "emptySelected": "You have {count, plural, one {# observation} other {# observations}} selected. Ask about them.",
+    "emptyNone": "Select a target and query the archive; then ask me what the results mean.",
+    "placeholder": "Ask about your results…",
+    "inputLabel": "Question for the assistant",
+    "send": "Send question",
+    "badges": {
+      "measured": "MEASURED",
+      "archive": "ARCHIVE",
+      "inferred": "INFERENCE",
+      "explanatory": "EXPLANATION"
+    },
+    "suggested": {
+      "motion": "Why does this star seem to move?",
+      "difference": "What does a difference image mean?",
+      "count": "How many observations have been found?",
+      "brightness": "What do brightness variations indicate?"
+    },
+    "answers": {
+      "noSearch": "The archive has not been queried yet. Search for a target to count its real observations.",
+      "found": "{count, plural, one {# observation was found} other {# observations were found}} (queried on {date}{cached, select, true {, from cache} other {}}).",
+      "observationExplain": "Each observation is a real image from the SPHEREx archive with its date and detector. Without observations no comparison is possible.",
+      "motionExplain": "An apparent shift between two epochs can be real proper motion, but also an alignment artifact, a different PSF or noise.",
+      "motionMeasured": "The engine measured {separation}″ ± {error}″ between epochs (candidate {id}, SNR {snr}).",
+      "motionInferred": "If the shift clearly exceeds its uncertainty and repeats in more epochs, real motion is a reasonable hypothesis to validate.",
+      "motionNone": "There is no displacement measurement from the current analysis.",
+      "differenceExplain": "The difference image is epoch A minus epoch B, after aligning by WCS and matching the background. Whatever brightens or dims changed between the two dates.",
+      "differenceInferred": "Isolated bright residuals suggest variability or motion; extended residuals usually point to instrumental differences.",
+      "brightnessExplain": "Brightness variations compare calibrated flux (MJy/sr) between compatible epochs: same detector and comparable spectral response.",
+      "brightnessTarget": "Current target: {name}. Measurements appear after running a time analysis.",
+      "brightnessNoTarget": "With no target selected there are no measurements to interpret.",
+      "seeingNoTarget": "No target selected. Search by name or coordinates to get started.",
+      "seeingTarget": "You are looking at the region of {name} ({ra}°, {dec}°), resolved by {resolver}.",
+      "defaultResolver": "the resolution service",
+      "seeingExplain": "The cyan outlines are footprints of real SPHEREx observations; the gold star marks your target.",
+      "fallback": "I can only answer from the measurements and metadata loaded in this investigation. Try one of the suggested questions."
+    }
+  },
+  "statusBanner": {
+    "error": "Could not check the archive status",
+    "releases": "SPHEREx releases: {releases}",
+    "configuredFallback": "Configured fallback list: IRSA could not be asked which releases exist."
+  },
+  "jobProgress": {
+    "label": "Progress",
+    "barLabel": "Sequence progress",
+    "note": "The first time it can take a couple of minutes: the exposures are downloaded and aligned. If you reload the page, the same job is recovered."
+  },
+  "explainer": {
+    "title": "What am I seeing?",
+    "items": {
+      "frame": {
+        "title": "What is each frame?",
+        "body": "A real exposure from the SPHEREx telescope of that patch of sky: a single detector, a single date. It is not a simulation or an averaged image."
+      },
+      "colour": {
+        "title": "Why do brightness and color change between frames?",
+        "body": "SPHEREx looks at each point through a filter that changes color and with six different detectors. A change between frames can come from the instrument rather than the object; that is why it helps to fix a detector."
+      },
+      "zodiacal": {
+        "title": "What is zodiacal light?",
+        "body": "It is sunlight scattered by dust in the Solar System. It is a bright background in the infrared and is subtracted from each frame before it is shown."
+      },
+      "scale": {
+        "title": "What does the scale mean?",
+        "body": "Motion mode: each frame uses its own noise level as the unit, so it is useful for seeing shifts but not for comparing brightness. Brightness mode: all frames share a fixed physical scale, so brightness is comparable."
+      },
+      "flags": {
+        "title": "What are flags and coverage?",
+        "body": "Flags mark unreliable pixels (cosmic rays, saturation, dead pixels). Coverage is the part of the cutout that has real data. With many flags or little coverage, interpret with caution."
+      },
+      "subpixel": {
+        "title": "Why does a moving object move less than a pixel?",
+        "body": "SPHEREx pixels are large (about 6″). A slow object can move less than that between two dates, and then the change shows up in how the light is distributed, not as a visible jump."
+      },
+      "candidates": {
+        "title": "Candidates are not discoveries",
+        "body": "A candidate is a signal the tool flags for review. Until other independent observations confirm it, it is not a finding."
+      }
+    }
+  },
+  "glossary": {
+    "title": "Glossary",
+    "terms": {
+      "spherex": {
+        "term": "SPHEREx",
+        "definition": "NASA space telescope that maps the whole sky in the infrared in many colors."
+      },
+      "irsa": {
+        "term": "IRSA",
+        "definition": "The NASA/IPAC archive where SPHEREx data are stored."
+      },
+      "exposure": {
+        "term": "Exposure",
+        "definition": "A single shot from the telescope: one detector, one date, one patch of sky."
+      },
+      "detector": {
+        "term": "Detector",
+        "definition": "Each of the six SPHEREx sensors; each one sees the same sky in a different color range."
+      },
+      "wavelength": {
+        "term": "Wavelength",
+        "definition": "The infrared “color” of the measured light, in micrometers (µm)."
+      },
+      "properMotion": {
+        "term": "Proper motion",
+        "definition": "Slow shift of a star across the sky over the years."
+      },
+      "zodiacalLight": {
+        "term": "Zodiacal light",
+        "definition": "Background of sunlight scattered by Solar System dust; it is subtracted."
+      },
+      "flag": {
+        "term": "Flag",
+        "definition": "Mark on an unreliable pixel (cosmic ray, saturation, dead pixel)."
+      },
+      "coverage": {
+        "term": "Coverage",
+        "definition": "Part of the cutout that has real data."
+      },
+      "lightCurve": {
+        "term": "Light curve",
+        "definition": "Plot of an object’s brightness over time."
+      },
+      "brownDwarf": {
+        "term": "Brown dwarf",
+        "definition": "An object larger than a planet and smaller than a star: it never manages to ignite hydrogen."
+      },
+      "candidate": {
+        "term": "Candidate",
+        "definition": "Signal to review; not a confirmed discovery."
+      }
+    }
+  },
+  "resultBadge": {
+    "observation": {
+      "label": "OBSERVATION",
+      "title": "Data measured by SPHEREx, exactly as they are in the archive."
+    },
+    "calculation": {
+      "label": "CALCULATION",
+      "title": "Result calculated by this tool from the observations."
+    },
+    "candidate": {
+      "label": "CANDIDATE",
+      "title": "Signal flagged for review. Not a confirmed discovery."
+    }
+  },
+  "authButton": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "archiveStatus": {
+    "label": "Archive status",
+    "online": "online",
+    "checking": "checking…",
+    "offline": "offline",
+    "latency": "Latency",
+    "latencyValue": "{ms} ms",
+    "release": "Release",
+    "utc": "UTC",
+    "details": "Archive details",
+    "recheck": "Check again",
+    "sourceUp": "{name}: {latency} ms",
+    "sourceDown": "{name}: {detail}"
+  }
+}

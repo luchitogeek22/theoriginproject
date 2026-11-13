@@ -7,22 +7,32 @@ Browser (Next.js 14 + React 18 + R3F)
   │  REST /api/v1  (NEXT_PUBLIC_API_URL)
   ▼
 FastAPI (app/main.py)
-  ├─ routers/system      /health, /data-sources/status (probe en vivo)
+  ├─ routers/system      /health (consulta la base), /data-sources/status (probe en vivo)
   ├─ routers/targets     resolución SIMBAD (+ WISE 0855 fijado por spec)
   ├─ routers/observations búsqueda SIA2 → persistencia de metadatos
   ├─ routers/cutouts     recortes + resumen FITS + PNG de previsualización
   ├─ routers/analysis    jobs temporal/diferencial/espectral + candidatos
+  ├─ routers/sequences   secuencia tipo video + apilado con desplazamiento (modo Planeta X) + cuadros PNG
+  ├─ routers/spectra     espectrofotometría relativa al vuelo + termómetro de color
   ├─ routers/research    journal + informes de evidencia (JSON/PDF/CSV/MD)
   └─ routers/sky         estrellas de referencia (catálogo J2000)
   ▼
 Servicios (app/services)
-  ├─ sia2_gateway   PyVO SIA2 con fallback HTTP documentado; caché TTL
+  ├─ sia2_gateway   SIA2 por HTTP (httpx) con plazos, reintento acotado y caché completa; colecciones descubiertas por TAP
   ├─ targets        astroquery SIMBAD; coordenadas manuales siempre posibles
-  ├─ fits_processing astropy: HDU 1-6, WCS, FLAGS, VARIANCE, WCS-WAVE, PNG
+  ├─ spherex_product lector de productos por EXTNAME: WCS con SIP, WCS-WAVE (clave W), máscara de calidad
+  ├─ fits_processing resumen y vista previa sobre el lector
   ├─ temporal       reproject + background match + diferencia + photutils
   ├─ spectral       perfil por apertura vs WCS-WAVE (grado visualización)
   ├─ jobs           BackgroundTasks + tabla analysis_jobs (polling)
-  ├─ evidence       informe con DOI QR2/QR3 + reconocimiento SPHEREx/IRSA
+  ├─ evidence       informe con DOI QR2/QR3 + reconocimiento SPHEREx/IRSA;
+  │                 hash SHA-256 versión 2 sobre todo el contenido
+  ├─ sequence       motor de secuencia (cuadros por fecha, escala común) y suma ponderada
+  ├─ shift_stack    búsqueda de movimiento lento con corrección por búsqueda múltiple
+  ├─ photometry     fotometría de apertura y curva de luz relativa
+  ├─ catalogs       Gaia DR3 y SkyBoT (plazo total, caché)
+  ├─ vetting        siete comprobaciones y categoría de un candidato
+  ├─ reference_epoch cuadro AllWISE W1/W2 de referencia (nunca se resta)
   └─ store          caché (Redis o memoria) + blobs (S3 o disco local)
   ▼
 Persistencia: SQLite local (defecto) o Postgres (compose); Redis opcional.
@@ -47,3 +57,10 @@ Persistencia: SQLite local (defecto) o Postgres (compose); Redis opcional.
   distintos y advierte sobre productos espectrales diferentes.
 - **SPHEREx:** colecciones QR3 (+deep) como fuente principal, QR2 (+deep)
   como complemento. QR1 no se usa (retirado del archivo público).
+- **Observabilidad.** Cada petición deja una línea JSON con `request_id`,
+  método, ruta, estado y `duration_ms`; el mismo identificador vuelve en
+  `X-Request-ID`. Cada etapa de un job registra su duración (`job_id`,
+  `stage`, `duration_ms`). `/api/v1/health` devuelve 503 si la base no responde.
+- **Entrada acotada.** CORS es la capa más externa (también en 429/413/500),
+  los cuerpos mayores de 1 MB se rechazan, el límite por cliente usa el último
+  salto de `X-Forwarded-For` y se compacta con gzip.

@@ -1205,3 +1205,207 @@ IRSA; [ayuda de espectrofotometría de SPHEREx](https://irsa.ipac.caltech.edu/on
 [productos de datos de SPHEREx](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products);
 [capacidades de recorte](https://irsa.ipac.caltech.edu/data/SPHEREx/docs/cutout_tool.html);
 SIMBAD (espejo de Harvard); catálogo AllWISE (`allwise_p3as_psd`).
+
+---
+
+## 16. Verificación con datos reales de la implementación (2026-11-12)
+
+Corrida de punta a punta por HTTP contra IRSA (backend local con base y almacenamiento
+temporales; navegador no usado). Todo lo de esta sección se observó; lo que no se
+observó figura en 16.5.
+
+### 16.1 Flujo de secuencia: los cinco objetivos
+
+`backend/scripts/warm_targets.py` pidió cada objetivo con y sin cuadro AllWISE de
+referencia: **10 de 10 secuencias completadas**, entre 9 y 12 cuadros de un solo
+detector, ordenados por fecha y alineados. Con la ruta hacia IRSA cortada (otro
+proceso con `IRSA_SIA2_URL` apuntando a un puerto cerrado y la misma caché), los cinco
+enlaces siguieron respondiendo su secuencia real etiquetada como servida desde caché
+(criterio de WP-31).
+
+### 16.2 Hallazgos que cambiaron el código
+
+| Hallazgo | Cambio |
+|---|---|
+| El recorte de WISE llega en gzip | El lector descomprime antes de abrir |
+| Pedir un objetivo rápido por su posición J2000 deja los recortes a ~200″ de él | Los recortes y la rejilla se centran en la posición propagada a la época media |
+| El detector con más épocas era D1 a D3 (0,8 a 2,4 µm), donde una enana Y no se ve; la curva de luz era ruido (±51 %) | El modo movimiento usa D6 por defecto (nota en `limitations`); la curva avisa cuando el objetivo no se detecta por separado (`target_detected`) |
+| La búsqueda a ciegas dio `detected=True` en D1 por estrellas estáticas que cambian de flujo con la longitud de onda | Resta de fuentes estáticas con ganancia propia por fuente y por visita; una velocidad en el borde de la rejilla nunca es detección |
+| El TAP de IRSA tarda 60 a 90 s (agregado sobre 1,6 millones de filas) | El descubrimiento de colecciones corre en segundo plano; las peticiones usan el último valor o la lista configurada |
+
+### 16.3 Movimiento lento: lo que la búsqueda a ciegas no puede hacer
+
+En la ventana de ~1 año de SPHEREx, WISE 0855 se mueve **1,3 px**, Epsilon Indi B 1,1 px y
+Barnard 1,9 px. Por debajo de ~1,5 px un móvil no se distingue de una fuente estática, así
+que la búsqueda no explora velocidades tan bajas. Para objetos con movimiento propio
+conocido se añadió la **comprobación dirigida**: apilar siguiendo ese movimiento y comparar
+el pico en la posición prevista con las demás posiciones del mismo apilado (nulo empírico de
+2100 posiciones, sin supuesto gaussiano).
+
+| Objetivo (D6, 12 visitas) | σ en la posición prevista | p empírico | Desfase del pico |
+|---|---|---|---|
+| WISE 0855 | 11,8 | < 0,001 (1 de 2100) | 0,0 px |
+| Epsilon Indi B | 155,6 | < 0,001 | 0,0 px |
+| Barnard's Star | 677,6 | < 0,001 | 0,0 px |
+
+Lectura honesta: Barnard y Epsilon Indi B son brillantes, la prueba es sobre todo una
+validación de que el movimiento propio de catálogo y la alineación son correctos. **WISE 0855
+es la prueba difícil**: es débil (SNR 2,6 a 4,2 por cuadro) y aun así el pico cae exactamente
+en el píxel previsto. Es una señal compatible con el objeto, no una detección confirmada: el
+p mínimo está limitado por el número de posiciones de comparación y el movimiento se supone
+lineal y el de catálogo correcto.
+
+### 16.4 R Draconis satura todos los detectores
+
+El núcleo de R Draconis queda saturado o marcado en D1, D3, D5 y D6 (píxel central sin dato, bits
+`TRANSIENT`, `OVERFLOW`, `SUR_ERROR` y `BLOOM`; valores centrales de ~900 a ~8000 MJy/sr frente a un
+fondo de ~0,5). La fotometría de apertura da 0 de 5 a 6 puntos usables en D3, D5 y D6. Se añadió
+**fotometría de las alas de la PSF**: el perfil radial de cada cuadro (r de 5 a 13 px, solo píxeles
+sin bandera) se ajusta con una plantilla común a todos los cuadros, de modo que cambiar la máscara no
+cambia la amplitud. Son valores relativos, no un flujo, y la curva lo dice. En D1: 10 de 10 puntos
+válidos, de 0,63 a 1,64 del valor mediano (2025-08 a 2026-09). Sin estrellas de comparación en esa corrida
+porque Gaia no respondió, así que la curva es absoluta.
+
+### 16.5 No verificado
+
+- Nada se miró en un navegador (reproductor, Aladin, exportación WebM, iframe, portapapeles).
+- Gaia se consultó de verdad solo en los campos de los cinco objetivos; SkyBoT nunca contra el servicio real.
+- La curva de RW Aurigae sale relativa (4 estrellas de comparación, amplitud ±48 % en D1, sin corrección de color); la de R Draconis sale absoluta porque no hay estrellas de comparación medibles.
+- No se probó ninguna secuencia en detectores distintos de los que eligió el motor.
+- La prueba con personas sin formación (WP-32) está pendiente: `docs/demo.md` tiene la tabla vacía.
+
+---
+
+## 17. Mejoras para competir (2026-11-12)
+
+Salen de la lectura crítica del proyecto como lo haría un jurado. Los cinco riesgos y su respuesta:
+
+| Riesgo detectado | Respuesta | Paquete |
+|---|---|---|
+| El movimiento (1 a 2 px en un año) puede no verse a simple vista | Hacerlo visible: antes/después, cola de trayectoria con distancia medida, interpolación suave | WP-34 |
+| Demasiados paneles; un jurado recuerda una sola idea | Demo guiada de tres pasos y paneles avanzados plegados | WP-35 |
+| Nunca se vio la interfaz en un navegador | Pruebas automáticas en navegador real con datos reales en caché | WP-36 |
+| El rigor científico es difícil de comprobar de un vistazo | Tabla pública de predicción frente a medición por objetivo | WP-37 |
+| Primera impresión lenta | Precarga, calentamiento de despliegue y progreso por etapas | WP-38 |
+
+#### WP-34 · Movimiento visible
+
+- **Requisitos:** R5, impacto. **Depende de:** WP-11, WP-24. **Tamaño:** M.
+- **Superficie de edición:** `frontend/components/SequencePlayer.tsx`,
+  `frontend/components/BeforeAfter.tsx` (nuevo), `frontend/app/(app)/time-explorer/page.tsx`,
+  `frontend/lib/types.ts`.
+- **Cambio:** (1) vista "antes / después" con la primera y la última época, con deslizador de
+  cortina y modo parpadeo; (2) cola de trayectoria del objetivo con la distancia recorrida en
+  arcsec y el rumbo; (3) interpolación suave de la imagen, activada por defecto en modo
+  movimiento y desactivable; (4) con movimiento propio conocido, la frase "se movió X″ hacia el
+  <rumbo>, igual que predice el catálogo".
+- **Criterios de aceptación:** con movimiento conocido se muestran la distancia y el rumbo
+  derivados de `overlay`; sin movimiento conocido no aparece la frase; el deslizador cambia entre
+  las dos épocas; todo es operable con teclado.
+
+#### WP-35 · Demo guiada de tres pasos
+
+- **Requisitos:** R5, presentación. **Depende de:** WP-34. **Tamaño:** S.
+- **Superficie de edición:** `frontend/app/(app)/demo/page.tsx` (nuevo),
+  `frontend/app/(app)/time-explorer/page.tsx` (paneles avanzados plegados), `frontend/app/(app)/page.tsx`.
+- **Cambio:** ruta `/demo` con tres pasos (Barnard se mueve, R Draconis late, WISE 0855 aparece al
+  sumar), cada uno con una frase, el resultado y "Siguiente"; en el explorador, los paneles de
+  apilado, espectro y verificación quedan plegados por defecto.
+- **Criterios de aceptación:** tres pasos completables solo con teclado; cada paso usa una
+  secuencia real (caché si no hay red); el explorador muestra primero solo el video.
+
+#### WP-36 · Pruebas automáticas en navegador
+
+- **Requisitos:** validez, presentación. **Depende de:** WP-34, WP-35. **Tamaño:** M. **Decisión
+  D11 revisada:** se incorpora Playwright (dependencia de desarrollo).
+- **Superficie de edición:** `frontend/playwright.config.ts`, `frontend/e2e/**`,
+  `frontend/package.json` (solo `devDependencies` y scripts), `backend/tests/fixtures/real_sequences/`,
+  `.github/workflows/ci.yml` (trabajo opcional).
+- **Cambio:** el backend arranca sin ruta hacia IRSA y sirve las secuencias reales guardadas; las
+  pruebas abren los cinco enlaces permanentes, reproducen, copian el enlace, exportan, usan el
+  modo incrustado y recorren la demo guiada.
+- **Criterios de aceptación:** los cinco enlaces muestran cuadros que cambian al reproducir; de la
+  portada al video hay como máximo dos interacciones; `?embed=1` oculta la navegación; la
+  exportación produce un archivo o la descarga de PNG; las cabeceras de incrustación son las
+  esperadas.
+
+#### WP-37 · Validación: predicción frente a medición
+
+- **Requisitos:** validez. **Depende de:** WP-25. **Tamaño:** M.
+- **Superficie de edición:** `backend/app/services/shift_stack.py`, `backend/app/routers/sequences.py`,
+  `backend/scripts/validate_motion.py` (nuevo), `docs/validacion-movimiento.md` (nuevo),
+  `frontend/components/ShiftStackPanel.tsx`, `backend/tests/test_shift_stack_synthetic.py`.
+- **Cambio:** medir el desplazamiento real del objetivo comparando el apilado de la mitad temprana
+  con el de la mitad tardía, y compararlo con lo previsto por su movimiento propio; incluir
+  `measured_motion` en la comprobación dirigida; un script que corre los cinco objetivos y escribe
+  la tabla.
+- **Criterios de aceptación:** con un desplazamiento inyectado, el medido coincide con el previsto
+  dentro de 0,3 px; la tabla de los cinco objetivos se genera con datos reales y marca como "no
+  medible" lo que no lo es.
+
+#### WP-38 · Primera impresión y rapidez
+
+- **Requisitos:** R5 ("quickly"). **Depende de:** WP-31. **Tamaño:** S.
+- **Superficie de edición:** `frontend/app/(app)/page.tsx`, `frontend/components/SequencePlayer.tsx`,
+  `docs/deployment.md`.
+- **Cambio:** al pasar el cursor o enfocar una tarjeta de objetivo se lanza la secuencia en segundo
+  plano; el progreso muestra la etapa y los cuadros ("3 de 12 cuadros"); el calentamiento de la
+  caché queda documentado como paso de despliegue.
+- **Criterios de aceptación:** al abrir un objetivo ya precargado el video aparece sin esperar; el
+  indicador de progreso muestra etapa y conteo.
+
+### 17.1 Estado
+
+| Paquete | Estado | Evidencia observada |
+|---|---|---|
+| WP-34 Movimiento visible | Hecho | Antes/después con cortina y parpadeo; círculo de la posición prevista en cada época; frase "se movió X″ hacia el <rumbo>"; se eligen épocas con cobertura ≥ 80 %; aviso cuando el objetivo es demasiado débil para verse |
+| WP-35 Demo guiada | Hecho | `/demo` con tres pasos recorridos en un navegador real (teclado incluido); paneles avanzados plegados |
+| WP-36 Pruebas en navegador | Hecho | Playwright con Chromium sobre las secuencias reales (`backend/tests/fixtures/real_sequences`) y el backend sin ruta hacia IRSA; ver 17.2 |
+| WP-37 Predicción frente a medición | Hecho | `docs/validacion-movimiento.md`: diferencias de 0,07 a 0,30 px en Barnard, Epsilon Indi B y WISE 0855 |
+| WP-38 Primera impresión | Hecho | Precarga al pasar el cursor, progreso por etapa y conteo; calentamiento documentado en `docs/deployment.md` |
+
+### 17.2 Lo que el navegador real encontró
+
+Es la primera vez que la interfaz se ejecutó en un navegador. Hallazgos y arreglos:
+
+| Hallazgo | Arreglo |
+|---|---|
+| La descarga de un cuadro y la exportación de video fallaban: la imagen se cacheaba sin cabecera CORS y la lectura posterior con `crossOrigin` la bloqueaba | `Vary: Origin` en las imágenes de secuencia y de recorte |
+| Los punteros de "última secuencia buena" solo se escribían al calcular, no al servir desde la caché de resultados | Se reescriben también al reutilizar un resultado |
+| El antes/después de Barnard comparaba una época con solo ~30 % de cobertura | Se eligen las épocas extremas con cobertura ≥ 80 % |
+| El marcador de trayectoria era una mancha que tapaba la fuente | Círculo en la primera posición, cruz en la última, anillo en la actual |
+| Avisos del servidor en inglés dentro de una interfaz en español | `lib/limitations.ts` traduce los avisos conocidos |
+| La etiqueta de la curva de R Draconis decía "flujo absoluto" aunque usa la amplitud de las alas de la PSF | La etiqueta y el eje lo dicen |
+
+Resultado de la batería en navegador: ver el resumen de §17.3.
+
+**Mapa del cielo de la portada (sustituye al fondo decorativo retirado en D3).** El fondo anterior era un
+planetario genérico de constelaciones cargado desde un CDN: no mostraba datos de SPHEREx y sus etiquetas se
+montaban sobre el título. Se reemplazó por un mapa propio (`SkyMapBackdrop.tsx`, proyección de Hammer, Vía Láctea
+calculada, sin script externo) con los cinco objetivos en su posición real como puntos clicables que abren su
+secuencia (azul: se mueve; ámbar: cambia de brillo). Revisado en navegador: queda encima de las tarjetas, sin
+tapar el texto, con teclado (cada punto es un enlace) y movimiento reducido respetado. Cubierto por una prueba
+en navegador.
+
+**Portada 3D a pantalla completa.** El mapa se convirtió en una bóveda celeste 3D que ocupa todo el fondo
+(`SkyScene.tsx`, React Three Fiber): tres capas de estrellas con parpadeo, la Vía Láctea calculada en
+coordenadas galácticas, rotación lenta, arrastre con inercia y paralaje con el puntero. Los cinco objetivos son
+marcadores pulsantes en su posición real, con etiqueta que es un enlace (`<a>`, accesible por teclado). Al elegir
+uno, la cámara vuela hacia él (≈1,25 s) y se abre su secuencia. Si el equipo no tiene WebGL se usa el mapa 2D
+(`SkyMapBackdrop.tsx`); con movimiento reducido no hay rotación ni vuelo. El render se pausa cuando la pestaña
+no está visible. Cubierto por una prueba en navegador.
+
+### 17.3 Resumen de pruebas en navegador
+
+**19 de 19 pruebas pasan** en Chromium (Playwright 1.49), con el backend sin ruta hacia IRSA y las secuencias reales de
+`backend/tests/fixtures/real_sequences` (284 KB): los cinco enlaces permanentes muestran cuadros reales que cambian
+al reproducir y llevan la insignia "desde caché"; de la portada al video hay un clic; una coordenada sexagesimal
+en la URL se resuelve y se reemplaza por números; una consulta inválida muestra un mensaje claro; la demo guiada
+se recorre con el teclado; antes/después, trayectoria y suavizado responden; los paneles avanzados empiezan
+plegados; el enlace copiado reproduce el estado en otra ventana; el modo incrustado oculta la navegación y la
+incrustación desde otro origen funciona mientras el resto del sitio queda bloqueado; la descarga de un cuadro y la
+exportación de video funcionan; los avisos del servidor salen en español y R Draconis explica que satura. Se ejecuta
+con `npm run test:e2e` en `frontend/` y como trabajo `e2e-browser` en CI.
+
+No cubre: la búsqueda del Planeta X (necesita el archivo en vivo), Aladin (carga un script externo) ni
+dispositivos móviles.

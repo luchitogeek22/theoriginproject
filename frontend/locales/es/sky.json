@@ -1,0 +1,120 @@
+{
+  "aladinViewer": {
+    "ariaLabel": "Mapa del cielo Aladin Lite",
+    "loading": "Cargando el mapa del cielo (Aladin Lite {version})…",
+    "errorTitle": "Mapa del cielo no disponible",
+    "errorBody": "No se pudo cargar Aladin Lite ({reason}). La secuencia de imágenes sigue funcionando; revisa tu conexión con aladin.cds.unistra.fr y recarga la página.",
+    "reason": {
+      "timeout": "tiempo agotado al cargar el script",
+      "download": "no se pudo descargar el script",
+      "noApi": "el script cargó pero no expuso la API",
+      "unknown": "fallo desconocido"
+    },
+    "markerCatalog": "Objetivo",
+    "layers": {
+      "gaia": "Gaia DR3 (flujo G)",
+      "wise": "WISE (color)"
+    },
+    "issues": {
+      "recenter": "El visor no pudo recentrarse en la posición pedida.",
+      "marker": "No se pudo dibujar el marcador del objetivo.",
+      "enable": "No se pudo activar la capa {layer}.",
+      "disable": "No se pudo desactivar la capa {layer}."
+    }
+  },
+  "spectrumPanel": {
+    "title": "Espectro al vuelo",
+    "intro": "Mide el flujo del objetivo en exposiciones de los seis detectores de SPHEREx y lo ordena por longitud de onda. Es espectrofotometría relativa, sin corrección de apertura.",
+    "measure": "Medir espectro del objetivo",
+    "remeasure": "Repetir la medida",
+    "stages": {
+      "queued": "En cola",
+      "searching": "Buscando observaciones en el archivo",
+      "downloading": "Descargando recortes",
+      "measuring": "Midiendo el flujo",
+      "sending": "Enviando la petición"
+    },
+    "cancelled": "Dejaste de esperar esta medida.",
+    "noPoints": "No hay medidas utilizables para esta posición.",
+    "caption": "Espectrofotometría relativa, sin corrección de apertura.",
+    "plotTitle": "Espectrofotometría relativa de {count, plural, one {# medida} other {# medidas}}",
+    "plotDesc": "{count, plural, one {# medida} other {# medidas}} entre {min} y {max} micras, en {dates, plural, one {# fecha} other {# fechas}}.",
+    "plotDescFlagged": "{count} con bandera, dibujadas huecas.",
+    "plotDescFlux": "Flujo entre {min} y {max} Jy.",
+    "axisX": "longitud de onda (µm)",
+    "axisY": "flujo (Jy)",
+    "pointTitle": "{date} · detector {detector} · {wavelength} µm · {flux} Jy",
+    "pointFlagged": "con bandera",
+    "legendLabel": "Leyenda por fecha",
+    "legendFlagged": "hueco = con bandera ({count})",
+    "colorUnavailable": "Termómetro de color no disponible: {reason}",
+    "colorNoReason": "sin motivo informado",
+    "colorTitle": "Termómetro de color: {index} ± {err}",
+    "bluer": "−1 (más azul)",
+    "redder": "+1 (más rojo)"
+  },
+  "lightCurve": {
+    "sectionLabel": "Curva de luz del objetivo",
+    "title": "Curva de luz",
+    "absoluteWarning": "Flujo absoluto: no corregido por cambios comunes. Un cambio de brillo aquí puede venir del instrumento.",
+    "notDetected": "El objetivo no se detecta por separado en cada cuadro: la curva refleja sobre todo ruido. Para objetos débiles usa el apilado.",
+    "notDetectedSnr": "El objetivo no se detecta por separado en cada cuadro (SNR mediana {snr}): la curva refleja sobre todo ruido. Para objetos débiles usa el apilado.",
+    "summary": "{used} de {total} épocas con medida. Mínimo {min}, máximo {max}, amplitud {amp} {method, select, psf {(amplitud relativa de las alas de la PSF, normalizada a la mediana)} relative {(flujo relativo, normalizado a la mediana)} other {(flujo absoluto)}}.",
+    "noUsable": "Ninguna época tiene una medida utilizable.",
+    "plotTitle": "Curva de luz de {count, plural, one {# época} other {# épocas}}",
+    "axisX": "fecha de observación",
+    "axisY": "{method, select, psf {amplitud relativa de las alas de la PSF} relative {flujo relativo} other {flujo absoluto}}",
+    "legendMeasure": "medida ± error",
+    "legendScatter": "ruido de referencia (±{scatter}, {count, plural, one {# estrella de comparación} other {# estrellas de comparación}})",
+    "legendUnused": "sin medida utilizable (bandera o fuera de cobertura): cuadros {frames}"
+  },
+  "skyView": {
+    "loadingSphere": "Cargando esfera celeste…",
+    "loadError": "{source}: {message}",
+    "unexpectedError": "error inesperado",
+    "sources": {
+      "referenceStars": "Estrellas de referencia",
+      "candidates": "Candidatos"
+    },
+    "loadErrorTitle": "No se pudieron cargar datos del servicio",
+    "loadErrorNote": "La esfera muestra solo lo que sí se cargó.",
+    "layersButton": "Capas",
+    "reset": "Restablecer vista",
+    "layers": {
+      "grid": "Malla de coordenadas",
+      "references": "Estrellas de referencia (catálogo)",
+      "footprints": "Huellas SPHEREx consultadas",
+      "candidates": "Candidatos",
+      "labels": "Etiquetas"
+    },
+    "fov": "Campo de visión",
+    "reducedMotion": "Movimiento reducido",
+    "hint": "Esfera celeste: direcciones, no distancias. Arrastra para explorar · rueda para acercar."
+  },
+  "celestialSphere": {
+    "canvasLabel": "Esfera celeste interactiva: arrastra para girar y usa la rueda para acercar",
+    "driftStop": "Detener deriva",
+    "driftStart": "Deriva lenta"
+  },
+  "skyScene": {
+    "role": {
+      "motion": "se mueve",
+      "brightness": "cambia de brillo"
+    },
+    "openSequence": "{name}: {role}. Abrir su secuencia."
+  },
+  "skyFallback": {
+    "notice": "WebGL no disponible — vista 2D alternativa con los mismos datos.",
+    "ariaLabel": "Mapa celeste 2D",
+    "projection": "Proyección equirectangular. Las direcciones son las mismas que en la esfera 3D."
+  },
+  "skyMapBackdrop": {
+    "ariaLabel": "Mapa del cielo con los cinco objetivos del desafío",
+    "role": {
+      "motion": "se mueve",
+      "brightness": "cambia de brillo"
+    },
+    "openSequence": "{name}: {role}. Abrir su secuencia.",
+    "caption": "Los cinco objetivos en el cielo real; la banda tenue es la Vía Láctea. Pulsa uno para ver su video."
+  }
+}

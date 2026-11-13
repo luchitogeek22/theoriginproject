@@ -127,7 +127,7 @@ def test_research_create_stores_user_id():
             db,
             UserInfo(user_id="user-1"),
         )
-        assert res.user_id == "user-1"
+        assert "user_id" not in res.model_dump()
         record = db.get(ResearchSession, res.id)
         assert record is not None and record.user_id == "user-1"
     finally:
@@ -142,7 +142,7 @@ def test_candidates_stamped_with_user_id():
     _store_images_and_candidates(
         job_id,
         "temporal",
-        {"detections": [{"label": 1, "peak_snr": 9.1}], "astrometry": {"measured": False}},
+        {"detections": [{"label": 1, "peak_snr": 9.1, "ra_deg": 10.0, "dec_deg": 5.0}], "astrometry": {"measured": False}},
         None,
         None,
         "user-1",
@@ -204,13 +204,28 @@ def _client():
     return TestClient(app)
 
 
-ANALYSIS_BODY = {"cutout_a_id": 1, "cutout_b_id": 2}
+def _analysis_body():
+    from app.models import Cutout, Observation
+
+    init_db()
+    ids = []
+    with SessionLocal() as db:
+        for index in range(2):
+            obs = Observation(obs_id=f"auth-analysis-{index}", collection="c", detector="6")
+            db.add(obs)
+            db.flush()
+            cutout = Cutout(observation_id=obs.id, ra_deg=1.0, dec_deg=1.0, size_arcmin=6.0)
+            db.add(cutout)
+            db.flush()
+            ids.append(cutout.id)
+        db.commit()
+    return {"cutout_a_id": ids[0], "cutout_b_id": ids[1]}
 
 
 def test_analysis_is_public_even_when_auth_is_configured(monkeypatch):
     _configured(monkeypatch)
     for path in ("differential", "temporal"):
-        response = _client().post(f"/api/v1/analysis/{path}", json=ANALYSIS_BODY)
+        response = _client().post(f"/api/v1/analysis/{path}", json=_analysis_body())
         assert response.status_code == 200, (path, response.text)
     response = _client().post(
         "/api/v1/analysis/spectral", json={"cutout_id": 1, "ra_deg": 10.0, "dec_deg": 5.0}
@@ -222,7 +237,7 @@ def test_analysis_with_an_invalid_token_is_still_rejected(monkeypatch):
     _configured(monkeypatch)
     response = _client().post(
         "/api/v1/analysis/differential",
-        json=ANALYSIS_BODY,
+        json=_analysis_body(),
         headers={"Authorization": f"Bearer {_mint(secret='another-secret')}"},
     )
     assert response.status_code == 401
@@ -232,7 +247,7 @@ def test_analysis_accepts_a_valid_token(monkeypatch):
     _configured(monkeypatch)
     response = _client().post(
         "/api/v1/analysis/differential",
-        json=ANALYSIS_BODY,
+        json=_analysis_body(),
         headers={"Authorization": f"Bearer {_mint(sub='user-42')}"},
     )
     assert response.status_code == 200

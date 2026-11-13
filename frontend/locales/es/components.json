@@ -1,0 +1,229 @@
+{
+  "tutorial": {
+    "dialogLabel": "Tutorial",
+    "step": "Paso {current} de {total}",
+    "close": "Cerrar tutorial",
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "start": "Empezar",
+    "steps": {
+      "pick": {
+        "title": "Elige un objetivo",
+        "body": "En el inicio, pulsa una de las cinco tarjetas (por ejemplo, la estrella de Barnard) o busca por nombre o coordenadas. Un clic te lleva directo al video."
+      },
+      "watch": {
+        "title": "Mira el video",
+        "body": "El Explorador temporal reproduce, ordenadas por fecha, exposiciones reales de SPHEREx sobre tu objetivo. Usa Espacio para pausar y las flechas para cambiar de cuadro. Elige el modo Movimiento o Brillo según lo que quieras ver."
+      },
+      "understand": {
+        "title": "Entiende lo que ves",
+        "body": "Abre «¿Qué estoy viendo?» junto al video. Cada resultado lleva una etiqueta: OBSERVACIÓN (dato medido), CÁLCULO (hecho por la herramienta) o CANDIDATO (señal por revisar, nunca un descubrimiento)."
+      },
+      "share": {
+        "title": "Comparte y exporta",
+        "body": "«Copiar enlace» guarda el objetivo, el campo, el modo y el cuadro exacto. También puedes exportar el video en WebM o descargar un cuadro en PNG, con la fecha y el detector en el pie."
+      }
+    }
+  },
+  "searchBar": {
+    "placeholder": "Nombre, «RA DEC» o ID de catálogo — prueba WISE 0855",
+    "ariaLabel": "Buscar objetivo",
+    "submit": "Observar",
+    "error": "La búsqueda falló"
+  },
+  "vettingPanel": {
+    "title": "Verificación del candidato #{id}",
+    "loading": "Consultando catálogos y comprobando la señal…",
+    "error": "No se pudo verificar el candidato",
+    "disclaimer": "Una categoría no es una confirmación: es el resultado de siete comprobaciones automáticas. Lo que no se pudo comprobar nunca se cuenta a favor del candidato.",
+    "categories": {
+      "known_object": "Objeto conocido",
+      "artifact_likely": "Artefacto probable",
+      "unexplained_candidate": "Candidato sin explicar",
+      "inconclusive": "No concluyente: alguna comprobación no se pudo ejecutar"
+    },
+    "status": {
+      "pass": "pasa",
+      "fail": "falla",
+      "info": "informativa",
+      "not_checked": "no comprobada"
+    },
+    "checks": {
+      "gaia_star": "Estrella de Gaia",
+      "solar_system": "Objeto del Sistema Solar",
+      "quality_flags": "Banderas de calidad",
+      "visits": "Detección en varias visitas",
+      "coherent_motion": "Movimiento coherente",
+      "point_source": "Fuente puntual",
+      "colour": "Color"
+    }
+  },
+  "copilotPanel": {
+    "title": "Asistente de interpretación",
+    "intro": "Explica tus resultados. Etiqueta cada afirmación: medido (solo cálculos del motor), dato del archivo, inferencia o explicación.",
+    "emptySelected": "Tienes {count, plural, one {# observación seleccionada} other {# observaciones seleccionadas}}. Pregunta por ellas.",
+    "emptyNone": "Selecciona un objetivo y consulta el archivo; después pregúntame qué significan los resultados.",
+    "placeholder": "Pregunta sobre tus resultados…",
+    "inputLabel": "Pregunta para el asistente",
+    "send": "Enviar pregunta",
+    "badges": {
+      "measured": "MEDIDO",
+      "archive": "ARCHIVO",
+      "inferred": "INFERENCIA",
+      "explanatory": "EXPLICACIÓN"
+    },
+    "suggested": {
+      "motion": "¿Por qué esta estrella parece moverse?",
+      "difference": "¿Qué significa una imagen diferencial?",
+      "count": "¿Cuántas observaciones se han encontrado?",
+      "brightness": "¿Qué indican las variaciones de brillo?"
+    },
+    "answers": {
+      "noSearch": "Aún no se ha consultado el archivo. Busca un objetivo para contar sus observaciones reales.",
+      "found": "Se {count, plural, one {encontró # observación} other {encontraron # observaciones}} (consulta del {date}{cached, select, true {, desde caché} other {}}).",
+      "observationExplain": "Cada observación es una imagen real del archivo SPHEREx con su fecha y detector. Sin observaciones no hay comparación posible.",
+      "motionExplain": "Un desplazamiento aparente entre dos épocas puede ser movimiento propio real, pero también un artefacto de alineación, distinta PSF o ruido.",
+      "motionMeasured": "El motor midió {separation}″ ± {error}″ entre épocas (candidato {id}, SNR {snr}).",
+      "motionInferred": "Si el desplazamiento supera claramente su incertidumbre y se repite en más épocas, un movimiento real es una hipótesis razonable a validar.",
+      "motionNone": "No hay ninguna medición de desplazamiento del análisis actual.",
+      "differenceExplain": "La imagen diferencial es época A menos época B, tras alinear por WCS e igualar el fondo. Lo que brilla o se oscurece cambió entre ambas fechas.",
+      "differenceInferred": "Residuos brillantes aislados sugieren variabilidad o movimiento; residuos extensos suelen indicar diferencias instrumentales.",
+      "brightnessExplain": "Las variaciones de brillo comparan flujo calibrado (MJy/sr) entre épocas compatibles: mismo detector y respuesta espectral comparable.",
+      "brightnessTarget": "Objetivo actual: {name}. Las mediciones aparecen tras ejecutar un análisis temporal.",
+      "brightnessNoTarget": "Sin objetivo seleccionado no hay mediciones que interpretar.",
+      "seeingNoTarget": "Ningún objetivo seleccionado. Busca por nombre o coordenadas para empezar.",
+      "seeingTarget": "Observas la región de {name} ({ra}°, {dec}°), resuelta por {resolver}.",
+      "defaultResolver": "el servicio de resolución",
+      "seeingExplain": "Los contornos cian son huellas de observaciones SPHEREx reales; la estrella dorada marca tu objetivo.",
+      "fallback": "Solo puedo responder a partir de las mediciones y metadatos cargados en esta investigación. Prueba con una de las preguntas sugeridas."
+    }
+  },
+  "statusBanner": {
+    "error": "No se pudo comprobar el estado del archivo",
+    "releases": "Entregas SPHEREx: {releases}",
+    "configuredFallback": "Lista configurada de respaldo: no se pudo preguntar a IRSA qué entregas existen."
+  },
+  "jobProgress": {
+    "label": "Progreso",
+    "barLabel": "Progreso de la secuencia",
+    "note": "La primera vez puede tardar un par de minutos: se descargan y alinean las exposiciones. Si recargas la página, se recupera la misma tarea."
+  },
+  "explainer": {
+    "title": "¿Qué estoy viendo?",
+    "items": {
+      "frame": {
+        "title": "¿Qué es cada cuadro?",
+        "body": "Una exposición real del telescopio SPHEREx sobre ese trozo de cielo: un solo detector, una sola fecha. No es una simulación ni una imagen promediada."
+      },
+      "colour": {
+        "title": "¿Por qué cambian el brillo y el color entre cuadros?",
+        "body": "SPHEREx mira cada punto con un filtro que cambia de color y con seis detectores distintos. Un cambio entre cuadros puede venir del instrumento y no del objeto; por eso conviene fijar un detector."
+      },
+      "zodiacal": {
+        "title": "¿Qué es la luz zodiacal?",
+        "body": "Es luz del Sol dispersada por el polvo del Sistema Solar. Es un fondo brillante en el infrarrojo y se resta de cada cuadro antes de mostrarlo."
+      },
+      "scale": {
+        "title": "¿Qué significa la escala?",
+        "body": "Modo Movimiento: cada cuadro usa su propio nivel de ruido como unidad, así que sirve para ver desplazamientos pero no para comparar brillo. Modo Brillo: todos los cuadros comparten una escala física fija, así que el brillo sí es comparable."
+      },
+      "flags": {
+        "title": "¿Qué son las banderas y la cobertura?",
+        "body": "Las banderas marcan píxeles poco fiables (rayos cósmicos, saturación, píxeles muertos). La cobertura es la parte del recorte que tiene datos reales. Con muchas banderas o poca cobertura, interpreta con cautela."
+      },
+      "subpixel": {
+        "title": "¿Por qué un objeto en movimiento se mueve menos de un píxel?",
+        "body": "Los píxeles de SPHEREx son grandes (unos 6″). Un objeto lento puede desplazarse menos que eso entre dos fechas, y entonces el cambio se nota en el reparto de luz, no como un salto visible."
+      },
+      "candidates": {
+        "title": "Candidatos no son descubrimientos",
+        "body": "Un candidato es una señal que la herramienta marca para revisar. Hasta que otras observaciones independientes la confirmen, no es un hallazgo."
+      }
+    }
+  },
+  "glossary": {
+    "title": "Glosario",
+    "terms": {
+      "spherex": {
+        "term": "SPHEREx",
+        "definition": "Telescopio espacial de la NASA que mapea todo el cielo en infrarrojo con muchos colores."
+      },
+      "irsa": {
+        "term": "IRSA",
+        "definition": "Archivo de la NASA/IPAC donde se guardan los datos de SPHEREx."
+      },
+      "exposure": {
+        "term": "Exposición",
+        "definition": "Una toma del telescopio: un detector, una fecha, un trozo de cielo."
+      },
+      "detector": {
+        "term": "Detector",
+        "definition": "Cada uno de los seis sensores de SPHEREx; cada uno ve el mismo cielo con otro rango de color."
+      },
+      "wavelength": {
+        "term": "Longitud de onda",
+        "definition": "El «color» infrarrojo de la luz medida, en micrómetros (µm)."
+      },
+      "properMotion": {
+        "term": "Movimiento propio",
+        "definition": "Desplazamiento lento de una estrella en el cielo a lo largo de los años."
+      },
+      "zodiacalLight": {
+        "term": "Luz zodiacal",
+        "definition": "Fondo de luz solar dispersada por polvo del Sistema Solar; se resta."
+      },
+      "flag": {
+        "term": "Bandera",
+        "definition": "Marca de un píxel poco fiable (rayo cósmico, saturación, píxel muerto)."
+      },
+      "coverage": {
+        "term": "Cobertura",
+        "definition": "Parte del recorte que tiene datos reales."
+      },
+      "lightCurve": {
+        "term": "Curva de luz",
+        "definition": "Gráfico del brillo de un objeto a lo largo del tiempo."
+      },
+      "brownDwarf": {
+        "term": "Enana marrón",
+        "definition": "Objeto más grande que un planeta y más pequeño que una estrella: no llega a encender hidrógeno."
+      },
+      "candidate": {
+        "term": "Candidato",
+        "definition": "Señal por revisar; no es un descubrimiento confirmado."
+      }
+    }
+  },
+  "resultBadge": {
+    "observation": {
+      "label": "OBSERVACIÓN",
+      "title": "Datos medidos por SPHEREx tal como están en el archivo."
+    },
+    "calculation": {
+      "label": "CÁLCULO",
+      "title": "Resultado calculado por esta herramienta a partir de las observaciones."
+    },
+    "candidate": {
+      "label": "CANDIDATO",
+      "title": "Señal marcada para revisar. No es un descubrimiento confirmado."
+    }
+  },
+  "authButton": {
+    "signIn": "Entrar",
+    "signOut": "Cerrar sesión"
+  },
+  "archiveStatus": {
+    "label": "Estado del archivo",
+    "online": "en línea",
+    "checking": "comprobando…",
+    "offline": "sin conexión",
+    "latency": "Latencia",
+    "latencyValue": "{ms} ms",
+    "release": "Entrega",
+    "utc": "UTC",
+    "details": "Detalles del archivo",
+    "recheck": "Volver a comprobar",
+    "sourceUp": "{name}: {latency} ms",
+    "sourceDown": "{name}: {detail}"
+  }
+}

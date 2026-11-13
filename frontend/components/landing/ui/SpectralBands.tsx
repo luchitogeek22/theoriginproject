@@ -2,12 +2,14 @@
 
 import { KeyboardEvent, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CHANNELS_PER_ARRAY, DETECTOR_ARRAYS } from "../content";
+import { useTranslations } from "next-intl";
+import { ARRAY_FEATURES, CHANNELS_PER_ARRAY, DETECTOR_ARRAYS } from "../content";
 
 const TOTAL = DETECTOR_ARRAYS.length * CHANNELS_PER_ARRAY;
-const HUES = ["#4263FF", "#5a63ff", "#7a6cff", "#9675FF", "#6fa6f8", "#42D9F5"];
+const HUES = ["#4263FF", "#5a63ff", "#4f7fe0", "#6f9be8", "#6fa6f8", "#9dbcf2"];
 
 export default function SpectralBands() {
+  const t = useTranslations("landing.bands");
   const [band, setBand] = useState(52);
   const arrayIndex = Math.floor((band - 1) / CHANNELS_PER_ARRAY);
   const channel = ((band - 1) % CHANNELS_PER_ARRAY) + 1;
@@ -28,11 +30,11 @@ export default function SpectralBands() {
       <div
         role="slider"
         tabIndex={0}
-        aria-label="SPHEREx spectral band"
+        aria-label={t("sliderLabel")}
         aria-valuemin={1}
         aria-valuemax={TOTAL}
         aria-valuenow={band}
-        aria-valuetext={`Band ${band}: detector array ${array.index}, ${array.from}–${array.to} micrometres`}
+        aria-valuetext={t("valueText", { band, array: array.index, from: String(array.from), to: String(array.to) })}
         onKeyDown={onKey}
         className="landing-focus flex h-24 items-end gap-[3px] rounded-sm md:h-28"
       >
@@ -65,7 +67,7 @@ export default function SpectralBands() {
       </div>
       <div className="mt-2 flex justify-between font-mono text-[11px] text-stellar/50">
         <span>0.75 µm</span>
-        <span>wavelength →</span>
+        <span>{t("wavelength")}</span>
         <span>5.0 µm</span>
       </div>
       <AnimatePresence mode="wait">
@@ -77,18 +79,25 @@ export default function SpectralBands() {
           transition={{ duration: 0.25 }}
           className="mt-5 grid gap-1"
         >
-          <p className="font-mono text-xs text-ion">
-            Band {band} · array {array.index}, channel {channel} of {CHANNELS_PER_ARRAY} · {array.from.toFixed(2)}–{array.to.toFixed(2)} µm
+          <p className="font-mono text-xs text-pulse">
+            {t("readout", {
+              band,
+              array: array.index,
+              channel,
+              channels: CHANNELS_PER_ARRAY,
+              from: array.from.toFixed(2),
+              to: array.to.toFixed(2),
+            })}
           </p>
           <ul className="text-sm text-stellar/75">
-            {array.features.map((f) => (
-              <li key={f}>{f}</li>
+            {ARRAY_FEATURES.map((f) => (
+              <li key={f}>{t(`arrays.a${array.index}.${f}`)}</li>
             ))}
           </ul>
         </motion.div>
       </AnimatePresence>
       <p className="mt-4 text-xs text-stellar/45">
-        Ranges per detector array, as published by NASA/IPAC IRSA. Bar heights are decorative.
+        {t("note")}
       </p>
     </div>
   );

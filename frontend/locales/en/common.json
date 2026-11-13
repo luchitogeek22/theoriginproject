@@ -1,0 +1,85 @@
+{
+  "common": {
+    "brand": "THE ORIGIN PROJECT",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "search": "Search",
+    "goHome": "Go to home"
+  },
+  "metadata": {
+    "siteName": "The Origin Project",
+    "site": {
+      "title": "THE ORIGIN PROJECT — Explore the universe. Understand its changes.",
+      "description": "Interactive observatory over real NASA SPHEREx observations: explore the sky, travel through time, and understand the evidence."
+    },
+    "observatory": {
+      "title": "Observatory — The Origin Project",
+      "description": "Explore the sky with real SPHEREx observations and choose a target to investigate."
+    },
+    "livingSky": {
+      "title": "Living sky — The Origin Project",
+      "description": "See how the sky changes across SPHEREx epochs."
+    },
+    "timeExplorer": {
+      "title": "Time explorer — The Origin Project",
+      "description": "Travel through time over real SPHEREx exposures and watch objects move or change brightness."
+    },
+    "spectralLab": {
+      "title": "Spectral lab — The Origin Project",
+      "description": "Build a spectrum from SPHEREx photometry of a target across wavelengths."
+    },
+    "candidates": {
+      "title": "Candidates — The Origin Project",
+      "description": "Candidates for change detected in SPHEREx observations, with their evidence."
+    },
+    "journal": {
+      "title": "Journal — The Origin Project",
+      "description": "Your saved investigations."
+    },
+    "login": {
+      "title": "Sign in — The Origin Project",
+      "description": "Sign in to save your investigations in the journal."
+    },
+    "demo": {
+      "title": "Guided demo — The Origin Project",
+      "description": "A guided tour of the platform with validated targets."
+    },
+    "landing": {
+      "title": "The Origin Project — Explore the universe. Discover what changes.",
+      "description": "An interactive scientific platform to explore real SPHEREx observations and investigate the dynamic universe. Built for the 2026 NASA Space Apps Challenge."
+    }
+  },
+  "nav": {
+    "label": "Main",
+    "tagline": "Explore the universe. Understand its changes.",
+    "observatory": "Observatory",
+    "livingSky": "Living sky",
+    "timeExplorer": "Time explorer",
+    "spectralLab": "Spectral lab",
+    "candidates": "Candidates",
+    "journal": "Journal",
+    "footer": "Real SPHEREx data via NASA/IPAC IRSA. Independent educational initiative.",
+    "headerNote": "Interactive observatory · SPHEREx data (NASA/IPAC IRSA)"
+  },
+  "mode": {
+    "label": "Mode",
+    "explore": "Explore",
+    "investigate": "Investigate"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language, current: {language}"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "body": "The screen hit an unexpected error. Your saved research has not been deleted.",
+    "reference": "Reference: {digest}."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This address does not exist or was moved."
+  }
+}
