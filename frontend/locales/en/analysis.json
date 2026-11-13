@@ -56,6 +56,23 @@
       "trajectory": "Trajectory tail",
       "wiseReference": "WISE reference frame"
     },
+    "display": {
+      "legend": "Display",
+      "contrast": "Contrast",
+      "brightness": "Brightness",
+      "invert": "Invert (white background)",
+      "reset": "Reset",
+      "help": "Only changes how the image looks on your screen and applies equally to every frame, so comparisons between frames stay valid. Downloads use the original image."
+    },
+    "probe": {
+      "hint": "Click the image to mark a point and see its coordinates.",
+      "label": "Marked point (RA, Dec J2000)",
+      "simbad": "Look up in SIMBAD",
+      "copy": "Copy coordinates",
+      "copied": "Coordinates copied.",
+      "clear": "Remove mark",
+      "precision": "Accurate to about 3″: each SPHEREx pixel is 6.15″ wide. The mark stays on the same point of the sky in every frame."
+    },
     "track": {
       "known": "The trajectory uses the known proper motion{detail}. Blue circle: predicted position at the first visit; orange cross: at the last; white ring: predicted position in this frame (radius = uncertainty).",
       "displacement": " (displacement {arcsec}″ in the window)",

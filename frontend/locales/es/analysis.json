@@ -56,6 +56,23 @@
       "trajectory": "Cola de trayectoria",
       "wiseReference": "Cuadro WISE de referencia"
     },
+    "display": {
+      "legend": "Visualización",
+      "contrast": "Contraste",
+      "brightness": "Brillo",
+      "invert": "Invertir (fondo blanco)",
+      "reset": "Restablecer",
+      "help": "Solo cambia cómo se ve la imagen en tu pantalla y se aplica igual a todos los cuadros, así que la comparación entre cuadros sigue siendo válida. Las descargas usan la imagen original."
+    },
+    "probe": {
+      "hint": "Haz clic sobre la imagen para marcar un punto y ver sus coordenadas.",
+      "label": "Punto marcado (RA, Dec J2000)",
+      "simbad": "Buscar en SIMBAD",
+      "copy": "Copiar coordenadas",
+      "copied": "Coordenadas copiadas.",
+      "clear": "Quitar marca",
+      "precision": "Precisión de unos 3″: cada píxel de SPHEREx mide 6,15″. La marca se mantiene en el mismo punto del cielo en todos los cuadros."
+    },
     "track": {
       "known": "La trayectoria usa el movimiento propio conocido{detail}. Círculo azul: posición prevista en la primera visita; cruz naranja: en la última; anillo blanco: posición prevista en este cuadro (radio = incertidumbre).",
       "displacement": " (desplazamiento {arcsec}″ en la ventana)",

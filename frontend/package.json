@@ -31,6 +31,7 @@
     "lint": "next lint",
     "start": "next start",
     "test:e2e": "playwright test",
+    "test:unit": "node --test tests/unit/gridCoords.test.mjs",
     "test:i18n": "node --test tests/i18n/messages.test.mjs tests/i18n/hardcoded-text.test.mjs tests/i18n/route-guard.test.mjs"
   },
   "version": "0.1.0"

@@ -156,7 +156,7 @@
         "rdra": {
           "kind": "Mira-type long-period variable",
           "summary": "A pulsating red giant whose brightness rises and falls over a cycle of months.",
-          "note": "Spread across three archive collections (qr2, qr2_deep, qr3_deep)."
+          "note": "Lies in the SPHEREx deep field: it appears in both the wide and deep collections (dr1, dr1_deep, qr3)."
         }
       }
     },

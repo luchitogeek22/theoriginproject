@@ -156,7 +156,7 @@
         "rdra": {
           "kind": "Variable de período largo tipo Mira",
           "summary": "Una gigante roja pulsante cuyo brillo sube y baja en un ciclo de meses.",
-          "note": "Distribuida en tres colecciones del archivo (qr2, qr2_deep, qr3_deep)."
+          "note": "Está en el campo profundo de SPHEREx: aparece en las colecciones de amplio campo y profundas (dr1, dr1_deep, qr3)."
         }
       }
     },
