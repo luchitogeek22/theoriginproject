@@ -13,7 +13,6 @@ from app.services.catalogs import CatalogUnavailable, gaia_position_at  # noqa: 
 from app.services.sequence import FrameInput, common_grid  # noqa: E402
 from app.services.sequence_extras import build_overlay, target_track  # noqa: E402
 from app.services.spherex_product import read_product  # noqa: E402
-from app.services.targets import propagate  # noqa: E402
 
 RA0, DEC0 = 150.0, 2.0
 SCALE = 6.15 / 3600.0

@@ -175,7 +175,7 @@ def run_sequence(params: dict) -> dict:
 
 def _run_sequence(params: dict) -> dict:
     job_id = params["_job_id"]
-    ra, dec, size = params["ra_deg"], params["dec_deg"], params["size_arcmin"]
+    size = params["size_arcmin"]
     pool = params["max_frames"] * (2 if params["mode"] == "brightness" else 1)
     candidates, n_available, limitations = _gather(params, pool)
     key = _key(params, [c["product_id"] for c in candidates])
@@ -242,7 +242,7 @@ def _run_sequence(params: dict) -> dict:
 
 def run_shift_stack(params: dict) -> dict:
     job_id = params["_job_id"]
-    ra, dec, size = params["ra_deg"], params["dec_deg"], params["size_arcmin"]
+    size = params["size_arcmin"]
     candidates, n_available, limitations = _gather({**params, "mode": "motion"}, params["max_frames"])
     stack_params = {**params, "mode": f"shift:{params['max_speed_arcsec_yr']}:{params['steps']}"}
     key = "s" + _key(stack_params, [c["product_id"] for c in candidates])[1:]

@@ -4,8 +4,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const FRONTEND = new URL("../../", import.meta.url).pathname;
+const FRONTEND = fileURLToPath(new URL("../../", import.meta.url));
 const DIRS = ["app", "components"];
 
 /** Official names, units and symbols that stay identical in every language. */

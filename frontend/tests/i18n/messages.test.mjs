@@ -3,8 +3,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("../../locales/", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("../../locales/", import.meta.url));
 const REFERENCE = "en";
 const locales = readdirSync(ROOT, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
 const filesOf = (locale) => readdirSync(join(ROOT, locale)).filter((f) => f.endsWith(".json")).sort();
