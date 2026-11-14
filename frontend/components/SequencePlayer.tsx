@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Download, Link2, Loader2, Pause, Play, SkipBack, SkipForward, TriangleAlert } from "lucide-react";
 import ResultBadge from "@/components/ResultBadge";
 import BeforeAfter, { MotionSentence } from "@/components/BeforeAfter";
+import DifferenceFrame from "@/components/DifferenceFrame";
 import { assetUrl } from "@/lib/api";
 import { useMotionFormat } from "@/lib/motion";
 import { useErrorText } from "@/lib/errors";
@@ -167,6 +168,7 @@ export default function SequencePlayer({
   const [exporting, setExporting] = useState(false);
   const [display, setDisplay] = useState(DISPLAY_DEFAULT);
   const [probe, setProbe] = useState<Probe | null>(null);
+  const [difference, setDifference] = useState(false);
   const [probeMessage, setProbeMessage] = useState("");
   const firstFrames = useRef(frames);
 
@@ -210,6 +212,8 @@ export default function SequencePlayer({
 
   const shownIndex = blink ? (blinkPhase ? blinkB : blinkA) : index;
   const frame = frames[Math.min(shownIndex, total - 1)];
+  const referenceFrame = frames[Math.min(blinkA, total - 1)];
+  const showDifference = difference && total > 1;
 
   const step = useCallback(
     (delta: number) => {
@@ -391,14 +395,24 @@ export default function SequencePlayer({
           onClick={markPosition}
           data-testid="frame-canvas"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={frameUrl(frame)}
-            alt={t("frameAlt", { number: frame.index + 1, total, date: frame.date_iso, detector: frame.detector })}
-            className="h-full w-full"
-            style={{ imageRendering: smooth ? "auto" : "pixelated", filter: displayFilter }}
-            draggable={false}
-          />
+          {showDifference ? (
+            <DifferenceFrame
+              frames={frames}
+              frame={frame}
+              reference={referenceFrame}
+              smooth={smooth}
+              alt={t("difference.alt", { number: frame.index + 1, reference: referenceFrame.index + 1 })}
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={frameUrl(frame)}
+              alt={t("frameAlt", { number: frame.index + 1, total, date: frame.date_iso, detector: frame.detector })}
+              className="h-full w-full"
+              style={{ imageRendering: smooth ? "auto" : "pixelated", filter: displayFilter }}
+              draggable={false}
+            />
+          )}
           {probe && (
             <svg
               viewBox="0 0 100 100"
@@ -808,7 +822,21 @@ export default function SequencePlayer({
                 >
                   {blink ? t("blink.stop") : t("blink.start")}
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={difference}
+                  onClick={() => setDifference((d) => !d)}
+                  className={`rounded border px-2 py-1 ${difference ? "border-pulse text-pulse" : "border-line"}`}
+                  data-testid="difference-toggle"
+                >
+                  {difference ? t("difference.stop") : t("difference.start")}
+                </button>
               </div>
+              {difference && (
+                <p className="mt-1" data-testid="difference-legend">
+                  {t("difference.legend", { reference: referenceFrame.index + 1 })}
+                </p>
+              )}
             </fieldset>
           </div>
         )}

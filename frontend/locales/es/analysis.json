@@ -123,7 +123,14 @@
       "processingVersion": "Versión de procesamiento {version}",
       "notMeasurement": "Estas imágenes son una vista de secuencia, no una medición de movimiento."
     },
-    "limitations": "Limitaciones"
+    "limitations": "Limitaciones",
+    "difference": {
+      "start": "Diferencia con A",
+      "stop": "Imágenes normales",
+      "alt": "Imagen de diferencia: cuadro {number} menos el cuadro de referencia {reference}",
+      "legend": "Cuadro mostrado menos el cuadro A ({reference}). Naranja: más brillante que en A (algo llegó o se encendió). Azul: más débil que en A (algo se fue o se apagó). Negro: sin cambio. Las diferencias usan la escala mostrada y se saturan en sus límites. Los cambios dentro de 3× el ruido de la diferencia se muestran en negro.",
+      "failed": "No se pudo calcular la imagen de diferencia (no se pudieron leer los cuadros)."
+    }
   },
   "beforeAfter": {
     "motionSentence": "Se movió {arcsec}″ hacia el {direction} entre {from} y {to}, igual que predice el catálogo.",

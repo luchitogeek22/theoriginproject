@@ -123,7 +123,14 @@
       "processingVersion": "Processing version {version}",
       "notMeasurement": "These images are a sequence view, not a motion measurement."
     },
-    "limitations": "Limitations"
+    "limitations": "Limitations",
+    "difference": {
+      "start": "Difference from A",
+      "stop": "Normal images",
+      "alt": "Difference image: frame {number} minus reference frame {reference}",
+      "legend": "Frame shown minus frame A ({reference}). Orange: brighter than in A (something arrived or brightened). Blue: fainter than in A (something left or dimmed). Black: no change. Differences use the displayed scale and saturate at its limits. Changes within 3× the noise of the difference are shown as black.",
+      "failed": "The difference image could not be computed (the frames could not be read)."
+    }
   },
   "beforeAfter": {
     "motionSentence": "Moved {arcsec}″ to the {direction} between {from} and {to}, as the catalogue predicts.",
