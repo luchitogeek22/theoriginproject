@@ -27,18 +27,15 @@
     },
     "explore": {
       "title": "Cada región del cielo cuenta una historia.",
-      "body": "Señala cualquier zona del cielo por sus coordenadas — ascensión recta y declinación — y The Origin Project consulta al archivo de SPHEREx qué observó allí y cuándo.",
+      "body": "Elige coordenadas y consultamos qué observó SPHEREx allí.",
       "grid": {
-        "term": "Cuadrícula RA / Dec",
-        "detail": "El sistema de coordenadas que usan los astrónomos para ubicar cualquier punto del cielo."
+        "term": "Cuadrícula RA / Dec"
       },
       "constellations": {
-        "term": "Líneas de constelaciones",
-        "detail": "Referencias para orientarse: Orion, Ursa Major, Cassiopeia y Crux."
+        "term": "Líneas de constelaciones"
       },
       "markers": {
-        "term": "Marcadores con nombre",
-        "detail": "Los cinco objetivos del desafío, ubicados en sus posiciones de catálogo."
+        "term": "Marcadores con nombre"
       }
     },
     "mission": {

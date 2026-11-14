@@ -27,18 +27,15 @@
     },
     "explore": {
       "title": "Every region of the sky tells a story.",
-      "body": "Point at any patch of sky by its coordinates — right ascension and declination — and The Origin Project asks the SPHEREx archive what it saw there, and when.",
+      "body": "Pick coordinates and we ask SPHEREx what it observed there.",
       "grid": {
-        "term": "RA / Dec grid",
-        "detail": "The coordinate system astronomers use to address any point on the sky."
+        "term": "RA / Dec grid"
       },
       "constellations": {
-        "term": "Constellation lines",
-        "detail": "Landmarks for orientation: Orion, Ursa Major, Cassiopeia and Crux."
+        "term": "Constellation lines"
       },
       "markers": {
-        "term": "Named markers",
-        "detail": "The five challenge targets, placed at their catalogue positions."
+        "term": "Named markers"
       }
     },
     "mission": {
