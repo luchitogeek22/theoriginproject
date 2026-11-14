@@ -3,7 +3,7 @@
     "ariaLabel": "Mapa del cielo Aladin Lite",
     "loading": "Cargando el mapa del cielo (Aladin Lite {version})…",
     "errorTitle": "Mapa del cielo no disponible",
-    "errorBody": "No se pudo cargar Aladin Lite ({reason}). La secuencia de imágenes sigue funcionando; revisa tu conexión con aladin.cds.unistra.fr y recarga la página.",
+    "errorBody": "No se pudo cargar Aladin Lite ({reason}). La secuencia de imágenes sigue funcionando; revisa tu conexión con cdn.jsdelivr.net y recarga la página.",
     "reason": {
       "timeout": "tiempo agotado al cargar el script",
       "download": "no se pudo descargar el script",

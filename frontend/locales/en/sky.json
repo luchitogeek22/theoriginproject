@@ -3,7 +3,7 @@
     "ariaLabel": "Aladin Lite sky map",
     "loading": "Loading the sky map (Aladin Lite {version})…",
     "errorTitle": "Sky map unavailable",
-    "errorBody": "Aladin Lite could not be loaded ({reason}). The image sequence still works; check your connection to aladin.cds.unistra.fr and reload the page.",
+    "errorBody": "Aladin Lite could not be loaded ({reason}). The image sequence still works; check your connection to cdn.jsdelivr.net and reload the page.",
     "reason": {
       "timeout": "timed out while loading the script",
       "download": "the script could not be downloaded",

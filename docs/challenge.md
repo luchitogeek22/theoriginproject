@@ -256,16 +256,27 @@ Verificado en vivo contra IRSA, no solo leído:
   WISE 0855 12 cuadros D6 2025-05 a 2026-05 (46 épocas, desplazamiento previsto
   8,3″, 114 s); Barnard 12 cuadros D6 2025-08 a 2026-09 mezclando DR1 y QR3
   (93 s); R Draconis 7 cuadros D6 de DR1 y DR1 Deep (214 s).
-- **Pendiente.** El DOI de DR1 no está en `collection_dois.json` (la app dice
-  "see IRSA documentation"); copiarlo de IRSA, no inventarlo. El ePSF
-  (extensión `EPSF`, 21×21 zonas, sobremuestreo 5) existe desde la versión 7.0
-  y podría mejorar la fotometría de WISE 0855. HiPS de SPHEREx para Aladin:
-  `https://irsa.ipac.caltech.edu/data/hips/SPHEREx/spherex_allsky_cube`.
+- **Resuelto (2026-11-13, tarde).** DOI de DR1 en `collection_dois.json`:
+  `10.26131/IRSA678` (DR1 Spectral Images, DataCite 2026-11-02; DR1 Deep usa el
+  mismo). El cubo todo-cielo tiene `10.26131/IRSA679`.
+- **Resuelto: mapa del cielo con SPHEREx.** La HiPS DR1 de IRSA
+  (`https://irsa.ipac.caltech.edu/data/hips/SPHEREx/spherex_allsky_cube`,
+  teselas PNG, 102 planos) es ahora el fondo de Aladin en lugar de 2MASS.
+  Observado en Chromium dentro de `/time-explorer` (16 teselas 200).
+- **Incidente CDS (2026-11-13).** `aladin.cds.unistra.fr/AladinLite/api/v3/*`
+  devuelve 404 para todas las versiones (también `latest`), SIMBAD da 404 y las
+  HiPS de alasky no responden. El mapa no cargaba. Aladin se carga ahora como
+  módulo ES desde `cdn.jsdelivr.net/npm/aladin-lite@3.6.5`. Las capas Gaia y
+  WISE siguen alojadas en CDS: fallarán con su aviso mientras dure la caída.
+- **Pendiente.** El ePSF (extensión `EPSF`, 21×21 zonas, sobremuestreo 5,
+  notebook `spherex-psf`) podría mejorar la fotometría de WISE 0855. Los
+  notebooks de IRSA no traen ninguno de series temporales: la secuencia por
+  épocas sigue siendo aporte propio.
 
 ### Otras referencias
 
 - NASA/IPAC IRSA, archivo de datos SPHEREx: https://irsa.ipac.caltech.edu
-- Aladin Lite (CDS): https://aladin.cds.unistra.fr/AladinLite/
+- Aladin Lite (CDS): https://aladin.cds.unistra.fr/AladinLite/ (script servido desde npm/jsDelivr)
 - Astropy: https://www.astropy.org
 - Backyard Worlds: https://www.backyardworlds.org
 

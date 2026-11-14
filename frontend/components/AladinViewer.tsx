@@ -3,12 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
-export const ALADIN_VERSION = "3.6.1";
-export const ALADIN_SCRIPT_URL = `https://aladin.cds.unistra.fr/AladinLite/api/v3/${ALADIN_VERSION}/aladin.js`;
-export const ALADIN_BASE_SURVEY = "P/2MASS/color";
+// CDS stopped serving aladin.cds.unistra.fr/AladinLite/api/v3/* (404, 2026-11-13); use the npm build.
+export const ALADIN_VERSION = "3.6.5";
+export const ALADIN_SCRIPT_URL = `https://cdn.jsdelivr.net/npm/aladin-lite@${ALADIN_VERSION}/dist/aladin.js`;
+// SPHEREx DR1 all-sky cube (DOI 10.26131/IRSA679), PNG tiles served by IRSA; replaces the CDS-hosted 2MASS base.
+export const ALADIN_BASE_SURVEY = "https://irsa.ipac.caltech.edu/data/hips/SPHEREx/spherex_allsky_cube";
 
 const SCRIPT_TIMEOUT_MS = 15000;
-const POLL_TIMEOUT_MS = 8000;
 
 /** HiPS overlays; their visible names live in the `aladinViewer.layers` messages. */
 export const CATALOG_LAYERS = {
@@ -73,51 +74,33 @@ function validApi(value: unknown): value is AladinGlobal {
   return typeof api.aladin === "function" && !!api.init && typeof api.init.then === "function";
 }
 
-function injectScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
-    if (existing) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    const timer = window.setTimeout(() => reject(new AladinLoadError("timeout", "timed out while loading the script")), SCRIPT_TIMEOUT_MS);
-    script.onload = () => {
-      window.clearTimeout(timer);
-      resolve();
-    };
-    script.onerror = () => {
-      window.clearTimeout(timer);
-      script.remove();
-      reject(new AladinLoadError("download", "the script could not be downloaded"));
-    };
-    document.head.appendChild(script);
+/** The npm build is an ES module whose default export is the `A` API; it sets no global. */
+async function importModule(src: string): Promise<AladinGlobal> {
+  let timer = 0;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = window.setTimeout(() => reject(new AladinLoadError("timeout", "timed out while loading the script")), SCRIPT_TIMEOUT_MS);
   });
-}
-
-function waitForGlobal(): Promise<AladinGlobal> {
-  return new Promise((resolve, reject) => {
-    const started = Date.now();
-    const poller = window.setInterval(() => {
-      if (validApi(window.A)) {
-        window.clearInterval(poller);
-        resolve(window.A);
-      } else if (Date.now() - started > POLL_TIMEOUT_MS) {
-        window.clearInterval(poller);
-        reject(new AladinLoadError("noApi", "the script loaded but did not expose the API"));
-      }
-    }, 100);
-  });
+  try {
+    const mod = await Promise.race([
+      import(/* webpackIgnore: true */ src).catch(() => {
+        throw new AladinLoadError("download", "the script could not be downloaded");
+      }),
+      timeout,
+    ]);
+    const api: unknown = (mod as { default?: unknown }).default;
+    if (!validApi(api)) throw new AladinLoadError("noApi", "the script loaded but did not expose the API");
+    window.A = api;
+    return api;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 function loadAladin(): Promise<AladinGlobal> {
   if (validApi(window.A)) return window.A.init.then(() => window.A as AladinGlobal);
   if (apiPromise) return apiPromise;
   apiPromise = (async () => {
-    await injectScript(ALADIN_SCRIPT_URL);
-    const api = await waitForGlobal();
+    const api = await importModule(ALADIN_SCRIPT_URL);
     await api.init;
     return api;
   })();
