@@ -4,13 +4,15 @@ Every call has a total deadline and a per-field cache; failures raise CatalogUna
 degrade honestly instead of guessing.
 """
 
+import hashlib
+import json
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from typing import Any
 
 from app.config import get_settings
 from app.logging import get_logger
-from app.services.store import cache_get_json, cache_set_json
+from app.services.store import cache_get_json, cache_set_json, storage_exists, storage_get, storage_put
 from app.services.targets import propagate
 
 log = get_logger("catalogs")
@@ -64,15 +66,26 @@ def _gaia_query(ra: float, dec: float, radius_deg: float, g_limit: float, row_li
 def gaia_cone(
     ra: float, dec: float, radius_deg: float, g_limit: float = 18.0, row_limit: int = 300
 ) -> list[dict[str, Any]]:
+    """Gaia DR3 stars in a cone. Answers are cached in memory and kept durably per field, so a
+    later failure (a 429, a timeout) still gets the last real answer for the same field."""
     key = f"gaia:{ra:.3f}:{dec:.3f}:{radius_deg:.3f}:{g_limit:.1f}:{row_limit}"
     cached = cache_get_json(key)
     if cached is not None:
         return cached
-    rows = _with_deadline(
-        _gaia_query, ra, dec, radius_deg, g_limit, row_limit,
-        seconds=get_settings().catalog_timeout_seconds,
-    )
-    cache_set_json(key, rows, get_settings().catalog_cache_ttl_seconds)
+    durable = f"catalogs/gaia/{hashlib.sha256(key.encode()).hexdigest()[:32]}.json"
+    try:
+        rows = _with_deadline(
+            _gaia_query, ra, dec, radius_deg, g_limit, row_limit,
+            seconds=get_settings().catalog_timeout_seconds,
+        )
+    except CatalogUnavailable:
+        if not storage_exists(durable):
+            raise
+        log.warning("Gaia unavailable; serving the stored answer for %s", key)
+        rows = json.loads(storage_get(durable))
+    else:
+        storage_put(durable, json.dumps(rows).encode())
+    cache_set_json(key, rows, get_settings().gaia_cache_ttl_seconds)
     return rows
 
 

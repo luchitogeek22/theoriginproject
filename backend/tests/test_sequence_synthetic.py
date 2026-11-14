@@ -437,3 +437,14 @@ def test_images_vary_on_origin_so_a_cached_copy_never_blocks_a_cors_reader(archi
         assert "immutable" in response.headers["cache-control"]
     with_origin = client.get(result["frames"][0]["png_url"], headers={"Origin": "http://localhost:3000"})
     assert with_origin.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
+def test_brightness_frames_matching_the_wavelength_are_spread_over_the_whole_window():
+    from app.services.sequence import spread_evenly
+
+    matching = [0, 1, 2, 3, 5, 8, 9, 11, 13, 14, 16, 17, 19, 20, 22, 23]
+    chosen = spread_evenly(matching, 12)
+    assert len(chosen) == 12
+    assert chosen[0] == 0 and chosen[-1] == 23
+    assert chosen == sorted(set(chosen)) and set(chosen) <= set(matching)
+    assert spread_evenly(matching[:5], 12) == matching[:5]

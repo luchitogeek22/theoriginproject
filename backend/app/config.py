@@ -68,6 +68,8 @@ class Settings(BaseSettings):
     cadc_tap_url: str = "https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus"
     wise_ibe_url: str = "https://irsa.ipac.caltech.edu/ibe"
     catalog_cache_ttl_seconds: int = 86400
+    # Gaia DR3 is a frozen release: a field answer stays valid, so it is kept for 30 days.
+    gaia_cache_ttl_seconds: int = 30 * 86400
     alignment_error_pix: float = 0.1
 
     @property

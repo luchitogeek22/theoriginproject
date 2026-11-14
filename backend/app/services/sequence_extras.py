@@ -21,6 +21,8 @@ MAX_GAIA_STARS = 40
 TARGET_EXCLUSION_PX = 4.0
 UNCERTAINTY_PX = 1.5
 TARGET_DETECTED_SNR = 5.0
+KNOWN_MOTION_MIN_FRAMES = 4
+KNOWN_MOTION_MAX_SIZE_PX = 150
 
 
 def resolve_motion(params: dict[str, Any]) -> dict[str, Any] | None:
@@ -37,6 +39,7 @@ def resolve_motion(params: dict[str, Any]) -> dict[str, Any] | None:
         return {
             "pmra": params["pm_ra_mas_yr"], "pmdec": params["pm_dec_mas_yr"],
             "plx": params.get("parallax_mas"), "epoch": epoch,
+            "source": "Proper motion supplied with the request",
         }
     match = match_known_target(params["ra_deg"], params["dec_deg"])
     if match is None:
@@ -45,6 +48,7 @@ def resolve_motion(params: dict[str, Any]) -> dict[str, Any] | None:
     return {
         "pmra": target["pmra_mas_yr"], "pmdec": target["pmdec_mas_yr"],
         "plx": target.get("parallax_mas"), "epoch": epoch,
+        "source": target.get("catalog") or target["name"],
     }
 
 
@@ -69,6 +73,86 @@ def view_center(params: dict[str, Any], mjds: list[float]) -> tuple[float, float
         return params["ra_deg"], params["dec_deg"]
     track, _ = target_track(params, [float(np.mean(mjds))])
     return track[0]
+
+
+def build_known_motion(
+    warped: list[dict[str, Any]], size_px: int, params: dict[str, Any], target_snr: float | None = None,
+    lightcurve: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Known-motion stack test and measured motion on the frames of a motion sequence.
+
+    Reuses shift_stack.targeted_check and shift_stack.measure_motion on the already warped frames, so
+    it costs no download. The internal "_stack_mean" entry is for the caller to render, never to send.
+    """
+    from app.services import shift_stack
+
+    def skipped(reason: str) -> dict[str, Any]:
+        return {"ok": False, "reason": reason, "limitations": [reason]}
+
+    motion = resolve_motion(params)
+    if motion is None:
+        return skipped("No proper motion is known for this position, so the known-motion check was not run.")
+    usable = [w for w in warped if w.get("variance") is not None]
+    if len(usable) < KNOWN_MOTION_MIN_FRAMES:
+        return skipped(
+            f"At least {KNOWN_MOTION_MIN_FRAMES} frames are needed for the known-motion check; found {len(usable)}."
+        )
+    if size_px > KNOWN_MOTION_MAX_SIZE_PX:
+        return skipped(
+            "The field is too large to run the known-motion check quickly "
+            f"({size_px} px; at most {KNOWN_MOTION_MAX_SIZE_PX} px); use a smaller field of view."
+        )
+    images = [w["image"] for w in usable]
+    variances = [w["variance"] for w in usable]
+    mjds = [w["mjd"] for w in usable]
+    centre = ((size_px - 1) / 2.0, (size_px - 1) / 2.0)
+    targeted = shift_stack.targeted_check(images, variances, mjds, motion["pmra"], motion["pmdec"], centre)
+    reference = {
+        "source": motion.get("source", "catalogue"),
+        "pm_ra_mas_yr": float(motion["pmra"]),
+        "pm_dec_mas_yr": float(motion["pmdec"]),
+        "total_arcsec_yr": float(np.hypot(motion["pmra"], motion["pmdec"]) / 1000.0),
+    }
+    if not targeted.get("ok"):
+        reason = (targeted.get("limitations") or ["The known-motion check could not be calibrated."])[0]
+        return {**skipped(reason), "reference": reference}
+    if target_snr is None and lightcurve:
+        target_snr = lightcurve.get("target_median_snr")
+    saturated = bool(lightcurve) and (
+        lightcurve.get("method") == "psf_wings" or (lightcurve.get("target_flagged_fraction") or 0.0) >= 0.5
+    )
+    if saturated:
+        # A masked (saturated or flagged) core biases the centroid: report it instead of a wrong number.
+        measured = {
+            "measurable": False,
+            "reason": "The target saturates or is flagged in most frames of this detector, so its position "
+            "cannot be measured reliably.",
+        }
+    else:
+        measured = shift_stack.measure_motion(images, variances, mjds, motion["pmra"], motion["pmdec"], centre)
+    if measured.get("measurable"):
+        years = measured["baseline_days"] / 365.25
+        if years > 0:
+            measured["measured_arcsec_yr"] = measured["measured_arcsec"] / years
+            measured["predicted_arcsec_yr"] = measured["predicted_arcsec"] / years
+        if measured["uncertainty_arcsec"] > 0:
+            measured["agreement_sigma"] = measured["difference_arcsec"] / measured["uncertainty_arcsec"]
+    detection = {
+        key: targeted[key]
+        for key in ("observed_sigma", "p_value", "sigma_equivalent", "offset_px", "n_visits",
+                    "n_null", "predicted_motion_px")
+    }
+    if target_snr is not None and np.isfinite(target_snr):
+        detection["median_frame_snr"] = float(target_snr)
+    return {
+        "ok": True,
+        "reason": None,
+        "reference": reference,
+        "detection": detection,
+        "measured": measured,
+        "limitations": targeted.get("limitations", []),
+        "_stack_mean": targeted.get("_stack_mean"),
+    }
 
 
 def _gaia_field(params: dict[str, Any], gaia_fn: Callable, center: tuple[float, float] | None = None) -> tuple[list[dict[str, Any]], str]:
@@ -126,9 +210,11 @@ def build_lightcurve(kept, params: dict[str, Any], gaia_fn: Callable = gaia_cone
         ]
         comparisons.append(series)
     if candidates and not comparisons:
+        firsts = [c["first"] for c in candidates]
+        measurable = len(select_comparisons(firsts, target_flux, n_max=len(firsts), n_min=0))
         warning = warning or (
-            f"Only {len(candidates)} Gaia star(s) were measurable here (at least 3 unflagged stars with "
-            "SNR >= 10 are needed), so the curve is absolute."
+            f"Only {measurable} Gaia star(s) were measurable here ({measurable} of {len(candidates)} "
+            "candidates are unflagged with SNR >= 10; at least 3 are needed), so the curve is absolute."
         )
     curve = relative_lightcurve(mjds, target, comparisons)
     for point, mjd in zip(curve["points"], mjds):

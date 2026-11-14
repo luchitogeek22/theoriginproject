@@ -264,3 +264,30 @@ def test_the_lightcurve_says_how_many_frames_got_the_epsf_correction():
     curve = build_lightcurve(kept, params, gaia_fn=lambda *a, **k: [])
     assert "One curve per detector; detectors are never mixed. Aperture flux corrected with the SPHEREx ePSF in 3 of 4 frames." in curve["limitations"]
     assert curve["aperture_correction"] == {"model": "epsf", "frames": 3, "total": 4}
+
+
+def test_the_comparison_note_counts_the_stars_that_passed_the_cut():
+    import re
+
+    from app.services.sequence import FrameInput
+    from app.services.sequence_extras import build_lightcurve
+
+    bright, faint, empty = COMPARISONS[0], COMPARISONS[1], COMPARISONS[2]
+    kept = []
+    for k in range(3):
+        data = synthetic.make_fits(
+            [(*TARGET, 20.0), (*bright, 40.0), (*faint, 0.5)], shape=(64, 64), noise=0.2, seed=k,
+            mjd=60800.0 + 20 * k,
+        )
+        kept.append((FrameInput({"obs_id": f"o{k}"}, data), read_product(data)))
+    stars = [
+        {"source_id": i, "ra": ra, "dec": dec, "pmra": 0.0, "pmdec": 0.0, "parallax": None,
+         "g_mag": 14.0, "variable": False}
+        for i, (ra, dec) in enumerate((bright, faint, empty))
+    ]
+    params = {"ra_deg": TARGET[0], "dec_deg": TARGET[1], "size_arcmin": 6.0}
+    curve = build_lightcurve(kept, params, gaia_fn=lambda *a, **k: stars)
+    note = next(n for n in curve["limitations"] if n.startswith("Only "))
+    assert re.match(r"^Only (\d+) Gaia star\(s\) were measurable here.*$", note)
+    assert note.startswith("Only 1 Gaia star(s) were measurable here")
+    assert "3 candidate" in note
