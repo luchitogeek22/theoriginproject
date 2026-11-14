@@ -43,23 +43,23 @@
     },
     "mission": {
       "title": "The power of SPHEREx",
-      "body": "NASA's SPHEREx observatory photographs the entire sky again and again, splitting its light into colours we cannot see. Each repeat is a new chance to notice what moved or changed.",
+      "body": "NASA's SPHEREx observatory photographs the whole sky again and again. Each repeat shows what moved or changed.",
       "facts": {
         "bands": {
           "value": "102",
-          "label": "spectral bands, from six detector arrays of 17 channels each"
+          "label": "spectral bands"
         },
         "range": {
           "value": "0.75–5.0 µm",
-          "label": "near-infrared, beyond what the human eye can see"
+          "label": "near-infrared"
         },
         "cadence": {
           "value": "6 months",
-          "label": "to map the whole sky, repeated since May 2025"
+          "label": "per full-sky map"
         }
       },
-      "bandsPrompt": "Move across the bands to see what each part of the spectrum reveals.",
-      "disclaimer": "The glowing strips on the sphere illustrate an all-sky survey filling in over time. They are not SPHEREx's real pointing schedule."
+      "bandsPrompt": "Move across the bands.",
+      "disclaimer": "The strips on the sphere are illustrative."
     },
     "bands": {
       "sliderLabel": "SPHEREx spectral band",

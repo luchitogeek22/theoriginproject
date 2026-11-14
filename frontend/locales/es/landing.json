@@ -43,23 +43,23 @@
     },
     "mission": {
       "title": "El poder de SPHEREx",
-      "body": "El observatorio SPHEREx de la NASA fotografía todo el cielo una y otra vez, separando su luz en colores que no podemos ver. Cada repetición es una nueva oportunidad para notar qué se movió o cambió.",
+      "body": "El observatorio SPHEREx de la NASA fotografía todo el cielo una y otra vez. Cada repetición muestra qué se movió o cambió.",
       "facts": {
         "bands": {
           "value": "102",
-          "label": "bandas espectrales, de seis matrices de detectores con 17 canales cada una"
+          "label": "bandas espectrales"
         },
         "range": {
           "value": "0.75–5.0 µm",
-          "label": "infrarrojo cercano, más allá de lo que puede ver el ojo humano"
+          "label": "infrarrojo cercano"
         },
         "cadence": {
           "value": "6 meses",
-          "label": "para cartografiar todo el cielo, repetido desde mayo de 2025"
+          "label": "por cada mapa del cielo completo"
         }
       },
-      "bandsPrompt": "Recorre las bandas para ver qué revela cada parte del espectro.",
-      "disclaimer": "Las franjas luminosas sobre la esfera ilustran un relevamiento de todo el cielo que se completa con el tiempo. No son el calendario de apuntado real de SPHEREx."
+      "bandsPrompt": "Recorre las bandas.",
+      "disclaimer": "Las franjas de la esfera son ilustrativas."
     },
     "bands": {
       "sliderLabel": "Banda espectral de SPHEREx",
