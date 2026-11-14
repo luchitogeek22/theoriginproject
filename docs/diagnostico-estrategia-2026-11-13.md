@@ -52,10 +52,9 @@ Las afirmaciones sin verificar están marcadas como tales.
 - **No mostramos ningún resultado medido:** la frase de movimiento repite el catálogo, y la misma pantalla lo aclara.
 
 **Recomendación: no pivotar.** Recortar a un flujo y convertir el visor en un
-*flipbook que mide*, con dos resultados verificables contra la literatura:
-
-1. El período de R Draconis, obtenido solo con SPHEREx.
-2. El movimiento propio medido en las imágenes, comparado con Gaia.
+*flipbook que mide*: el movimiento propio medido sobre los mismos cuadros del
+video y comparado con Gaia. No requiere descargas extra ni almacenamiento
+nuevo, tarda segundos y funciona en cualquier coordenada.
 
 La entrega es el **domingo 15 de noviembre a las 23:59, hora local del
 evento**, y el plan está dimensionado para ese plazo.
@@ -63,7 +62,7 @@ evento**, y el plan está dimensionado para ese plazo.
 | | |
 |---|---|
 | **Nivel actual** | Producto funcional y honesto. Técnicamente está por encima del promedio de los repositorios rivales que encontramos, pero no tiene una idea memorable ni un resultado demostrable. Es competitivo para pasar la etapa local y débil para la global. |
-| **Mejor oportunidad** | Ser el único equipo que, además de mostrar el cambio, lo *mide* y lo contrasta con valores publicados. Los datos están: R Dra tiene 603 épocas disponibles en un detector y hoy usamos 7. |
+| **Mejor oportunidad** | Ser el único equipo que, además de mostrar el cambio, lo *mide* y lo contrasta con valores publicados, en segundos y para cualquier coordenada. |
 
 ## 2. Qué construimos realmente
 
@@ -95,7 +94,7 @@ en el flujo principal.
 | Cinco objetivos y demo guiada | ✅ Funcional | `lib/targets.ts`, `demo/page.tsx` | La demo dispara trabajos reales; sin caché caliente tarda minutos. |
 | Parpadeo, antes/después, diferencia, sondeo | ✅ Funcional | `SequencePlayer.tsx`, `DifferenceFrame.tsx` | Cubre los controles de WiseView que importan. |
 | Mapa Aladin con HiPS SPHEREx DR1 | ✅ Funcional | `AladinViewer.tsx` | Gaia y WISE dependen de CDS, que hoy está caído. |
-| Curva de luz | ⚠️ Parcial | `sequence.py:88`, `sequences.py:93-102` | Muestrea N cuadros antes de filtrar por longitud de onda: R Dra pasa de 603 épocas a 7 puntos. En producción salió absoluta, sin estrellas de comparación. |
+| Curva de luz | ⚠️ Parcial | `sequence.py:88`, `sequences.py:93-102` | Muestrea N cuadros antes de filtrar por longitud de onda: R Dra queda con 7 puntos de 24 cuadros bajados. En producción salió absoluta, sin estrellas de comparación. |
 | Espectro multi-detector | ✅ Funcional | `SpectrumPanel.tsx`, `routers/spectra.py` | Real, pero escondido debajo de una herramienta confusa. |
 | "Perfil espacial" del laboratorio espectral | ❌ Científicamente engañoso | `services/spectral.py:56-62` | Grafica una franja del recorte contra la longitud de onda, así que cada fila es otro trozo de cielo. Además queda vacío tras recargar. |
 | Apilado y búsqueda (modo Planeta X) | ✅ Funcional | `services/shift_stack.py` | Significancia corregida por ensayos. Es la base para medir movimiento. |
@@ -134,7 +133,7 @@ primer commit del archivo.
 ### Lo que un astrónomo objetaría
 
 - **No medimos el movimiento.** El "se movió 11,4″" sale del catálogo, y un jurado con formación pregunta enseguida qué midió la herramienta.
-- **Desperdiciamos la cadencia.** R Dra está cerca del polo norte eclíptico, en la zona profunda que se observa en cada órbita: tiene 603 épocas en D6, contra 46 de WISE 0855. La curva usa 7 puntos.
+- **La curva de las variables tiene pocos puntos.** De 24 cuadros bajados para R Dra quedan 7 a la misma longitud de onda. Hay más épocas disponibles (603 en D6, por estar en la zona profunda del polo eclíptico), pero aprovecharlas no conviene: ver la nota al final de §7.
 - **La variabilidad de color se confunde con la temporal.** El filtro de ±0,06 µm es correcto, pero se aplica después de muestrear y deja muy pocos puntos.
 - **WISE 0855 no se detecta cuadro a cuadro** (SNR mediana 2,6 en producción). Solo el apilado lo ve: hay que mostrarlo así y no prometer más.
 - **El "perfil espacial" no es un espectro** y no debería estar en una página llamada laboratorio espectral.
@@ -191,12 +190,18 @@ objetivos.
 
 ## 7. Oportunidades de innovación
 
-1. **Medir, no solo mostrar.**
-   - Movimiento propio ajustado sobre las imágenes, con el apilado sobre una grilla de velocidades que ya existe en el código, comparado con Gaia.
-   - Período de R Dra con todas sus épocas a longitud de onda constante, comparado con el GCVS.
-2. **Usar la cadencia profunda.** Cerca de los polos eclípticos SPHEREx observa en cada órbita. Es una propiedad de la misión que casi nadie aprovecha y que convierte la curva de luz en ciencia de verdad.
+1. **Medir, no solo mostrar.** Movimiento propio ajustado sobre los mismos cuadros del video, con el apilado sobre una grilla de velocidades que ya existe en el código, comparado con Gaia. Es cálculo local sobre datos ya descargados: segundos, en cualquier coordenada.
+2. **Curvas de luz más honestas dentro del mismo presupuesto.** Filtrar mejor por longitud de onda los cuadros que ya se bajan y mostrar la variación con su incertidumbre, sin prometer un período.
 3. **Separar color y tiempo como parte del relato.** Cada exposición ve otro color. Una línea que diga "estos cuadros tienen el mismo color" educa y nos diferencia.
-4. **Tarjeta de resultado verificable por objetivo.** Lo que medimos, lo publicado, la diferencia y el enlace a la fuente: un jurado lo comprueba en 10 segundos.
+4. **Tarjeta de resultado verificable.** Lo que medimos, lo publicado, la diferencia y el enlace a la fuente: un jurado lo comprueba en 10 segundos.
+
+**Descartado: el período de R Dra con cientos de épocas.** Lo evaluamos y no conviene:
+
+- Un recorte DR1 pesa 4 MB (el 97 % es la tabla ePSF), así que 603 recortes son unos 2,4 GB.
+- Tardaría de 4 a 30 minutos por objetivo, contra los 7–11 s actuales del video.
+- Producción usa almacenamiento local en un disco efímero que se borra en cada despliegue (`docs/deployment.md`); guardarlos exigiría S3 o un volumen pago.
+- Precalcularlo solo para los objetivos de prueba no sirve para otras coordenadas y parecería una demo preparada.
+- La ganancia es un número para un solo objeto, que además ya tiene su período publicado.
 
 ## 8. Matriz de oportunidades de producto
 
@@ -205,7 +210,7 @@ domingo.
 
 | Dirección | Relevancia | Diferenciación | Viabilidad científica | Demostrable en 48 h ×2 | Total | Lectura |
 |---|:-:|:-:|:-:|:-:|:-:|---|
-| **A. Flipbook que mide** (movimiento y período contrastados) | 5 | 5 | 4 | 4 (8) | **22** | Reutiliza el apilado y la fotometría que ya existen. **Recomendada.** |
+| **A. Flipbook que mide** (movimiento medido frente a Gaia) | 5 | 5 | 4 | 4 (8) | **22** | Reutiliza el apilado sobre los cuadros ya descargados. **Recomendada.** |
 | B. Ciencia ciudadana con movimientos inyectados | 4 | 2 | 4 | 3 (6) | 16 | SkyShift ya lo hace. |
 | C. Explorador espectral de 102 bandas | 3 | 3 | 4 | 3 (6) | 16 | Bueno como complemento (C3), no como núcleo: no habla del cambio en el tiempo. |
 | D. Línea de tiempo multimisión (SPHEREx, NEOSSat, WISE, Gaia) | 3 | 4 | 2 | 2 (4) | 13 | NEOSSat no cubre todo el cielo y observa en otra banda. |
@@ -252,7 +257,7 @@ domingo.
 1. La portada muestra el titular del desafío y los cinco objetivos: un clic lleva al video.
 2. El video arranca en menos de 10 s. Arriba aparece la tarjeta de resultado: "Medido en SPHEREx: 10,3 ± 0,4″/año · Gaia DR3: 10,4″/año" (son números de ejemplo; se reemplazan por los medidos).
 3. Controles de WiseView: parpadeo, antes/después y diferencia con A.
-4. En las variables, la curva de luz a longitud de onda constante, con el período ajustado y el valor del GCVS al lado.
+4. En las variables, la curva de luz a longitud de onda constante, con su incertidumbre y el tipo de variable publicado al lado (sin período ajustado).
 5. Para profundizar, en paneles plegados: espectro al vuelo, mapa Aladin, cobertura NEOSSat y modo Planeta X (apilado).
 
 ## 11. Funcionalidades prioritarias
@@ -261,7 +266,7 @@ domingo.
 
 - Despliegue de lo de hoy y caché caliente DR1 de los cinco objetivos.
 - Movimiento medido frente a Gaia: Barnard, ε Indi B y WISE 0855 con su incertidumbre.
-- Curva de R Dra con todas las épocas a longitud de onda constante, y su período.
+- Curvas de las variables con el filtro de longitud de onda aplicado sobre los cuadros ya bajados, mostrando la incertidumbre.
 - Navegación reducida a Observatorio, Explorador y Demo.
 - Video de 30 s y 7 diapositivas.
 
@@ -292,8 +297,8 @@ Mantener la actual, que es del tamaño correcto: Next.js en Vercel, FastAPI en
 Railway, caché de secuencias en almacenamiento y trabajos en segundo plano. No
 hace falta tecnología nueva. Los cambios son de alcance, no de estructura:
 
-- **Seleccionar los cuadros por longitud de onda antes de muestrear** en el modo brillo. Calcularla desde el encabezado del recorte, descargar en paralelo y dejar en caché los cinco objetivos con anticipación.
-- **Servicio de "resultado medido"** que reutilice `shift_stack.py` (ajuste de velocidad) y `photometry.py` (período por Lomb-Scargle de Astropy). Devuelve medición, incertidumbre, valor de referencia y fuente.
+- **Sin descargas ni almacenamiento nuevos.** Todo lo nuevo se calcula sobre los cuadros que ya se bajan para el video.
+- **Servicio de "resultado medido"** que reutilice `shift_stack.py` (ajuste de velocidad). Devuelve medición, incertidumbre, valor de referencia de Gaia y fuente.
 - **Caché de Gaia por campo**, con tiempo de vida largo y precalentada para los cinco objetivos.
 - **Ocultar funcionalidades con una bandera** en lugar de borrarlas, para no romper dependencias a 48 h de la entrega.
 
@@ -304,16 +309,16 @@ hace falta tecnología nueva. Los cambios son de alcance, no de estructura:
 | 1 · Crítico (hoy, 3 h) | Desplegar y calentar caché DR1 y Gaia | Railway, Vercel | `/sky/neossat` responde; los 5 videos salen en < 10 s | curl contra producción y e2e contra la URL pública |
 | | Reducir la navegación a tres páginas | `(app)/layout.tsx`, sidebar | Ningún enlace lleva a una página vacía o rota | e2e de navegación |
 | | Etiquetar o reemplazar las curvas de las tarjetas | `TargetCurve.tsx` | Dicen "ilustración" o muestran datos reales | Revisión visual |
-| 2 · Ciencia (6–8 h) | Curva de R Dra, seleccionando primero por longitud de onda | `sequence.py`, `routers/sequences.py` | ≥ 60 puntos válidos en una banda; período dentro de ±10 % del GCVS, o se informa que no converge | pytest con verdad inyectada y corrida real |
-| | Movimiento medido por ajuste de velocidad del apilado | `shift_stack.py`, servicio nuevo | Barnard y ε Indi B dentro de 2σ de Gaia; WISE 0855 informado con su incertidumbre | pytest sintético y corrida real de los tres |
+| 2 · Ciencia (4–6 h) | Movimiento medido por ajuste de velocidad del apilado, sobre los cuadros del video | `shift_stack.py`, servicio nuevo | Barnard y ε Indi B dentro de 2σ de Gaia; WISE 0855 informado con su incertidumbre; el video sigue saliendo en < 15 s | pytest sintético y corrida real de los tres |
+| | Curvas de las variables: filtro de longitud de onda sobre los cuadros ya bajados e incertidumbre visible | `routers/sequences.py`, `LightCurve.tsx` | Sin descargas extra; la nota de estrellas de comparación deja de contradecirse | pytest y corrida real de RW Aur y R Dra |
 | 3 · Diferencial (4 h) | Tarjeta "Medido frente a publicado" | `time-explorer/page.tsx`, componente nuevo | Muestra medición, referencia, diferencia y fuente enlazada | e2e en los cinco objetivos |
 | 4 · Experiencia (4 h) | Portada de una pantalla con el titular del desafío; espectro dentro del explorador | `(landing)`, `SpectrumPanel.tsx` | Del primer clic al video, ≤ 2 clics | Prueba con 3 personas y tabla en `docs/demo.md` |
 | 5 · Demo (3 h) | Video de 30 s y 7 diapositivas | — | ≤ 30 s, enlace público, marca de agua si hay imágenes generadas con IA | Revisión del equipo |
 | 6 · Documentación (2 h) | Texto de entrega, declaración de uso de IA, README | `README.md`, formulario | Campos del formulario completos | Lista de la guía oficial |
 
-Si la fase 2 no converge el sábado a la noche, se presenta el apilado como
-evidencia, que ya es real y significativo, y se recorta la tarjeta de período.
-No se presenta un número que no se midió.
+Si la medición de movimiento no es confiable el sábado a la noche, se presenta
+el apilado como evidencia, que ya es real y significativo, y se recorta la
+tarjeta. No se presenta un número que no se midió.
 
 ## 14. Guion de demostración
 
@@ -323,7 +328,7 @@ No se presenta un número que no se midió.
 |---|---|
 | 0–5 s | "SPHEREx mapea el cielo en 102 colores. ¿Qué cambió?" Se escriben las coordenadas de WISE 0855 y arranca el video. |
 | 5–13 s | Barnard: parpadeo y diferencia; la estrella se corre. Tarjeta "Medido en SPHEREx frente a Gaia DR3". |
-| 13–22 s | R Draconis: la curva con cientos de épocas y el período medido junto al publicado. |
+| 13–22 s | R Draconis: el brillo cambia en la misma escala y a la misma longitud de onda; la curva lo muestra. |
 | 22–30 s | WISE 0855: invisible cuadro a cuadro, aparece al apilar siguiendo su movimiento. "Así se buscaría un Planeta X." Enlace al sitio. |
 
 ### Presentación en vivo de 3 minutos (evento local)
@@ -332,7 +337,7 @@ No se presenta un número que no se midió.
 |---|---|
 | 0:00 | El problema: miles de imágenes por semana, cada una en otro color. Buscar cambios a ojo mezcla tiempo y color. |
 | 0:30 | En vivo desde la portada: un clic a Barnard, el video, el parpadeo, la diferencia y la tarjeta medida frente a Gaia. |
-| 1:15 | R Draconis: la curva y el período frente al GCVS. Remarcar que se obtuvo solo con SPHEREx. |
+| 1:15 | R Draconis y RW Aurigae: el cambio de brillo en una escala común y a la misma longitud de onda, con su incertidumbre. |
 | 1:50 | WISE 0855 y el apilado: de "no se ve" a "está donde predice el catálogo", con p < 0,001. |
 | 2:30 | Honestidad y recursos usados: DR1, Gaia, WISE, NEOSSat/CADC, y lo que la herramienta no hace. Cierre: cómo escala con DR2 y con el catálogo de 2027. |
 
@@ -351,7 +356,7 @@ No se presenta un número que no se midió.
 | Uso de IA sin declarar | ❌ Alta | Declararlo en el formulario. La guía también pide que la IA no genere la idea: el equipo decide qué partes de esta propuesta adopta y lo declara. |
 | Gaia limita los pedidos (429) durante la demo | ⚠️ Media | Caché por objetivo, precalentada. |
 | Caché fría: la demo tarda minutos | ⚠️ Media | Calentar los cinco objetivos después de cada despliegue. |
-| El período de R Dra no converge | ⚠️ Media | Mostrar la curva sin período; nunca forzar un número. |
+| La medición de movimiento no es confiable en WISE 0855 (señal débil) | ⚠️ Media | Mostrarla con su incertidumbre o solo el apilado; nunca forzar un número. |
 | El sitio está bloqueado en la red del jurado | ⚠️ Media | Clasificar el dominio en FortiGuard, como recomienda la guía. |
 | CDS caído (capas Gaia/WISE de Aladin, enlaces a SIMBAD) | ℹ️ Baja | El fondo ya es SPHEREx DR1 servido por IRSA, y las capas avisan si fallan. |
 | Candidatos globales visibles para todos | ⚠️ Media | Ocultar la página y no permitir que la verificación escriba sin autenticación. |
@@ -364,8 +369,8 @@ No se presenta un número que no se midió.
 | ¿Qué tan competitivos somos? | Por encima de la media de los rivales públicos en rigor; empatados o por debajo en presentación. Hoy somos candidatos a nominación local, no a premio global. |
 | ¿Qué nos falta para destacar? | Un número medido por nosotros que coincida con la literatura, y un video de 30 s que lo muestre. |
 | ¿Qué eliminar? | Cielo vivo, Copilot, Descubrimientos, Candidatos, el perfil espacial, el Diario y el login de la navegación pública. |
-| ¿Qué construir ya? | Desplegar y calentar la caché; la curva de R Dra con todas sus épocas; el movimiento medido frente a Gaia; la tarjeta de resultado. |
-| ¿Mejor oportunidad? | "El flipbook que mide": la única entrada que, además de mostrar el cambio, lo cuantifica con SPHEREx y lo contrasta con Gaia y el GCVS en los cinco objetivos del enunciado. |
+| ¿Qué construir ya? | Desplegar y calentar la caché; el movimiento medido frente a Gaia sobre los cuadros del video; la tarjeta de resultado. |
+| ¿Mejor oportunidad? | "El flipbook que mide": la única entrada que, además de mostrar el cambio, lo cuantifica con SPHEREx y lo contrasta con Gaia, en segundos y para cualquier coordenada. |
 
 ---
 
