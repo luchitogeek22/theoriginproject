@@ -12,7 +12,6 @@ export default function SpectralBands() {
   const t = useTranslations("landing.bands");
   const [band, setBand] = useState(52);
   const arrayIndex = Math.floor((band - 1) / CHANNELS_PER_ARRAY);
-  const channel = ((band - 1) % CHANNELS_PER_ARRAY) + 1;
   const array = DETECTOR_ARRAYS[arrayIndex];
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -80,14 +79,7 @@ export default function SpectralBands() {
           className="mt-5 grid gap-1"
         >
           <p className="font-mono text-xs text-pulse">
-            {t("readout", {
-              band,
-              array: array.index,
-              channel,
-              channels: CHANNELS_PER_ARRAY,
-              from: array.from.toFixed(2),
-              to: array.to.toFixed(2),
-            })}
+            {t("readout", { band, from: array.from.toFixed(2), to: array.to.toFixed(2) })}
           </p>
           <ul className="text-sm text-stellar/75">
             {ARRAY_FEATURES.map((f) => (
@@ -96,9 +88,6 @@ export default function SpectralBands() {
           </ul>
         </motion.div>
       </AnimatePresence>
-      <p className="mt-4 text-xs text-stellar/45">
-        {t("note")}
-      </p>
     </div>
   );
 }

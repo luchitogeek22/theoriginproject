@@ -56,14 +56,13 @@
         }
       },
       "bandsPrompt": "Recorre las bandas.",
-      "disclaimer": "Las franjas de la esfera son ilustrativas."
+      "disclaimer": "Barras y franjas ilustrativas · rangos: NASA/IPAC IRSA."
     },
     "bands": {
       "sliderLabel": "Banda espectral de SPHEREx",
       "valueText": "Banda {band}: matriz de detectores {array}, {from}–{to} micrómetros",
       "wavelength": "longitud de onda →",
-      "readout": "Banda {band} · matriz {array}, canal {channel} de {channels} · {from}–{to} µm",
-      "note": "Rangos por matriz de detectores, según la publicación de NASA/IPAC IRSA. La altura de las barras es decorativa.",
+      "readout": "Banda {band} · {from}–{to} µm",
       "arrays": {
         "a1": {
           "f1": "Luz de estrellas frías",

@@ -56,14 +56,13 @@
         }
       },
       "bandsPrompt": "Move across the bands.",
-      "disclaimer": "The strips on the sphere are illustrative."
+      "disclaimer": "Bars and sphere strips are illustrative · ranges: NASA/IPAC IRSA."
     },
     "bands": {
       "sliderLabel": "SPHEREx spectral band",
       "valueText": "Band {band}: detector array {array}, {from}–{to} micrometres",
       "wavelength": "wavelength →",
-      "readout": "Band {band} · array {array}, channel {channel} of {channels} · {from}–{to} µm",
-      "note": "Ranges per detector array, as published by NASA/IPAC IRSA. Bar heights are decorative.",
+      "readout": "Band {band} · {from}–{to} µm",
       "arrays": {
         "a1": {
           "f1": "Starlight from cool stars",
