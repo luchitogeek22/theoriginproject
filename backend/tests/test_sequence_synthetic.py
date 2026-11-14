@@ -448,3 +448,58 @@ def test_brightness_frames_matching_the_wavelength_are_spread_over_the_whole_win
     assert chosen[0] == 0 and chosen[-1] == 23
     assert chosen == sorted(set(chosen)) and set(chosen) <= set(matching)
     assert spread_evenly(matching[:5], 12) == matching[:5]
+
+
+NEUTRAL = (58, 66, 84)
+
+
+def neutral_count(png):
+    rgb = np.asarray(Image.open(io.BytesIO(png)).convert("RGB"))
+    return int(np.all(rgb == NEUTRAL, axis=-1).sum())
+
+
+def with_image_values(data, setter):
+    from astropy.io import fits
+
+    with fits.open(io.BytesIO(data), memmap=False) as hdul:
+        setter(hdul["IMAGE"].data)
+        buffer = io.BytesIO()
+        hdul.writeto(buffer)
+    return buffer.getvalue()
+
+
+def test_flagged_pixels_with_a_value_are_drawn_but_kept_out_of_the_science_image():
+    flags = np.zeros((64, 64), dtype=np.int32)
+    flags[20:30, 20:30] = 1  # bit 0, TRANSIENT: hard-masked, but the pixel has a value
+    out = render_sequence(
+        [frame([(RA0, DEC0, 9.0)], n=1, flags=flags)], RA0, DEC0, 6.0, "brightness"
+    )
+    assert neutral_count(out.pngs[0]) == 0
+    assert np.isnan(out.warped[0]["image"]).sum() > 0
+    assert np.isnan(out.images[0]).sum() > 0
+
+
+def test_pixels_without_a_value_stay_neutral_and_do_not_grow():
+    data = synthetic.make_fits(sources=[(RA0, DEC0, 9.0)], seed=1)
+
+    def blank(image):
+        image[40:42, 40:42] = np.nan  # bilinear alone would grey out 3x3 grid pixels
+
+    data = with_image_values(data, blank)
+    out = render_sequence([FrameInput(meta=meta(1), data=data)], RA0, DEC0, 6.0, "brightness")
+    assert 1 <= neutral_count(out.pngs[0]) <= 4
+    assert out.result["frames"][0]["display_blank_fraction"] > 0
+
+
+def test_a_hot_flagged_pixel_does_not_change_the_brightness_scale():
+    clean = render_sequence([frame([(RA0, DEC0, 9.0)], n=1)], RA0, DEC0, 6.0, "brightness")
+    flags = np.zeros((64, 64), dtype=np.int32)
+    flags[10, 10] = 1 << 2  # OVERFLOW
+    data = synthetic.make_fits(sources=[(RA0, DEC0, 9.0)], seed=1, flags=flags)
+
+    def heat(image):
+        image[10, 10] = 1e6
+
+    data = with_image_values(data, heat)
+    hot = render_sequence([FrameInput(meta=meta(1), data=data)], RA0, DEC0, 6.0, "brightness")
+    assert hot.result["scale"]["hi"] == pytest.approx(clean.result["scale"]["hi"], rel=0.01)

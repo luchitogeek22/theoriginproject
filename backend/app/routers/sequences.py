@@ -49,8 +49,9 @@ KEY_PATTERN = re.compile(r"^[0-9a-fs][0-9a-f]{23}$")
 IMMUTABLE = "public, max-age=31536000, immutable"
 IMAGE_HEADERS = {"Cache-Control": IMMUTABLE, "Vary": "Origin"}
 # Bump when the stored sequence result changes shape (2: known_motion, evenly spread brightness
-# frames, truthful comparison-star note). Unlike processing_version it keeps the cached cutouts.
-RESULT_VERSION = 2
+# frames, truthful comparison-star note; 3: frames draw every pixel with a value in the FITS).
+# Unlike processing_version it keeps the cached cutouts.
+RESULT_VERSION = 3
 
 
 def _key(params: dict, product_ids: list[str]) -> str:
