@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSectionProgress } from "../hooks";
-import { SIM_EPOCHS, simulatedReadout } from "../simulation";
+import { SIM_EPOCHS } from "../simulation";
 import { stage } from "../stage";
 
 /** Epoch numbers shown on the chips; labels come from `landing.epochs.epoch`. */
@@ -18,7 +18,6 @@ export default function Epochs() {
 
   const scrolled = Math.min(1, Math.max(0, (progress - 0.15) / 0.6));
   const epoch = manual ?? scrolled;
-  const readout = simulatedReadout(epoch);
   const nearest = SIM_EPOCHS.reduce((best, e, i) => (Math.abs(SIM_EPOCHS[best] - epoch) > Math.abs(e - epoch) ? i : best), 0);
 
   useEffect(() => {
@@ -74,27 +73,7 @@ export default function Epochs() {
             {t("difference")}
           </label>
 
-          <dl className="mt-6 grid grid-cols-3 gap-3 border-t border-stellar/10 pt-4 font-mono text-[11px]">
-            <div>
-              <dt className="text-stellar/45">{t("date")}</dt>
-              <dd className="mt-1 text-stellar/80">{t("dateValue")}</dd>
-            </div>
-            <div>
-              <dt className="text-stellar/45">{t("shift")}</dt>
-              <dd className="mt-1 text-pulse">{readout.shiftPx.toFixed(2)} px</dd>
-            </div>
-            <div>
-              <dt className="text-stellar/45">{t("brightness")}</dt>
-              <dd className="mt-1 text-stellar">
-                {readout.brightnessPct >= 0 ? "+" : ""}
-                {readout.brightnessPct.toFixed(0)}%
-              </dd>
-            </div>
-          </dl>
 
-          <p className="mt-5 hidden text-xs leading-relaxed text-stellar/55 md:block">
-            {t("why")}
-          </p>
         </div>
       </div>
     </section>

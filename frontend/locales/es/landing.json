@@ -27,46 +27,42 @@
     },
     "explore": {
       "title": "Cada región del cielo cuenta una historia.",
-      "body": "Señala cualquier zona del cielo por sus coordenadas — ascensión recta y declinación — y The Origin Project consulta al archivo de SPHEREx qué observó allí y cuándo.",
+      "body": "Elige coordenadas y consultamos qué observó SPHEREx allí.",
       "grid": {
-        "term": "Cuadrícula RA / Dec",
-        "detail": "El sistema de coordenadas que usan los astrónomos para ubicar cualquier punto del cielo."
+        "term": "Cuadrícula RA / Dec"
       },
       "constellations": {
-        "term": "Líneas de constelaciones",
-        "detail": "Referencias para orientarse: Orion, Ursa Major, Cassiopeia y Crux."
+        "term": "Líneas de constelaciones"
       },
       "markers": {
-        "term": "Marcadores con nombre",
-        "detail": "Los cinco objetivos del desafío, ubicados en sus posiciones de catálogo."
+        "term": "Marcadores con nombre"
       }
     },
     "mission": {
       "title": "El poder de SPHEREx",
-      "body": "El observatorio SPHEREx de la NASA fotografía todo el cielo una y otra vez, separando su luz en colores que no podemos ver. Cada repetición es una nueva oportunidad para notar qué se movió o cambió.",
+      "body": "El observatorio SPHEREx de la NASA fotografía todo el cielo una y otra vez. Cada repetición muestra qué se movió o cambió.",
       "facts": {
         "bands": {
           "value": "102",
-          "label": "bandas espectrales, de seis matrices de detectores con 17 canales cada una"
+          "label": "bandas espectrales"
         },
         "range": {
           "value": "0.75–5.0 µm",
-          "label": "infrarrojo cercano, más allá de lo que puede ver el ojo humano"
+          "label": "infrarrojo cercano"
         },
         "cadence": {
           "value": "6 meses",
-          "label": "para cartografiar todo el cielo, repetido desde mayo de 2025"
+          "label": "por cada mapa del cielo completo"
         }
       },
-      "bandsPrompt": "Recorre las bandas para ver qué revela cada parte del espectro.",
-      "disclaimer": "Las franjas luminosas sobre la esfera ilustran un relevamiento de todo el cielo que se completa con el tiempo. No son el calendario de apuntado real de SPHEREx."
+      "bandsPrompt": "Recorre las bandas.",
+      "disclaimer": "Barras y franjas ilustrativas · rangos: NASA/IPAC IRSA."
     },
     "bands": {
       "sliderLabel": "Banda espectral de SPHEREx",
       "valueText": "Banda {band}: matriz de detectores {array}, {from}–{to} micrómetros",
       "wavelength": "longitud de onda →",
-      "readout": "Banda {band} · matriz {array}, canal {channel} de {channels} · {from}–{to} µm",
-      "note": "Rangos por matriz de detectores, según la publicación de NASA/IPAC IRSA. La altura de las barras es decorativa.",
+      "readout": "Banda {band} · {from}–{to} µm",
       "arrays": {
         "a1": {
           "f1": "Luz de estrellas frías",
@@ -96,21 +92,16 @@
     },
     "epochs": {
       "badge": "Simulación · no es una medición",
-      "title": "El universo cambia. Te ayudamos a investigarlo.",
-      "body": "La misma zona del cielo, vista en distintos momentos. Una estrella se desplaza, otra aumenta su brillo. Recorre las épocas y luego activa la vista de diferencia para conservar solo lo que cambió.",
+      "title": "El universo cambia.",
+      "body": "Mueve las épocas. Activa la diferencia.",
       "legend": "Elige una época",
       "epoch": "Época {number}",
       "range": "Tiempo entre épocas",
-      "difference": "Mostrar diferencia (época posterior menos Época 01)",
-      "date": "Fecha de observación",
-      "dateValue": "ninguna (simulada)",
-      "shift": "Variación de posición",
-      "brightness": "Variación de brillo",
-      "why": "¿Por qué comparar épocas? Un píxel de SPHEREx abarca unos 6″ de cielo, y los objetivos móviles del desafío se desplazan aproximadamente 5–10″ por año: a menudo menos de un píxel entre visitas. Verlos requiere fotogramas alineados en una misma escala de brillo."
+      "difference": "Mostrar solo lo que cambió"
     },
     "objects": {
       "title": "Objetos que vale la pena explorar",
-      "body": "El desafío propone cinco objetivos de prueba: tres que se mueven por el cielo y dos cuya luz cambia. Elige uno para orientar el cielo hacia él.",
+      "body": "Cinco objetivos del desafío. Elige uno.",
       "tabsLabel": "Objetivos del desafío",
       "badge": {
         "motion": "se mueve",
@@ -120,42 +111,28 @@
         "motion": "Busca: movimiento",
         "brightness": "Busca: cambio de brillo"
       },
-      "ra": "RA (J2000)",
-      "dec": "Dec (J2000)",
-      "archive": "Archivo de SPHEREx",
-      "timeSpan": "Intervalo de tiempo",
-      "exposures": "{count} exposiciones",
-      "exposuresApprox": "≈ {count} exposiciones",
-      "spanMonths": "{from} – {to}",
-      "spanDays": "{days} días",
-      "spanDaysPerDetector": "{days} días por detector",
-      "auditNote": "Cobertura del archivo según la auditoría de datos del proyecto (11 nov 2026). La plataforma aún no ha medido ninguna variación; las secuencias de este objetivo se están validando.",
       "cta": "Explorar observaciones",
       "targets": {
         "barnard": {
           "kind": "Enana roja · alto movimiento propio",
-          "summary": "Una enana roja a unos 6 años luz, con el mayor movimiento propio de todas las estrellas conocidas.",
+          "summary": "Enana roja a 6 años luz, la estrella con mayor movimiento propio conocido.",
           "note": "Desplazamiento esperado en el intervalo: hasta 1.9 píxeles de SPHEREx."
         },
         "epsindi": {
           "kind": "Par de enanas marrones",
-          "summary": "Dos enanas marrones que orbitan entre sí, ambas ligadas a la estrella cercana Epsilon Indi A.",
-          "note": "Desplazamiento esperado en el intervalo: hasta 1.1 píxeles de SPHEREx."
+          "summary": "Dos enanas marrones que orbitan juntas cerca de Epsilon Indi A."
         },
         "wise0855": {
           "kind": "Enana marrón fría y de movimiento rápido",
-          "summary": "La enana marrón más fría que se conoce. Es tenue en el infrarrojo cercano, por lo que un solo fotograma podría no mostrarla.",
-          "note": "Desplazamiento esperado en el intervalo: hasta 1.35 píxeles de SPHEREx."
+          "summary": "La enana marrón más fría conocida; muy tenue en el infrarrojo cercano."
         },
         "rwaur": {
           "kind": "Estrella variable joven",
-          "summary": "Un sistema estelar joven todavía rodeado de gas y polvo, conocido por sus cambios irregulares de brillo.",
-          "note": "Comparar el brillo requiere una misma escala de intensidad en todos los fotogramas."
+          "summary": "Estrella joven rodeada de polvo, con cambios de brillo irregulares."
         },
         "rdra": {
           "kind": "Variable de período largo tipo Mira",
-          "summary": "Una gigante roja pulsante cuyo brillo sube y baja en un ciclo de meses.",
-          "note": "Está en el campo profundo de SPHEREx: aparece en las colecciones de amplio campo y profundas (dr1, dr1_deep, qr3)."
+          "summary": "Gigante roja que pulsa: su brillo sube y baja en meses."
         }
       }
     },
@@ -166,31 +143,25 @@
         "validating": "En validación"
       },
       "stepOf": "Paso {current} de {total}",
-      "note": "Los diagramas explican cada paso; no son datos reales. “Disponible” significa que ya se puede usar en la aplicación. “En validación” significa que está construido y todavía se está comprobando con datos reales de SPHEREx.",
+      "note": "Diagramas ilustrativos, no datos reales.",
       "steps": {
         "region": {
-          "title": "Seleccionar una región del cielo",
-          "detail": "Busca un objeto por su nombre o escribe su RA/Dec. La vista del cielo se centra en él."
+          "title": "Seleccionar una región del cielo"
         },
         "query": {
-          "title": "Obtener observaciones astronómicas",
-          "detail": "La plataforma consulta a NASA/IPAC IRSA qué exposiciones de SPHEREx cubren ese punto."
+          "title": "Obtener observaciones astronómicas"
         },
         "fits": {
-          "title": "Procesar datos FITS",
-          "detail": "Cada exposición se recorta alrededor del objetivo y se enmascaran los píxeles defectuosos. Una escala de brillo común para todos los fotogramas aún está en desarrollo."
+          "title": "Procesar datos FITS"
         },
         "epochs": {
-          "title": "Comparar distintas épocas",
-          "detail": "Los fotogramas de una misma banda se reproducen en orden, lado a lado o parpadeando, para que el cambio sea visible a simple vista."
+          "title": "Comparar distintas épocas"
         },
         "variation": {
-          "title": "Analizar posibles variaciones",
-          "detail": "Las diferencias alineadas señalan qué se movió o cambió. Ayudan a tu ojo; nunca lo reemplazan."
+          "title": "Analizar posibles variaciones"
         },
         "journal": {
-          "title": "Generar evidencia reproducible",
-          "detail": "Guarda el objetivo, la consulta y los fotogramas en tu diario para que cualquiera pueda repetir la investigación."
+          "title": "Generar evidencia reproducible"
         }
       },
       "diagram": {

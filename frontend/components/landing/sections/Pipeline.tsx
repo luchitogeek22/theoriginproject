@@ -68,8 +68,6 @@ export default function Pipeline() {
                     {t("stepOf", { current: active + 1, total: PIPELINE.length })}
                   </span>
                 </div>
-                <h3 className="mt-3 font-display text-xl text-stellar">{t(`steps.${step.visual}.title`)}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-stellar/75">{t(`steps.${step.visual}.detail`)}</p>
               </motion.div>
             </AnimatePresence>
             <p className="mt-4 text-xs text-stellar/45">

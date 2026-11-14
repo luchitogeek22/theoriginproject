@@ -156,6 +156,7 @@ def reproject_frames(kept, grid, n: int, ra_deg: float, dec_deg: float) -> list[
             science = science - background
         out, footprint = reproject_interp((science, product.wcs), grid, shape_out=(n, n))
         out = np.asarray(out, dtype=float)
+        display = _display_image(product, background if valid.any() else 0.0, grid, n)
         variance = None
         if product.variance is not None:
             var_native = np.where(valid, product.variance, np.nan)
@@ -163,14 +164,40 @@ def reproject_frames(kept, grid, n: int, ra_deg: float, dec_deg: float) -> list[
             variance = np.asarray(variance, dtype=float)
         warped.append({
             "image": out,
+            "display": display,
             "variance": variance,
             "sigma": _robust_sigma(out),
             "mjd": product.mjd_obs,
             "wavelength_um": _wavelength(product, ra_deg, dec_deg),
             "flagged_fraction": float(1.0 - valid.mean()),
             "coverage_fraction": float(np.mean(np.asarray(footprint) > 0)),
+            "display_blank_fraction": float(np.mean(~np.isfinite(display))),
         })
     return warped
+
+
+def _display_image(product, background: float, grid, n: int) -> np.ndarray:
+    """Science image for display only: every pixel with a value in the FITS, FLAGS ignored.
+
+    Bilinear resampling turns any output pixel touching a NaN into NaN, so those gaps take the
+    value of the native pixel they fall on (round half up). A grid pixel stays NaN only when that
+    native pixel has no value in the FITS or lies outside the cutout. Never use for measurements.
+    """
+    from reproject import reproject_interp  # type: ignore[import-untyped]
+
+    science = product.science_image - background
+    out, _ = reproject_interp((science, product.wcs), grid, shape_out=(n, n))
+    out = np.asarray(out, dtype=float)
+    gaps = np.argwhere(~np.isfinite(out))
+    if gaps.size:
+        world = grid.all_pix2world(gaps[:, ::-1].astype(float), 0)
+        native = product.wcs.all_world2pix(world, 0)
+        ix = np.floor(native[:, 0] + 0.5).astype(int)
+        iy = np.floor(native[:, 1] + 0.5).astype(int)
+        inside = (ix >= 0) & (iy >= 0) & (ix < science.shape[1]) & (iy < science.shape[0])
+        rows, cols = gaps[inside, 0], gaps[inside, 1]
+        out[rows, cols] = science[iy[inside], ix[inside]]
+    return out
 
 
 def motion_shifts(
@@ -268,6 +295,7 @@ def render_sequence(
             "png_url": "",
             "flagged_fraction": w["flagged_fraction"],
             "coverage_fraction": w["coverage_fraction"],
+            "display_blank_fraction": w["display_blank_fraction"],
         })
 
     if mode == "brightness":
@@ -278,6 +306,7 @@ def render_sequence(
         hi = max(float(np.percentile(finite, hi_percentile)) if finite.size else 0.0, 10.0 * sigma_ref)
         unit = get_unit(kept)
         shown = reprojected
+        displayed = [w["display"] for w in warped]
         note = "One physical scale for all frames: brightness changes between frames are real."
     else:
         lo, hi = MOTION_RANGE
@@ -286,12 +315,22 @@ def render_sequence(
             r / s if np.isfinite(s) and s > 0 else np.full_like(r, np.nan)
             for r, s in zip(reprojected, sigmas)
         ]
+        displayed = [
+            w["display"] / s if np.isfinite(s) and s > 0 else np.full_like(w["display"], np.nan)
+            for w, s in zip(warped, sigmas)
+        ]
         note = (
             "Each frame is shown in units of its own noise: use it to spot motion, "
             "not to compare brightness between frames."
         )
     limitations.append(note)
-    pngs = [_to_png(image, lo, hi) for image in shown]
+    if warped:
+        limitations.append(
+            "Frames show every pixel with a value in the FITS, including pixels the pipeline flags "
+            "(e.g. transient or saturated); measurements still exclude them. Grey means no value "
+            "in the FITS or outside the cutout."
+        )
+    pngs = [_to_png(image, lo, hi) for image in displayed]
 
     result = {
         "mode": mode,

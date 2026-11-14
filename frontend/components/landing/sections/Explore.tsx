@@ -9,20 +9,11 @@ export default function Explore() {
         <p className="landing-body mt-5">
           {t("body")}
         </p>
-        <dl className="mt-8 grid gap-4 text-sm">
-          <div>
-            <dt className="font-mono text-xs text-pulse">{t("grid.term")}</dt>
-            <dd className="text-stellar/70">{t("grid.detail")}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-xs text-stellar">{t("constellations.term")}</dt>
-            <dd className="text-stellar/70">{t("constellations.detail")}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-xs text-stellar">{t("markers.term")}</dt>
-            <dd className="text-stellar/70">{t("markers.detail")}</dd>
-          </div>
-        </dl>
+        <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
+          <li className="text-pulse">{t("grid.term")}</li>
+          <li className="text-stellar">{t("constellations.term")}</li>
+          <li className="text-stellar">{t("markers.term")}</li>
+        </ul>
       </div>
     </section>
   );
