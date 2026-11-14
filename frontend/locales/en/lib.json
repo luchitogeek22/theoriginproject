@@ -70,6 +70,7 @@
     "gaiaUnavailable": "Gaia could not be reached: there are no comparison stars or catalogue marks.",
     "noProperMotion": "No proper motion known for this position: photometry uses a fixed position.",
     "curvePerDetector": "One curve per detector; detectors are never mixed. No aperture correction.",
+    "curvePerDetectorEpsf": "One curve per detector; detectors are never mixed. Aperture flux corrected with the SPHEREx ePSF in {corrected} of {total} frames.",
     "saturatedCore": "The target saturates its core in this detector: the curve uses the amplitude of the PSF wings (relative values, not a flux).",
     "notDetected": "The target is not detected individually in each frame (median SNR {snr}); the curve mostly shows noise.",
     "targetFlagged": "The target is flagged (saturation or unusable pixels) in {flagged} of {total} frames in detector {detector}; try another detector.",

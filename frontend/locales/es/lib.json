@@ -70,6 +70,7 @@
     "gaiaUnavailable": "No se pudo consultar Gaia: no hay estrellas de comparación ni marcas de catálogo.",
     "noProperMotion": "No se conoce el movimiento propio de esta posición: la fotometría se hace en posición fija.",
     "curvePerDetector": "Una curva por detector; nunca se mezclan detectores. Sin corrección de apertura.",
+    "curvePerDetectorEpsf": "Una curva por detector; nunca se mezclan detectores. Flujo de apertura corregido con el ePSF de SPHEREx en {corrected} de {total} cuadros.",
     "saturatedCore": "El objetivo satura su núcleo en este detector: la curva usa la amplitud de las alas de la PSF (valores relativos, no un flujo).",
     "notDetected": "El objetivo no se detecta por separado en cada cuadro (SNR mediana {snr}): la curva refleja sobre todo ruido.",
     "targetFlagged": "El objetivo está marcado (saturación o píxeles inutilizables) en {flagged} de {total} cuadros del detector {detector}: prueba otro detector.",

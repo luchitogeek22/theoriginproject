@@ -1,7 +1,10 @@
 """Aperture photometry on native SPHEREx pixels and relative light curves.
 
-Fluxes are relative photometry without aperture correction. Pixels carrying any unusable-pixel
-flag inside the aperture mark the point as flagged and exclude it from fits.
+When the product carries an ePSF table (pipeline v7+, DR1) the flux is divided by the encircled
+energy of the nearest detector zone's ePSF inside the aperture, so the light lost outside the
+aperture is corrected epoch by epoch; the stamp spans about +-3.2 native pixels, so this is the
+flux within that stamp, not a total flux. Older products are left uncorrected. Pixels carrying any
+unusable-pixel flag inside the aperture mark the point as flagged and exclude it from fits.
 """
 
 from typing import Any
@@ -18,6 +21,29 @@ def aperture_radius_pix(product) -> float:
     fwhm = product.header.get("PSF_FWHM")
     fwhm_pix = float(fwhm) / PIXEL_SCALE_ARCSEC if fwhm else 1.1
     return max(1.5, 1.4 * fwhm_pix)
+
+
+def epsf_encircled_energy(product, x: float, y: float, radius_pix: float) -> dict[str, Any] | None:
+    """Encircled energy within `radius_pix` of the ePSF zone nearest to cutout pixel (x, y)."""
+    epsf = getattr(product, "epsf", None)
+    crpix1a, crpix2a = product.header.get("CRPIX1A"), product.header.get("CRPIX2A")
+    if epsf is None or crpix1a is None or crpix2a is None:
+        return None
+    # Cutout -> parent image, as in IRSA's spherex-psf notebook.
+    x_parent = 1.0 + x - float(crpix1a)
+    y_parent = 1.0 + y - float(crpix2a)
+    zone = int(np.argmin(np.hypot(epsf["xcenter"] - x_parent, epsf["ycenter"] - y_parent)))
+    stamp = epsf["stamps"][zone]
+    total = float(np.nansum(stamp))
+    if not np.isfinite(total) or total <= 0:
+        return None
+    centre_y, centre_x = (np.asarray(stamp.shape) - 1) / 2.0
+    yy, xx = np.mgrid[: stamp.shape[0], : stamp.shape[1]]
+    inside = np.hypot(xx - centre_x, yy - centre_y) / epsf["oversample"] <= radius_pix
+    energy = float(np.nansum(stamp[inside]) / total)
+    if not 0 < energy <= 1:
+        return None
+    return {"zone": [int(epsf["binx"][zone]), int(epsf["biny"][zone])], "encircled_energy": energy}
 
 
 def aperture_photometry(
@@ -56,8 +82,12 @@ def aperture_photometry(
     flagged = bool((~valid[in_aperture]).any())
     n_pix = float(np.pi * radius**2)
     bg_error = background_sigma / np.sqrt(max(clipped.size, 1)) * n_pix
-    flux = float(total[0])
-    flux_err = float(np.sqrt(total_error[0] ** 2 + bg_error**2))
+    flux_raw = float(total[0])
+    flux_err_raw = float(np.sqrt(total_error[0] ** 2 + bg_error**2))
+    psf = epsf_encircled_energy(product, x, y, radius)
+    correction = 1.0 / psf["encircled_energy"] if psf else 1.0
+    flux = flux_raw * correction
+    flux_err = flux_err_raw * correction
     return {
         "ok": True,
         "x": float(x),
@@ -70,6 +100,12 @@ def aperture_photometry(
         "flagged": flagged,
         "radius_pix": float(radius),
         "snr": flux / flux_err if flux_err > 0 else None,
+        "flux_uncorrected": flux_raw,
+        "flux_err_uncorrected": flux_err_raw,
+        "psf_model": "epsf" if psf else "none",
+        "psf_zone": psf["zone"] if psf else None,
+        "encircled_energy": psf["encircled_energy"] if psf else None,
+        "aperture_correction": correction,
     }
 
 

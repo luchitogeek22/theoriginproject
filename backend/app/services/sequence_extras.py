@@ -136,7 +136,15 @@ def build_lightcurve(kept, params: dict[str, Any], gaia_fn: Callable = gaia_cone
     notes = [warning] if warning else []
     if not moved:
         notes.append("No proper motion known for this position: photometry is at a fixed position.")
-    notes.append("One curve per detector; detectors are never mixed. No aperture correction.")
+    corrected = sum(1 for t in target if t.get("psf_model") == "epsf") if method == "aperture" else 0
+    curve["aperture_correction"] = {"model": "epsf" if corrected else "none", "frames": corrected, "total": len(target)}
+    if corrected:
+        notes.append(
+            "One curve per detector; detectors are never mixed. Aperture flux corrected with the "
+            f"SPHEREx ePSF in {corrected} of {len(target)} frames."
+        )
+    else:
+        notes.append("One curve per detector; detectors are never mixed. No aperture correction.")
     curve["method"] = method
     flagged = sum(1 for t in target if t.get("ok") and t.get("flagged")) if method == "aperture" else 0
     curve["target_flagged_fraction"] = flagged / len(target) if target else 0.0

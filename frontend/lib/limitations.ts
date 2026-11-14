@@ -26,6 +26,7 @@ const RULES: Array<{ pattern: RegExp; key: LimitationKey; params?: string[]; num
   { pattern: /^Gaia could not be reached.*$/, key: "gaiaUnavailable" },
   { pattern: /^No proper motion known for this position.*$/, key: "noProperMotion" },
   { pattern: /^One curve per detector; detectors are never mixed\. No aperture correction\.?$/, key: "curvePerDetector" },
+  { pattern: /^One curve per detector; detectors are never mixed\. Aperture flux corrected with the SPHEREx ePSF in (\d+) of (\d+) frames\.?$/, key: "curvePerDetectorEpsf", params: ["corrected", "total"], numeric: ["corrected", "total"] },
   { pattern: /^The target saturates its core in this detector: the curve uses the amplitude of the PSF wings.*$/, key: "saturatedCore" },
   { pattern: /^The target is not detected individually in each frame \(median SNR ([\d.]+)\); the curve mostly shows noise\.?$/, key: "notDetected", params: ["snr"] },
   { pattern: /^The target is flagged .* in (\d+) of (\d+) frames in detector (D\d); try another detector.*$/, key: "targetFlagged", params: ["flagged", "total", "detector"], numeric: ["flagged", "total"] },

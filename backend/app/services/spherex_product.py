@@ -30,6 +30,7 @@ class SpherexProduct:
     variance: np.ndarray | None = None
     zodi: np.ndarray | None = None
     wave_hdu: Any = field(default=None, repr=False)
+    epsf: dict[str, Any] | None = field(default=None, repr=False)
     extension_names: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     _wave_wcs: Any = field(default=None, repr=False)
@@ -109,6 +110,31 @@ def _plane(hdul, name: str, shape: tuple[int, ...], warnings: list[str]) -> np.n
     return data
 
 
+def _read_epsf(hdul, warnings: list[str]) -> dict[str, Any] | None:
+    """Zone table of the empirical PSF (pipeline v7+, e.g. DR1). Older products carry a `PSF` cube instead.
+
+    Zone centres are 0-based pixels of the parent spectral image; stamps are oversampled by OVSMPX.
+    """
+    if "EPSF" not in hdul or hdul["EPSF"].data is None:
+        return None
+    try:
+        table = hdul["EPSF"].data
+        oversample = int(hdul["EPSF"].header.get("OVSMPX") or 0)
+        if oversample <= 0:
+            raise ValueError("OVSMPX missing")
+        return {
+            "binx": np.asarray(table["BINX"], dtype=int),
+            "biny": np.asarray(table["BINY"], dtype=int),
+            "xcenter": np.asarray(table["XCENTER"], dtype=np.float64),
+            "ycenter": np.asarray(table["YCENTER"], dtype=np.float64),
+            "stamps": np.asarray(table["EPSF"], dtype=np.float64),
+            "oversample": oversample,
+        }
+    except Exception as exc:  # noqa: BLE001 - recorded, photometry falls back to no correction
+        warnings.append(f"EPSF unreadable: {exc}")
+        return None
+
+
 def read_product(data: bytes) -> SpherexProduct:
     from astropy.io import fits  # type: ignore[import-untyped]
     from astropy.wcs import WCS  # type: ignore[import-untyped]
@@ -133,6 +159,7 @@ def read_product(data: bytes) -> SpherexProduct:
             zodi = zodi.astype(np.float64)
         wcs = _build_wcs(WCS, header, hdul, None, warnings, "celestial WCS")
         wave_hdu = hdul["WCS-WAVE"].copy() if "WCS-WAVE" in hdul else None
+        epsf = _read_epsf(hdul, warnings)
     celestial = wcs.celestial if wcs is not None and wcs.has_celestial else None
     if celestial is None:
         warnings.append("IMAGE header carries no celestial WCS.")
@@ -144,6 +171,7 @@ def read_product(data: bytes) -> SpherexProduct:
         variance=variance,
         zodi=zodi,
         wave_hdu=wave_hdu,
+        epsf=epsf,
         extension_names=names,
         warnings=warnings,
     )
