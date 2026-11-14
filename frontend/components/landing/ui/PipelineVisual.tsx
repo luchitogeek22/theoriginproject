@@ -46,8 +46,8 @@ function Query() {
       <text x={20} y={30} fill={STELLAR} opacity={0.6} fontSize={10} fontFamily="var(--font-mono)">{ARCHIVE}</text>
       {[0, 1, 2, 3, 4].map((i) => (
         <motion.g key={i} initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15, duration: 0.5 }}>
-          <rect x={60 + i * 26} y={60 + i * 16} width={150} height={100} rx={2} fill="#0B1020" stroke={i === 4 ? ION : SIGNAL} opacity={0.4 + i * 0.15} />
-          {i === 4 && <text x={70 + i * 26} y={80 + i * 16} fill={ION} fontSize={10} fontFamily="var(--font-mono)">{t("exposure")}</text>}
+          <rect x={60 + i * 26} y={45 + i * 16} width={150} height={100} rx={2} fill="#0B1020" stroke={i === 4 ? ION : SIGNAL} opacity={0.4 + i * 0.15} />
+          {i === 4 && <text x={70 + i * 26} y={65 + i * 16} fill={ION} fontSize={10} fontFamily="var(--font-mono)">{t("exposure")}</text>}
         </motion.g>
       ))}
     </>
