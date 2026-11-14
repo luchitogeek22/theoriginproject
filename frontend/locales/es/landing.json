@@ -147,31 +147,25 @@
         "validating": "En validación"
       },
       "stepOf": "Paso {current} de {total}",
-      "note": "Los diagramas explican cada paso; no son datos reales. “Disponible” significa que ya se puede usar en la aplicación. “En validación” significa que está construido y todavía se está comprobando con datos reales de SPHEREx.",
+      "note": "Diagramas ilustrativos, no datos reales.",
       "steps": {
         "region": {
-          "title": "Seleccionar una región del cielo",
-          "detail": "Busca un objeto por su nombre o escribe su RA/Dec. La vista del cielo se centra en él."
+          "title": "Seleccionar una región del cielo"
         },
         "query": {
-          "title": "Obtener observaciones astronómicas",
-          "detail": "La plataforma consulta a NASA/IPAC IRSA qué exposiciones de SPHEREx cubren ese punto."
+          "title": "Obtener observaciones astronómicas"
         },
         "fits": {
-          "title": "Procesar datos FITS",
-          "detail": "Cada exposición se recorta alrededor del objetivo y se enmascaran los píxeles defectuosos. Una escala de brillo común para todos los fotogramas aún está en desarrollo."
+          "title": "Procesar datos FITS"
         },
         "epochs": {
-          "title": "Comparar distintas épocas",
-          "detail": "Los fotogramas de una misma banda se reproducen en orden, lado a lado o parpadeando, para que el cambio sea visible a simple vista."
+          "title": "Comparar distintas épocas"
         },
         "variation": {
-          "title": "Analizar posibles variaciones",
-          "detail": "Las diferencias alineadas señalan qué se movió o cambió. Ayudan a tu ojo; nunca lo reemplazan."
+          "title": "Analizar posibles variaciones"
         },
         "journal": {
-          "title": "Generar evidencia reproducible",
-          "detail": "Guarda el objetivo, la consulta y los fotogramas en tu diario para que cualquiera pueda repetir la investigación."
+          "title": "Generar evidencia reproducible"
         }
       },
       "diagram": {

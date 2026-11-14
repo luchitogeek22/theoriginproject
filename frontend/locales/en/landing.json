@@ -147,31 +147,25 @@
         "validating": "Being validated"
       },
       "stepOf": "Step {current} of {total}",
-      "note": "Diagrams explain each step; they are not real data. “Available” means usable in the app today. “Being validated” means built and still being checked against real SPHEREx data.",
+      "note": "Illustrative diagrams, not real data.",
       "steps": {
         "region": {
-          "title": "Select a region of the sky",
-          "detail": "Search an object by name or type its RA/Dec. The sky view centres on it."
+          "title": "Select a region of the sky"
         },
         "query": {
-          "title": "Retrieve astronomical observations",
-          "detail": "The platform asks NASA/IPAC IRSA which SPHEREx exposures cover that point."
+          "title": "Retrieve astronomical observations"
         },
         "fits": {
-          "title": "Process FITS data",
-          "detail": "Each exposure is cut around the target and bad pixels are masked. A shared brightness scale across frames is still in development."
+          "title": "Process FITS data"
         },
         "epochs": {
-          "title": "Compare different epochs",
-          "detail": "Frames from the same band play in order, side by side or blinking, so change is visible to the eye."
+          "title": "Compare different epochs"
         },
         "variation": {
-          "title": "Analyze possible variations",
-          "detail": "Aligned differences point to what moved or changed. They assist your eye; they never replace it."
+          "title": "Analyze possible variations"
         },
         "journal": {
-          "title": "Generate reproducible evidence",
-          "detail": "Save the target, query and frames to your journal so anyone can repeat the investigation."
+          "title": "Generate reproducible evidence"
         }
       },
       "diagram": {
