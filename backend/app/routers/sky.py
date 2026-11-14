@@ -7,9 +7,11 @@ reference visuals, never as SPHEREx detections.
 import json
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query
 
-from app.schemas import ReferenceStar
+from app.schemas import NeossatCoverage, ReferenceStar
+from app.services import neossat
+from app.services.catalogs import CatalogUnavailable
 
 router = APIRouter()
 
@@ -23,3 +25,15 @@ def _load() -> list[dict]:
 @router.get("/sky/reference-stars", response_model=list[ReferenceStar])
 def reference_stars() -> list[ReferenceStar]:
     return [ReferenceStar(**row) for row in _load()]
+
+
+@router.get("/sky/neossat", response_model=NeossatCoverage)
+def neossat_coverage(
+    ra: float = Query(..., ge=0.0, lt=360.0),
+    dec: float = Query(..., ge=-90.0, le=90.0),
+) -> NeossatCoverage:
+    """How many CSA NEOSSat observations (CADC) cover this position, and when."""
+    try:
+        return NeossatCoverage(**neossat.neossat_coverage(ra, dec))
+    except CatalogUnavailable as exc:
+        raise HTTPException(status_code=503, detail="CADC (NEOSSat archive) could not be reached.") from exc

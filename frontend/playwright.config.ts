@@ -26,7 +26,7 @@ export default defineConfig({
         "cd ../backend && DATABASE_URL=sqlite:///../frontend/.e2e-tmp/o.db LOCAL_STORAGE_DIR=../frontend/.e2e-tmp/storage " +
         "STORAGE_BACKEND=local REDIS_URL= SUPABASE_URL= SUPABASE_ANON_KEY= SUPABASE_JWT_SECRET= ENVIRONMENT=development " +
         `CORS_ORIGINS=${web} RATE_LIMIT_PER_MINUTE=100000 DISCOVER_COLLECTIONS=false ` +
-        "IRSA_SIA2_URL=http://127.0.0.1:9/SIA IRSA_TAP_URL=http://127.0.0.1:9/TAP WISE_IBE_URL=http://127.0.0.1:9/ibe " +
+        "IRSA_SIA2_URL=http://127.0.0.1:9/SIA IRSA_TAP_URL=http://127.0.0.1:9/TAP WISE_IBE_URL=http://127.0.0.1:9/ibe CADC_TAP_URL=http://127.0.0.1:9/argus " +
         `${process.env.E2E_PYTHON ?? ".venv/bin/python"} -m uvicorn app.main:app --port ${API_PORT} --log-level warning`,
       url: `${api}/api/v1/health`,
       reuseExistingServer: !process.env.CI,

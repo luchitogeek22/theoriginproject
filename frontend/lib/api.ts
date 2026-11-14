@@ -6,6 +6,7 @@ import type {
   DataCollections,
   DataSource,
   JobStatus,
+  NeossatCoverage,
   ReferenceStar,
   SearchResult,
   SequenceRequest,
@@ -161,6 +162,8 @@ export const api = {
     ),
   candidates: (limit = 100) => request<Candidate[]>(`/api/v1/candidates?limit=${limit}`),
   referenceStars: () => request<ReferenceStar[]>("/api/v1/sky/reference-stars"),
+  neossatCoverage: (ra: number, dec: number) =>
+    request<NeossatCoverage>(`/api/v1/sky/neossat?ra=${ra}&dec=${dec}`),
   saveResearch: (body: {
     title: string;
     target_name: string;

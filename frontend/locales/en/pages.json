@@ -78,6 +78,7 @@
     "sequenceLabel": "Image sequence",
     "embedCredit": "Data: NASA/IPAC IRSA, SPHEREx · THE ORIGIN PROJECT",
     "skyMap": "Sky map",
+    "neossat": "Other missions: NEOSSat (CSA)",
     "lightCurve": "Light curve",
     "shiftStack": "Stacking and search for a Planet X (advanced)",
     "manualCompare": "Manual A/B comparison and difference analysis (advanced)",

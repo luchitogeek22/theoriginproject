@@ -28,6 +28,7 @@ import {
 import { useResearch } from "@/lib/store";
 import type { SequenceMode, SequenceRequest, SequenceResult } from "@/lib/types";
 import { useJob } from "@/lib/useJob";
+import NeossatPanel from "@/components/NeossatPanel";
 
 const AladinViewer = dynamic(() => import("@/components/AladinViewer"), {
   ssr: false,
@@ -61,6 +62,7 @@ function Explorer() {
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
+  const [neossatOpen, setNeossatOpen] = useState(false);
 
   useEffect(() => {
     if (!query) {
@@ -348,6 +350,15 @@ function Explorer() {
             <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("skyMap")}</summary>
             <section aria-label={t("skyMap")} className="h-[360px] overflow-hidden border-t border-line">
               {mapOpen && <AladinViewer ra={params.ra} dec={params.dec} fovArcmin={params.fov} marker={marker} />}
+            </section>
+          </details>
+          <details
+            className="rounded border border-line bg-deep/60"
+            onToggle={(e) => setNeossatOpen(e.currentTarget.open)}
+          >
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("neossat")}</summary>
+            <section aria-label={t("neossat")} className="border-t border-line">
+              {neossatOpen && <NeossatPanel ra={params.ra} dec={params.dec} />}
             </section>
           </details>
           {result && result.frames.length > 0 && (

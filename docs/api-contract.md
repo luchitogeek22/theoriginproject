@@ -29,6 +29,7 @@ Base: `{backend}/api/v1`. Errores: `{ "detail": "…" }` + `X-Request-ID`.
 | GET | `/research/{id}/verify` | recalcula el hash y compara con el registrado (`match`). Los registros nuevos usan `hash_version` 2 (JSON canónico de título, objetivo, coordenadas y todo el `payload`, incluidos `processing_version` y los SHA-256 de los recortes); los anteriores se verifican con la versión 1 y no se reescriben |
 | GET | `/evidence/{id}/report?format=` | json / markdown / csv / pdf, siempre como descarga `attachment` (`research-<objetivo>.<ext>`); formato desconocido → 422. `integrity.covers` enumera lo que cubre el hash; en CSV las celdas que empiezan por `=`, `+`, `-`, `@`, tabulador o retorno de carro llevan un apóstrofo inicial |
 | GET | `/sky/reference-stars` | estrellas de referencia J2000 |
+| GET | `/sky/neossat?ra=&dec=` | cobertura NEOSSat (CSA) en CADC dentro de 0,25°: cantidad, primera y última fecha, enlace; 503 si CADC no responde |
 
 Contrato completo y ejecutable: `{backend}/docs` (OpenAPI; desactivado cuando `ENVIRONMENT=production`).
 Tipos espejo en frontend: `frontend/lib/types.ts`.

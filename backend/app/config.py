@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     max_queued_jobs: int = 20
     detection_min_pixels: int = 2
     catalog_timeout_seconds: float = 25.0
+    # CSA NEOSSat archive (CADC TAP, CAOM2); resolved from ivo://cadc.nrc.ca/argus on 2026-11-13.
+    cadc_tap_url: str = "https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus"
     wise_ibe_url: str = "https://irsa.ipac.caltech.edu/ibe"
     catalog_cache_ttl_seconds: int = 86400
     alignment_error_pix: float = 0.1

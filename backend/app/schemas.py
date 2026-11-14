@@ -284,6 +284,16 @@ class ResearchResponse(BaseModel):
     hash_version: int = 1
 
 
+class NeossatCoverage(BaseModel):
+    archive: str
+    collection: str
+    count: int
+    first_date: str | None
+    last_date: str | None
+    radius_deg: float
+    collection_url: str
+
+
 class ReferenceStar(BaseModel):
     name: str
     ra_deg: float

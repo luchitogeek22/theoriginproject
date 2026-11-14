@@ -116,5 +116,13 @@
     },
     "openSequence": "{name}: {role}. Abrir su secuencia.",
     "caption": "Los cinco objetivos en el cielo real; la banda tenue es la Vía Láctea. Pulsa uno para ver su video."
+  },
+  "neossatPanel": {
+    "loading": "Consultando el Canadian Astronomy Data Centre (CADC)…",
+    "error": "No se pudo contactar a CADC (archivo de NEOSSat). La secuencia de SPHEREx no se ve afectada.",
+    "found": "{count, plural, one {# observación de NEOSSat} other {# observaciones de NEOSSat}} a menos de {radius}° de esta posición, de {first} a {last}.",
+    "none": "NEOSSat nunca apuntó a menos de {radius}° de esta posición.",
+    "context": "NEOSSat es el telescopio óptico de la Agencia Espacial Canadiense para asteroides y basura espacial. Solo observa los campos a los que se apunta, así que sus imágenes son épocas extra independientes, no cuadros de SPHEREx.",
+    "open": "Abrir la colección NEOSSat en CADC"
   }
 }

@@ -284,6 +284,16 @@ export interface Candidate {
   user_id: string | null;
 }
 
+export interface NeossatCoverage {
+  archive: string;
+  collection: string;
+  count: number;
+  first_date: string | null;
+  last_date: string | null;
+  radius_deg: number;
+  collection_url: string;
+}
+
 export interface ReferenceStar {
   name: string;
   ra_deg: number;

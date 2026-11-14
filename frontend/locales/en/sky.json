@@ -116,5 +116,13 @@
     },
     "openSequence": "{name}: {role}. Open its sequence.",
     "caption": "The five targets in the real sky; the faint band is the Milky Way. Click one to see its video."
+  },
+  "neossatPanel": {
+    "loading": "Asking the Canadian Astronomy Data Centre (CADC)…",
+    "error": "CADC (NEOSSat archive) could not be reached. The SPHEREx sequence is not affected.",
+    "found": "{count, plural, one {# NEOSSat observation} other {# NEOSSat observations}} within {radius}° of this position, from {first} to {last}.",
+    "none": "NEOSSat never pointed within {radius}° of this position.",
+    "context": "NEOSSat is the Canadian Space Agency's optical telescope for asteroids and space debris. It only observes the fields it is aimed at, so its images are independent extra epochs, not SPHEREx frames.",
+    "open": "Open the NEOSSat collection at CADC"
   }
 }
