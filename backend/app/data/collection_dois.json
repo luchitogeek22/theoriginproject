@@ -1,6 +1,8 @@
 {
-  "note": "DOIs of IRSA SPHEREx quick-release collections; collections missing here report 'see IRSA documentation'.",
+  "note": "DOIs of IRSA SPHEREx collections; collections missing here report 'see IRSA documentation'. DR1 (10.26131/IRSA678, DataCite 2026-11-02) supersedes QR2.",
   "dois": {
+    "spherex_dr1": "10.26131/IRSA678",
+    "spherex_dr1_deep": "10.26131/IRSA678",
     "spherex_qr2": "10.26131/IRSA804",
     "spherex_qr2_deep": "10.26131/IRSA804",
     "spherex_qr3": "10.26131/IRSA805",
