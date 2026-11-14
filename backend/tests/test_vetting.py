@@ -1,5 +1,7 @@
 """WP-27: candidate vetting with simulated Gaia and SkyBoT."""
 
+import pytest
+
 from app.services.catalogs import CatalogUnavailable
 from app.services.vetting import vet_candidate
 
@@ -143,3 +145,119 @@ def test_ra_wrap_does_not_break_the_motion_check():
     )
     motion = checks(result)["coherent_motion"]
     assert motion["status"] == "pass" and motion["evidence"]["rms_arcsec"] < 1.0
+
+
+SECRET = "vet-test-secret"
+
+
+def _mint(sub):
+    import base64
+    import hashlib
+    import hmac
+    import json
+    import time
+
+    def b64(data):
+        return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+    header = b64(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
+    payload = b64(json.dumps({"sub": sub, "email": "", "exp": int(time.time()) + 3600}).encode())
+    sig = hmac.new(SECRET.encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest()
+    return f"{header}.{payload}.{b64(sig)}"
+
+
+def _candidate(owner, job_id="vet-owned"):
+    import json
+
+    from app.database import SessionLocal, init_db
+    from app.models import Candidate
+
+    init_db()
+    with SessionLocal() as db:
+        row = Candidate(kind="unclassified", ra_deg=150.0, dec_deg=2.0, job_id=job_id, snr=9.0,
+                        evidence_json=json.dumps({"astrometry": {}, "cutouts": None}), user_id=owner)
+        db.add(row)
+        db.commit()
+        return row.id
+
+
+def _evidence(candidate_id):
+    import json
+
+    from app.database import SessionLocal
+    from app.models import Candidate
+
+    with SessionLocal() as db:
+        return json.loads(db.get(Candidate, candidate_id).evidence_json)
+
+
+@pytest.fixture
+def auth_on(monkeypatch):
+    from types import SimpleNamespace
+
+    from app import auth as auth_module
+    from app.services import vetting
+
+    monkeypatch.setattr(auth_module, "get_settings", lambda: SimpleNamespace(supabase_jwt_secret=SECRET))
+    original = vetting.vet_candidate
+    monkeypatch.setattr(
+        "app.services.vetting.vet_candidate",
+        lambda source, **kw: original(source, gaia_fn=gaia_none, skybot_fn=skybot_none),
+    )
+
+
+def _client():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app)
+
+
+def test_with_auth_configured_vetting_needs_a_session_and_writes_nothing_without_one(auth_on):
+    candidate_id = _candidate("owner-1")
+    response = _client().post("/api/v1/analysis/vet", json={"candidate_id": candidate_id})
+    assert response.status_code == 401
+    assert "vetting" not in _evidence(candidate_id)
+
+
+def test_with_auth_configured_a_user_cannot_vet_someone_elses_candidate(auth_on):
+    for owner in ("owner-1", None):
+        candidate_id = _candidate(owner)
+        response = _client().post(
+            "/api/v1/analysis/vet", json={"candidate_id": candidate_id},
+            headers={"Authorization": f"Bearer {_mint('intruder')}"},
+        )
+        assert response.status_code == 404
+        assert "vetting" not in _evidence(candidate_id)
+
+
+def test_with_auth_configured_the_owner_vets_their_candidate(auth_on):
+    candidate_id = _candidate("owner-1")
+    response = _client().post(
+        "/api/v1/analysis/vet", json={"candidate_id": candidate_id},
+        headers={"Authorization": f"Bearer {_mint('owner-1')}"},
+    )
+    assert response.status_code == 200 and response.json()["category"] == "inconclusive"
+    assert "vetting" in _evidence(candidate_id)
+
+
+def test_with_auth_configured_candidates_are_scoped_to_the_user(auth_on):
+    mine = _candidate("owner-2", job_id="scoped")
+    theirs = _candidate("owner-3", job_id="scoped")
+    anonymous = _candidate(None, job_id="scoped")
+    client = _client()
+    assert client.get("/api/v1/candidates").status_code == 401
+    listed = client.get("/api/v1/candidates", headers={"Authorization": f"Bearer {_mint('owner-2')}"})
+    assert listed.status_code == 200
+    ids = {row["id"] for row in listed.json()}
+    assert mine in ids and theirs not in ids and anonymous not in ids
+
+
+def test_in_anonymous_mode_candidates_are_listed_as_before():
+    owned = _candidate("owner-4", job_id="anon-list")
+    anonymous = _candidate(None, job_id="anon-list")
+    listed = _client().get("/api/v1/candidates")
+    assert listed.status_code == 200
+    ids = {row["id"] for row in listed.json()}
+    assert owned in ids and anonymous in ids

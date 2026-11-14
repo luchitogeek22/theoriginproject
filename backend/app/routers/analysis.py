@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import UserInfo, get_optional_user
+from app.auth import UserInfo, get_current_user, get_optional_user
 from app.database import SessionLocal, get_db
 from app.models import Candidate, Cutout, Observation
 from app.schemas import (
@@ -208,9 +208,15 @@ def job_artifact(job_id: str, name: str):
 
 @router.get("/candidates", response_model=list[CandidateItem])
 def list_candidates(
-    limit: int = Query(100, ge=1, le=200), db: Session = Depends(get_db)
+    limit: int = Query(100, ge=1, le=200),
+    db: Session = Depends(get_db),
+    user: UserInfo | None = Depends(get_current_user),
 ) -> list[CandidateItem]:
-    rows = db.scalars(select(Candidate).order_by(Candidate.id.desc()).limit(limit)).all()
+    """With auth configured, a signed-in user sees only their own candidates; anonymous mode lists all."""
+    query = select(Candidate)
+    if user is not None:
+        query = query.where(Candidate.user_id == user.user_id)
+    rows = db.scalars(query.order_by(Candidate.id.desc()).limit(limit)).all()
     out = []
     for row in rows:
         try:
@@ -265,11 +271,17 @@ def _vetting_source(db: Session, candidate: Candidate, evidence: dict) -> dict:
 
 
 @router.post("/analysis/vet")
-def vet_candidate_endpoint(payload: VetRequest, db: Session = Depends(get_db)) -> dict:
+def vet_candidate_endpoint(
+    payload: VetRequest,
+    db: Session = Depends(get_db),
+    user: UserInfo | None = Depends(get_current_user),
+) -> dict:
+    """Writes the vetting onto the candidate. With auth configured only its owner may do so; a
+    candidate of someone else (or with no owner) answers 404, like one that does not exist."""
     from app.services.vetting import vet_candidate
 
     candidate = db.get(Candidate, payload.candidate_id)
-    if candidate is None:
+    if candidate is None or (user is not None and candidate.user_id != user.user_id):
         raise HTTPException(status_code=404, detail="Candidate not found")
     try:
         evidence = json.loads(candidate.evidence_json or "{}")
