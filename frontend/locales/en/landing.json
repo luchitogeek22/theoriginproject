@@ -96,17 +96,12 @@
     },
     "epochs": {
       "badge": "Simulation · not a measurement",
-      "title": "The universe changes. We help you investigate.",
-      "body": "The same patch of sky, seen at different times. One star drifts, another brightens. Drag through the epochs, then switch on the difference view to keep only what changed.",
+      "title": "The universe changes.",
+      "body": "Move through the epochs. Switch on the difference.",
       "legend": "Choose an epoch",
       "epoch": "Epoch {number}",
       "range": "Time between epochs",
-      "difference": "Show difference (later epoch minus Epoch 01)",
-      "date": "Observation date",
-      "dateValue": "none (simulated)",
-      "shift": "Positional variation",
-      "brightness": "Brightness variation",
-      "why": "Why compare epochs? A SPHEREx pixel spans about 6″ of sky, and the challenge's moving targets drift roughly 5–10″ per year: often less than a pixel between visits. Seeing them takes aligned frames on one shared brightness scale."
+      "difference": "Show only what changed"
     },
     "objects": {
       "title": "Objects worth exploring",

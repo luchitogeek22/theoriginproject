@@ -96,17 +96,12 @@
     },
     "epochs": {
       "badge": "Simulación · no es una medición",
-      "title": "El universo cambia. Te ayudamos a investigarlo.",
-      "body": "La misma zona del cielo, vista en distintos momentos. Una estrella se desplaza, otra aumenta su brillo. Recorre las épocas y luego activa la vista de diferencia para conservar solo lo que cambió.",
+      "title": "El universo cambia.",
+      "body": "Mueve las épocas. Activa la diferencia.",
       "legend": "Elige una época",
       "epoch": "Época {number}",
       "range": "Tiempo entre épocas",
-      "difference": "Mostrar diferencia (época posterior menos Época 01)",
-      "date": "Fecha de observación",
-      "dateValue": "ninguna (simulada)",
-      "shift": "Variación de posición",
-      "brightness": "Variación de brillo",
-      "why": "¿Por qué comparar épocas? Un píxel de SPHEREx abarca unos 6″ de cielo, y los objetivos móviles del desafío se desplazan aproximadamente 5–10″ por año: a menudo menos de un píxel entre visitas. Verlos requiere fotogramas alineados en una misma escala de brillo."
+      "difference": "Mostrar solo lo que cambió"
     },
     "objects": {
       "title": "Objetos que vale la pena explorar",
