@@ -44,6 +44,7 @@ vía variables de entorno del compose.
 | `IRSA_*` | endpoint SIA2, colecciones, timeouts, MAXREC, límite de descarga |
 | `NEXT_PUBLIC_API_URL` | URL del backend vista desde el navegador (en Docker es un argumento de build) |
 | `NEXT_PUBLIC_SITE_URL` | Opcional. Origen público del frontend para `canonical`, `hreflang` y `sitemap.xml` (en Vercel se usa `VERCEL_PROJECT_PRODUCTION_URL` si falta) |
+| `NEXT_PUBLIC_SHOW_EXTRA_PAGES` | Opcional, defecto apagado. Con `true` vuelven Cielo vivo, Candidatos, Descubrimientos, Diario, Iniciar sesión y Laboratorio espectral (barra lateral, botones, enlaces de la landing y URLs). Apagado, esas URLs devuelven la página 404 normal. Se lee en el build (`lib/features.ts`): cambiarla exige redesplegar |
 | `TRUSTED_PROXY_HOPS` | saltos de proxy confiables para `X-Forwarded-For` (defecto 1: se usa el último valor; 0 usa la IP del socket) |
 | `RATE_LIMIT_PER_MINUTE` | peticiones por minuto y cliente (defecto 120) |
 | `SUPABASE_JWT_AUDIENCE` | `aud` exigido en los tokens (defecto `authenticated`) |

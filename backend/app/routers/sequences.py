@@ -17,7 +17,13 @@ from app.logging import get_logger
 from app.schemas import JobResponse, SequenceRequest, ShiftStackRequest
 from app.services import cutout_store, jobs as job_store, shift_stack
 from app.services.reference_epoch import build_reference
-from app.services.sequence_extras import build_lightcurve, build_overlay, resolve_motion, view_center
+from app.services.sequence_extras import (
+    build_known_motion,
+    build_lightcurve,
+    build_overlay,
+    resolve_motion,
+    view_center,
+)
 from app.services.observation_store import upsert_observation
 from app.services.sequence import (
     WAVELENGTH_TOLERANCE_UM,
@@ -28,6 +34,7 @@ from app.services.sequence import (
     choose_by_wavelength,
     render_sequence,
     select_items,
+    spread_evenly,
 )
 from app.services.sia2_gateway import ArchiveUnavailableError, InvalidCollectionError, SPHERExDataGateway, query_hash
 from app.services.spherex_product import read_product
@@ -41,6 +48,9 @@ LONG_WAVELENGTH_DETECTOR = 6
 KEY_PATTERN = re.compile(r"^[0-9a-fs][0-9a-f]{23}$")
 IMMUTABLE = "public, max-age=31536000, immutable"
 IMAGE_HEADERS = {"Cache-Control": IMMUTABLE, "Vary": "Origin"}
+# Bump when the stored sequence result changes shape (2: known_motion, evenly spread brightness
+# frames, truthful comparison-star note). Unlike processing_version it keeps the cached cutouts.
+RESULT_VERSION = 2
 
 
 def _key(params: dict, product_ids: list[str]) -> str:
@@ -50,6 +60,7 @@ def _key(params: dict, product_ids: list[str]) -> str:
             "size": params["size_arcmin"], "mode": params["mode"],
             "detector": params.get("detector"), "max": params["max_frames"],
             "products": product_ids, "version": get_settings().processing_version,
+            "result_version": RESULT_VERSION,
             "pm": [params.get("pm_ra_mas_yr"), params.get("pm_dec_mas_yr"), params.get("parallax_mas")],
             "ref_epoch": params.get("ref_epoch"), "reference": bool(params.get("include_reference")),
         },
@@ -88,6 +99,13 @@ def _frames(params: dict, candidates: list[dict], limitations: list[str], centre
     return frames
 
 
+def _store_known_motion_png(key: str, mean) -> str:
+    noise = float(np.nanmedian(np.abs(mean - np.nanmedian(mean))) * 1.4826)
+    display = mean / noise if noise and np.isfinite(noise) else mean
+    storage_put(f"sequences/{key}/known_motion.png", _to_png(display, MOTION_RANGE[0], MOTION_RANGE[1]))
+    return f"/api/v1/sequences/{key}/known_motion.png"
+
+
 def _wavelength_filter(frames: list[FrameInput], params: dict, limitations: list[str]) -> list[FrameInput]:
     waves = [_wavelength(read_product(f.data), params["ra_deg"], params["dec_deg"]) for f in frames]
     keep = choose_by_wavelength(waves, WAVELENGTH_TOLERANCE_UM)
@@ -99,7 +117,7 @@ def _wavelength_filter(frames: list[FrameInput], params: dict, limitations: list
         f"Brightness mode keeps frames at the same wavelength: {len(keep)} of {len(frames)} are "
         f"within ±{WAVELENGTH_TOLERANCE_UM} µm of {centre:.2f} µm."
     )
-    return [frames[i] for i in keep][: params["max_frames"]]
+    return [frames[i] for i in spread_evenly(keep, params["max_frames"])]
 
 
 class ArchiveDown(job_store.UserFacingError):
@@ -175,7 +193,7 @@ def run_sequence(params: dict) -> dict:
 
 def _run_sequence(params: dict) -> dict:
     job_id = params["_job_id"]
-    ra, dec, size = params["ra_deg"], params["dec_deg"], params["size_arcmin"]
+    size = params["size_arcmin"]
     pool = params["max_frames"] * (2 if params["mode"] == "brightness" else 1)
     candidates, n_available, limitations = _gather(params, pool)
     key = _key(params, [c["product_id"] for c in candidates])
@@ -229,6 +247,22 @@ def _run_sequence(params: dict) -> dict:
             else:
                 params["_degraded"] = True
                 limitations.append("The WISE reference frame could not be retrieved.")
+    if params["mode"] == "motion":
+        job_store.set_progress(job_id, "known motion", 5, 6)
+        try:
+            size_px = (result.get("grid") or {}).get("size_px", 0)
+            known = build_known_motion(rendered.warped, size_px, params, lightcurve=result.get("lightcurve"))
+            mean = known.pop("_stack_mean", None)
+            if mean is not None:
+                known["stack_png_url"] = _store_known_motion_png(key, mean)
+        except job_store.UserFacingError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - extras never sink the sequence
+            log.warning("known motion failed: %s", exc)
+            params["_degraded"] = True
+            reason = "The known-motion check could not be computed."
+            known = {"ok": False, "reason": reason, "limitations": [reason]}
+        result["known_motion"] = known
     overlay = result.get("overlay") or {}
     if overlay.get("gaia_available") is False or "lightcurve" not in result and rendered.kept:
         params["_degraded"] = True
@@ -242,7 +276,7 @@ def _run_sequence(params: dict) -> dict:
 
 def run_shift_stack(params: dict) -> dict:
     job_id = params["_job_id"]
-    ra, dec, size = params["ra_deg"], params["dec_deg"], params["size_arcmin"]
+    size = params["size_arcmin"]
     candidates, n_available, limitations = _gather({**params, "mode": "motion"}, params["max_frames"])
     stack_params = {**params, "mode": f"shift:{params['max_speed_arcsec_yr']}:{params['steps']}"}
     key = "s" + _key(stack_params, [c["product_id"] for c in candidates])[1:]
@@ -275,10 +309,7 @@ def run_shift_stack(params: dict) -> dict:
         )
         targeted_mean = targeted.pop("_stack_mean", None)
         if targeted_mean is not None:
-            noise = float(np.nanmedian(np.abs(targeted_mean - np.nanmedian(targeted_mean))) * 1.4826)
-            display = targeted_mean / noise if noise and np.isfinite(noise) else targeted_mean
-            storage_put(f"sequences/{key}/known_motion.png", _to_png(display, MOTION_RANGE[0], MOTION_RANGE[1]))
-            targeted["stack_png_url"] = f"/api/v1/sequences/{key}/known_motion.png"
+            targeted["stack_png_url"] = _store_known_motion_png(key, targeted_mean)
     mean = outcome.pop("_stack_mean", None)
     error = outcome.pop("_stack_error", None)
     result = {

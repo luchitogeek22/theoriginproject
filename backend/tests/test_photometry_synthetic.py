@@ -10,6 +10,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import synthetic  # noqa: E402
 
 from app.services.photometry import (  # noqa: E402
+    PIXEL_SOLID_ANGLE_SR,
     aperture_photometry,
     relative_lightcurve,
     select_comparisons,
@@ -202,3 +203,91 @@ def test_the_lightcurve_switches_to_psf_wings_when_the_core_is_flagged():
     assert curve["method"] == "psf_wings"
     assert sum(p["used"] for p in curve["points"]) >= 7
     assert any("PSF" in note and "wings" in note for note in curve["limitations"])
+
+
+# --- ePSF aperture correction (IRSA notebook "spherex-psf", DR1 / pipeline v7+) ---------------
+
+def gaussian_stamp(sigma_native, oversample=5, size=33, halo=0.0):
+    c = (size - 1) / 2
+    yy, xx = np.mgrid[:size, :size]
+    r2 = ((xx - c) ** 2 + (yy - c) ** 2) / oversample**2
+    stamp = np.exp(-r2 / (2 * sigma_native**2)) + halo * (1.0 + r2 / 4.0) ** -1.5
+    return stamp / stamp.sum()
+
+
+def encircled(stamp, radius, oversample=5):
+    c = (stamp.shape[0] - 1) / 2
+    yy, xx = np.mgrid[: stamp.shape[0], : stamp.shape[1]]
+    return float(stamp[np.hypot(xx - c, yy - c) / oversample <= radius].sum() / stamp.sum())
+
+
+def test_the_epsf_of_the_nearest_zone_corrects_the_aperture_flux():
+    wide = gaussian_stamp(0.85, halo=0.08)
+    sharp = gaussian_stamp(0.85)
+    # Target at cutout pixel ~(31.5, 31.5) -> parent (1 + 31.5 + 300, 1 + 31.5 + 100) = (332.5, 132.5).
+    zones = [(330.0, 130.0, 3, 1, wide), (900.0, 900.0, 9, 9, sharp)]
+    data = synthetic.make_fits([(*TARGET, 20.0)], shape=(64, 64), noise=0.05, seed=1, epsf_zones=zones)
+    product = read_product(data)
+    result = aperture_photometry(product, *TARGET)
+
+    assert result["psf_model"] == "epsf"
+    assert result["psf_zone"] == [3, 1]
+    expected = encircled(wide, result["radius_pix"])
+    assert result["encircled_energy"] == pytest.approx(expected, rel=1e-6)
+    assert result["aperture_correction"] == pytest.approx(1.0 / expected, rel=1e-6)
+    assert result["flux"] == pytest.approx(result["flux_uncorrected"] / expected, rel=1e-9)
+    assert result["flux_err"] == pytest.approx(result["flux_err_uncorrected"] / expected, rel=1e-9)
+    assert result["flux_jy"] == pytest.approx(result["flux"] * PIXEL_SOLID_ANGLE_SR * 1e6, rel=1e-9)
+
+
+def test_products_without_an_epsf_keep_the_uncorrected_flux():
+    product = read_product(synthetic.make_fits([(*TARGET, 20.0)], shape=(64, 64), noise=0.05, seed=1))
+    result = aperture_photometry(product, *TARGET)
+    assert result["psf_model"] == "none"
+    assert result["aperture_correction"] == 1.0
+    assert result["psf_zone"] is None
+    assert result["flux"] == result["flux_uncorrected"]
+
+
+def test_the_lightcurve_says_how_many_frames_got_the_epsf_correction():
+    from app.services.sequence import FrameInput
+    from app.services.sequence_extras import build_lightcurve
+
+    stamp = gaussian_stamp(0.85)
+    kept = []
+    for k in range(4):
+        zones = [(330.0, 130.0, 3, 1, stamp)] if k < 3 else None
+        data = synthetic.make_fits([(*TARGET, 20.0)], shape=(64, 64), noise=0.1, seed=k,
+                                   mjd=60800.0 + 20 * k, epsf_zones=zones)
+        kept.append((FrameInput({"obs_id": f"e{k}"}, data), read_product(data)))
+    params = {"ra_deg": TARGET[0], "dec_deg": TARGET[1], "size_arcmin": 6.0}
+    curve = build_lightcurve(kept, params, gaia_fn=lambda *a, **k: [])
+    assert "One curve per detector; detectors are never mixed. Aperture flux corrected with the SPHEREx ePSF in 3 of 4 frames." in curve["limitations"]
+    assert curve["aperture_correction"] == {"model": "epsf", "frames": 3, "total": 4}
+
+
+def test_the_comparison_note_counts_the_stars_that_passed_the_cut():
+    import re
+
+    from app.services.sequence import FrameInput
+    from app.services.sequence_extras import build_lightcurve
+
+    bright, faint, empty = COMPARISONS[0], COMPARISONS[1], COMPARISONS[2]
+    kept = []
+    for k in range(3):
+        data = synthetic.make_fits(
+            [(*TARGET, 20.0), (*bright, 40.0), (*faint, 0.5)], shape=(64, 64), noise=0.2, seed=k,
+            mjd=60800.0 + 20 * k,
+        )
+        kept.append((FrameInput({"obs_id": f"o{k}"}, data), read_product(data)))
+    stars = [
+        {"source_id": i, "ra": ra, "dec": dec, "pmra": 0.0, "pmdec": 0.0, "parallax": None,
+         "g_mag": 14.0, "variable": False}
+        for i, (ra, dec) in enumerate((bright, faint, empty))
+    ]
+    params = {"ra_deg": TARGET[0], "dec_deg": TARGET[1], "size_arcmin": 6.0}
+    curve = build_lightcurve(kept, params, gaia_fn=lambda *a, **k: stars)
+    note = next(n for n in curve["limitations"] if n.startswith("Only "))
+    assert re.match(r"^Only (\d+) Gaia star\(s\) were measurable here.*$", note)
+    assert note.startswith("Only 1 Gaia star(s) were measurable here")
+    assert "3 candidate" in note

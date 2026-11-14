@@ -45,6 +45,9 @@ def make_fits(
     flags=None,
     crpix=None,
     halo_fraction=0.0,
+    epsf_zones=None,
+    epsf_oversample=5,
+    parent_crpix=(-300.0, -100.0),
 ):
     """sources: iterable of (ra_deg, dec_deg, peak). Returns FITS bytes."""
     rng = np.random.default_rng(seed)
@@ -89,6 +92,25 @@ def make_fits(
         fits.ImageHDU(np.full(shape, zodi, dtype=np.float32), name="ZODI"),
         wave_table,
     ]
+    if epsf_zones is not None:
+        # DR1 (v7+) layout: one row per detector zone, centres in 0-based parent-image pixels.
+        header["CRPIX1A"], header["CRPIX2A"] = parent_crpix
+        hdus[1].header["CRPIX1A"], hdus[1].header["CRPIX2A"] = parent_crpix
+        stamps = np.array([z[4] for z in epsf_zones], dtype=np.float32)
+        size = stamps.shape[1]
+        table = fits.BinTableHDU.from_columns(
+            [
+                fits.Column(name="BINX", format="J", array=[z[2] for z in epsf_zones]),
+                fits.Column(name="BINY", format="J", array=[z[3] for z in epsf_zones]),
+                fits.Column(name="XCENTER", format="E", array=[z[0] for z in epsf_zones]),
+                fits.Column(name="YCENTER", format="E", array=[z[1] for z in epsf_zones]),
+                fits.Column(name="EPSF", format=f"{size * size}E", dim=f"({size},{size})", array=stamps),
+            ],
+            name="EPSF",
+        )
+        table.header["OVSMPX"] = epsf_oversample
+        table.header["OVSMPY"] = epsf_oversample
+        hdus.insert(5, table)
     buffer = io.BytesIO()
     fits.HDUList(hdus).writeto(buffer)
     return buffer.getvalue()

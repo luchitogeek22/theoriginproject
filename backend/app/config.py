@@ -31,7 +31,9 @@ class Settings(BaseSettings):
     collection_discovery_ttl_seconds: int = 86400
     collection_discovery_timeout_seconds: float = 180.0
     collection_discovery_retry_seconds: int = 300
-    irsa_collections: str = "spherex_qr3,spherex_qr3_deep,spherex_qr2,spherex_qr2_deep"
+    # 2026-11-13: DR1 (reprocessed, 2025-05 to early 2026) supersedes QR2, which SIA no longer
+    # returns; QR3 now holds only the later weeks (2026W3x+). The two do not overlap.
+    irsa_collections: str = "spherex_dr1,spherex_dr1_deep,spherex_qr3,spherex_qr3_deep"
     irsa_timeout_seconds: float = 30.0
     irsa_connect_timeout_seconds: float = 5.0
     irsa_search_deadline_seconds: float = 60.0
@@ -62,8 +64,12 @@ class Settings(BaseSettings):
     max_queued_jobs: int = 20
     detection_min_pixels: int = 2
     catalog_timeout_seconds: float = 25.0
+    # CSA NEOSSat archive (CADC TAP, CAOM2); resolved from ivo://cadc.nrc.ca/argus on 2026-11-13.
+    cadc_tap_url: str = "https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus"
     wise_ibe_url: str = "https://irsa.ipac.caltech.edu/ibe"
     catalog_cache_ttl_seconds: int = 86400
+    # Gaia DR3 is a frozen release: a field answer stays valid, so it is kept for 30 days.
+    gaia_cache_ttl_seconds: int = 30 * 86400
     alignment_error_pix: float = 0.1
 
     @property

@@ -4,7 +4,7 @@
  */
 export const APP_ENTRY = "/observatory";
 
-export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "platform" | "question";
+export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "question";
 
 export interface Chapter {
   id: ChapterId;
@@ -17,7 +17,6 @@ export const CHAPTERS: Chapter[] = [
   { id: "epochs" },
   { id: "objects" },
   { id: "evidence" },
-  { id: "platform" },
   { id: "question" },
 ];
 
@@ -148,22 +147,6 @@ export const PIPELINE: PipelineStep[] = [
   { status: "validating", visual: "epochs" },
   { status: "validating", visual: "variation" },
   { status: "available", visual: "journal" },
-];
-
-export type ModuleKey = "observatory" | "livingSky" | "timeExplorer" | "spectralLab" | "discoveries" | "journal";
-
-export interface ProductModule {
-  key: ModuleKey;
-  href: string;
-}
-
-export const MODULES: ProductModule[] = [
-  { key: "observatory", href: "/" },
-  { key: "livingSky", href: "/living-sky" },
-  { key: "timeExplorer", href: "/time-explorer" },
-  { key: "spectralLab", href: "/spectral-lab" },
-  { key: "discoveries", href: "/discoveries" },
-  { key: "journal", href: "/journal" },
 ];
 
 export type SourceKey = "irsa" | "jpl" | "spaceApps" | "docs";

@@ -225,5 +225,25 @@
     "recheck": "Check again",
     "sourceUp": "{name}: {latency} ms",
     "sourceDown": "{name}: {detail}"
+  },
+  "targetCurve": {
+    "caption": "Illustration",
+    "description": "Illustrative shape, not measured data."
+  },
+  "knownMotionCard": {
+    "title": "Catalogued motion check",
+    "measured": "Measured on these frames: {value} ± {error}″/yr",
+    "measuredNoError": "Measured on these frames: {value}″/yr",
+    "catalogue": "Catalogue ({source}): {value}″/yr",
+    "agreement": "Difference from the catalogue: {sigma}σ",
+    "shift": "Shift over {days} days: {measured}″ measured, {predicted}″ predicted by the catalogue",
+    "notMeasurable": "The motion could not be measured on these frames: {reason} Only the stacked detection is shown.",
+    "detection": "Invisible in each frame (median SNR {snr}) → appears when the {visits} visits are stacked along its catalogued motion, p = {p}.",
+    "honesty": "This confirms a motion already in the catalogue; it is not a discovery.",
+    "unavailable": "Catalogued motion check not available: {reason}",
+    "genericReason": "the check could not be computed for this field.",
+    "imageAlt": "Frames stacked along the catalogued motion",
+    "detectionVisible": "Visible in each frame (median SNR {snr}); stacking the {visits} visits along its catalogued motion puts the peak at the predicted position, p = {p}.",
+    "pFloor": "This is the smallest p-value the test can resolve with {nNull} random positions, so the true value may be lower."
   }
 }

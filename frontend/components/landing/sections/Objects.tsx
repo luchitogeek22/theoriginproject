@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
+import { SHOW_EXTRA_PAGES } from "@/lib/features";
+import { sequenceUrl } from "@/lib/sequenceParams";
+import { VALIDATION_TARGETS } from "@/lib/targets";
 import { TARGETS, type ChallengeTarget } from "../content";
 import { stage } from "../stage";
 
@@ -12,6 +15,9 @@ export default function Objects() {
   const format = useFormatter();
   const [selected, setSelected] = useState(0);
   const target = TARGETS[selected];
+  // With the living sky hidden, the call to action opens the target's own sequence.
+  const validation = VALIDATION_TARGETS.find((vt) => vt.key === target.key);
+  const ctaHref = SHOW_EXTRA_PAGES || !validation ? "/living-sky" : sequenceUrl(validation, undefined, validation.mode);
 
   const exposures = (e: ChallengeTarget["exposures"]) => {
     const count = format.number(e.count);
@@ -102,7 +108,7 @@ export default function Objects() {
                 <p className="mt-3 text-xs text-stellar/45">
                   {t("auditNote")}
                 </p>
-                <Link href="/living-sky" className="landing-focus landing-button landing-button--primary mt-6">
+                <Link href={ctaHref} className="landing-focus landing-button landing-button--primary mt-6">
                   {t("cta")}
                 </Link>
               </motion.article>

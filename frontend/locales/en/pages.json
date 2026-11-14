@@ -17,7 +17,8 @@
     "sourceUnavailable": "{name}: unavailable — {detail}",
     "ongoingLabel": "Research in progress",
     "ongoingOpen": "Open journal",
-    "ongoingDismiss": "Dismiss"
+    "ongoingDismiss": "Dismiss",
+    "ongoingOpenExplorer": "Open in the time explorer"
   },
   "livingSkyPage": {
     "archiveQueryFailed": "Archive query failed",
@@ -78,33 +79,16 @@
     "sequenceLabel": "Image sequence",
     "embedCredit": "Data: NASA/IPAC IRSA, SPHEREx · THE ORIGIN PROJECT",
     "skyMap": "Sky map",
+    "neossat": "Other missions: NEOSSat (CSA)",
     "lightCurve": "Light curve",
     "shiftStack": "Stacking and search for a Planet X (advanced)",
     "manualCompare": "Manual A/B comparison and difference analysis (advanced)",
-    "loadingExplorer": "Loading the time explorer…"
+    "loadingExplorer": "Loading the time explorer…",
+    "spectrum": "Spectrum (all detectors)"
   },
   "spectralLabPage": {
-    "traceName": "spatial profile",
-    "axisWavelength": "wavelength (µm)",
-    "axisRow": "detector row",
-    "axisFlux": "flux ({unit})",
-    "extractFailed": "Spatial profile extraction failed",
     "title": "Spectral lab",
-    "subtitle": "spatial profile of one SPHEREx exposure · not a full spectrum",
-    "chooseCutout": "Choose cutout",
-    "cutoutPlaceholder": "— cutout —",
-    "extract": "Extract spatial profile",
-    "csv": "CSV",
-    "noCutouts": "Prepare cutouts (Time explorer, manual comparison) to extract the spatial profile of an exposure.",
-    "detector": "Detector",
-    "band": "Band",
-    "date": "Date",
-    "samples": "Samples",
-    "dataClass": "Class",
-    "noSamples": "Without samples there is no curve. Run an extraction on a real cutout. The result is a spatial profile of a single exposure, not a 102-channel spectrum.",
-    "qualityTitle": "Quality and limitations",
-    "noMolecules": "This lab does not identify molecules: any physical interpretation requires appropriate models and references.",
-    "chooseTarget": "Pick a target to measure its spectrum on the fly (relative spectrophotometry, distinct from the spatial profile above)."
+    "chooseTarget": "Pick a target to measure its spectrum on the fly (relative spectrophotometry across detectors)."
   },
   "candidatesPage": {
     "kinds": {

@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 
 import pytest
 
@@ -100,11 +99,14 @@ def test_health_is_503_when_the_database_is_unreachable(client):
     assert "connection refused" not in response.text
 
 
-def test_each_job_stage_logs_its_duration(caplog):
+def test_each_job_stage_logs_its_duration(caplog, monkeypatch):
+    # Fake clock: real sleep() is too coarse on Windows (~15.6 ms ticks) to assert on.
+    clock = [1000.0]
+    monkeypatch.setattr(jobs.time, "monotonic", lambda: clock[0])
     job_id = "obs-job-1"
     with caplog.at_level(logging.INFO, logger="jobs"):
         jobs.set_progress(job_id, "downloading", 0, 2)
-        time.sleep(0.02)
+        clock[0] += 0.5
         jobs.set_progress(job_id, "downloading", 1, 2)
         jobs.set_progress(job_id, "storing results", 2, 2)
         jobs.finish_stage_timing(job_id)
@@ -114,4 +116,4 @@ def test_each_job_stage_logs_its_duration(caplog):
         if getattr(r, "job_id", None) == job_id and hasattr(r, "duration_ms")
     ]
     assert [(j, s) for j, s, _ in stages] == [(job_id, "downloading"), (job_id, "storing results")]
-    assert stages[0][2] >= 20
+    assert stages[0][2] == 500

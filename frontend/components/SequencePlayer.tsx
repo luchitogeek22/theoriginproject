@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Download, Link2, Loader2, Pause, Play, SkipBack, SkipForward, TriangleAlert } from "lucide-react";
 import ResultBadge from "@/components/ResultBadge";
 import BeforeAfter, { MotionSentence } from "@/components/BeforeAfter";
+import DifferenceFrame from "@/components/DifferenceFrame";
 import { assetUrl } from "@/lib/api";
 import { useMotionFormat } from "@/lib/motion";
 import { useErrorText } from "@/lib/errors";
@@ -13,6 +14,17 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import type { SequenceFrame, SequenceResult } from "@/lib/types";
 import { nextLargerFov } from "@/lib/sequenceParams";
 import { downloadPng, exportSequence, type ExportLabels } from "@/lib/sequenceExport";
+import { formatRaDec } from "@/lib/coords";
+import { formatSexagesimal, gridFractionToSky, simbadUrl } from "@/lib/gridCoords";
+
+const DISPLAY_DEFAULT = { contrast: 100, brightness: 100, invert: false };
+
+interface Probe {
+  fx: number;
+  fy: number;
+  ra: number;
+  dec: number;
+}
 
 export const FLAGGED_WARNING_THRESHOLD = 0.3;
 const SCALE_GRADIENT = "linear-gradient(to right, #000, #fff)";
@@ -154,6 +166,10 @@ export default function SequencePlayer({
   const [shareMessage, setShareMessage] = useState("");
   const [exportMessage, setExportMessage] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [display, setDisplay] = useState(DISPLAY_DEFAULT);
+  const [probe, setProbe] = useState<Probe | null>(null);
+  const [difference, setDifference] = useState(false);
+  const [probeMessage, setProbeMessage] = useState("");
   const firstFrames = useRef(frames);
 
   const usable = preload.done && preload.loaded > 0;
@@ -167,6 +183,8 @@ export default function SequencePlayer({
     setBlinkPhase(false);
     setBlink(false);
     setPlaying(false);
+    setProbe(null);
+    setProbeMessage("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frames, total]);
 
@@ -194,6 +212,8 @@ export default function SequencePlayer({
 
   const shownIndex = blink ? (blinkPhase ? blinkB : blinkA) : index;
   const frame = frames[Math.min(shownIndex, total - 1)];
+  const referenceFrame = frames[Math.min(blinkA, total - 1)];
+  const showDifference = difference && total > 1;
 
   const step = useCallback(
     (delta: number) => {
@@ -208,6 +228,21 @@ export default function SequencePlayer({
     if (!shareUrl) return;
     const url = `${window.location.origin}${shareUrl(index)}`;
     setShareMessage((await copyText(url)) ? t("share.copied") : t("share.failed", { url }));
+  };
+
+  const markPosition = (e: React.MouseEvent<HTMLDivElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) return;
+    const fx = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+    const fy = Math.min(1, Math.max(0, (e.clientY - box.top) / box.height));
+    setProbe({ fx, fy, ...gridFractionToSky(result.grid, fx, fy) });
+    setProbeMessage("");
+  };
+
+  const copyProbe = async () => {
+    if (!probe) return;
+    const text = `${probe.ra.toFixed(6)} ${probe.dec >= 0 ? "+" : ""}${probe.dec.toFixed(6)}`;
+    setProbeMessage((await copyText(text)) ? t("probe.copied") : t("share.failed", { url: text }));
   };
 
   const exportMessageFor = (e: unknown) => errorText(e, t("export.failed"));
@@ -284,6 +319,14 @@ export default function SequencePlayer({
         : `${trailArcsec}″`
       : null;
   const overlayVisible = overlay !== undefined && ((showGaia && gaiaEnabled) || showTrack);
+  const displayChanged =
+    display.contrast !== DISPLAY_DEFAULT.contrast ||
+    display.brightness !== DISPLAY_DEFAULT.brightness ||
+    display.invert !== DISPLAY_DEFAULT.invert;
+  // Display-only: the same CSS filter applies to every frame, so comparisons between frames hold.
+  const displayFilter = displayChanged
+    ? `contrast(${display.contrast}%) brightness(${display.brightness}%)${display.invert ? " invert(1)" : ""}`
+    : undefined;
 
   return (
     <div
@@ -347,15 +390,45 @@ export default function SequencePlayer({
         )}
         {view === "compare" && total > 1 && <BeforeAfter result={result} />}
         <div className={`${showReference && reference ? "grid gap-2 sm:grid-cols-2" : ""} ${view === "compare" && total > 1 ? "hidden" : ""}`}>
-        <div className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded border border-line bg-abyss">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={frameUrl(frame)}
-            alt={t("frameAlt", { number: frame.index + 1, total, date: frame.date_iso, detector: frame.detector })}
-            className="h-full w-full"
-            style={{ imageRendering: smooth ? "auto" : "pixelated" }}
-            draggable={false}
-          />
+        <div
+          className="relative mx-auto aspect-square w-full max-w-[560px] cursor-crosshair overflow-hidden rounded border border-line bg-abyss"
+          onClick={markPosition}
+          data-testid="frame-canvas"
+        >
+          {showDifference ? (
+            <DifferenceFrame
+              frames={frames}
+              frame={frame}
+              reference={referenceFrame}
+              smooth={smooth}
+              alt={t("difference.alt", { number: frame.index + 1, reference: referenceFrame.index + 1 })}
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={frameUrl(frame)}
+              alt={t("frameAlt", { number: frame.index + 1, total, date: frame.date_iso, detector: frame.detector })}
+              className="h-full w-full"
+              style={{ imageRendering: smooth ? "auto" : "pixelated", filter: displayFilter }}
+              draggable={false}
+            />
+          )}
+          {probe && (
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              aria-hidden="true"
+              data-testid="probe-marker"
+            >
+              <path
+                d={`M ${probe.fx * 100 - 4} ${probe.fy * 100} L ${probe.fx * 100 - 1.5} ${probe.fy * 100} M ${probe.fx * 100 + 1.5} ${probe.fy * 100} L ${probe.fx * 100 + 4} ${probe.fy * 100} M ${probe.fx * 100} ${probe.fy * 100 - 4} L ${probe.fx * 100} ${probe.fy * 100 - 1.5} M ${probe.fx * 100} ${probe.fy * 100 + 1.5} L ${probe.fx * 100} ${probe.fy * 100 + 4}`}
+                stroke="#7CFFB2"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          )}
           {overlayVisible && overlay && (
             <svg
               viewBox={`0 0 ${size} ${size}`}
@@ -533,6 +606,103 @@ export default function SequencePlayer({
             )}
           </fieldset>
         )}
+        <div
+          className="mx-auto mt-2 max-w-[560px] rounded border border-line bg-deep p-2 text-[11px] text-mutedstar"
+          data-testid="probe-panel"
+        >
+          {probe ? (
+            <>
+              <p className="font-semibold text-starlight">{t("probe.label")}</p>
+              <p className="mt-0.5 font-mono text-starlight" data-testid="probe-coords">
+                {formatRaDec(probe.ra, probe.dec)} · {formatSexagesimal(probe.ra, probe.dec)}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <a
+                  href={simbadUrl(probe.ra, probe.dec)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded border border-line px-2 py-0.5 text-starlight hover:border-pulse"
+                >
+                  {t("probe.simbad")}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void copyProbe()}
+                  className="rounded border border-line px-2 py-0.5 text-starlight hover:border-pulse"
+                >
+                  {t("probe.copy")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProbe(null);
+                    setProbeMessage("");
+                  }}
+                  className="rounded border border-line px-2 py-0.5 hover:text-starlight"
+                >
+                  {t("probe.clear")}
+                </button>
+                <span aria-live="polite">{probeMessage}</span>
+              </div>
+              <HelpText>{t("probe.precision")}</HelpText>
+            </>
+          ) : (
+            <p>{t("probe.hint")}</p>
+          )}
+        </div>
+
+        <fieldset className="mx-auto mt-2 max-w-[560px] rounded border border-line bg-deep p-2 text-[11px] text-mutedstar">
+          <legend className="px-1 font-semibold text-starlight">{t("display.legend")}</legend>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <label className="flex items-center gap-1">
+              {t("display.contrast")}
+              <input
+                type="range"
+                min={50}
+                max={400}
+                step={10}
+                value={display.contrast}
+                onChange={(e) => setDisplay((d) => ({ ...d, contrast: Number(e.target.value) }))}
+                className="w-24 accent-[#46d8ff]"
+                data-testid="display-contrast"
+              />
+              <span className="w-9 tabular-nums">{display.contrast}%</span>
+            </label>
+            <label className="flex items-center gap-1">
+              {t("display.brightness")}
+              <input
+                type="range"
+                min={30}
+                max={300}
+                step={10}
+                value={display.brightness}
+                onChange={(e) => setDisplay((d) => ({ ...d, brightness: Number(e.target.value) }))}
+                className="w-24 accent-[#46d8ff]"
+                data-testid="display-brightness"
+              />
+              <span className="w-9 tabular-nums">{display.brightness}%</span>
+            </label>
+            <label className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={display.invert}
+                onChange={(e) => setDisplay((d) => ({ ...d, invert: e.target.checked }))}
+                data-testid="display-invert"
+              />
+              {t("display.invert")}
+            </label>
+            <button
+              type="button"
+              onClick={() => setDisplay(DISPLAY_DEFAULT)}
+              disabled={!displayChanged}
+              className="rounded border border-line px-2 py-0.5 hover:text-starlight disabled:opacity-40"
+            >
+              {t("display.reset")}
+            </button>
+          </div>
+          <HelpText>{t("display.help")}</HelpText>
+        </fieldset>
+
         {preload.failed > 0 && preload.done && preload.loaded > 0 && (
           <p className="mt-1 text-[11px] text-gold">
             {t("framesFailed", { failed: preload.failed, total })}
@@ -652,7 +822,21 @@ export default function SequencePlayer({
                 >
                   {blink ? t("blink.stop") : t("blink.start")}
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={difference}
+                  onClick={() => setDifference((d) => !d)}
+                  className={`rounded border px-2 py-1 ${difference ? "border-pulse text-pulse" : "border-line"}`}
+                  data-testid="difference-toggle"
+                >
+                  {difference ? t("difference.stop") : t("difference.start")}
+                </button>
               </div>
+              {difference && (
+                <p className="mt-1" data-testid="difference-legend">
+                  {t("difference.legend", { reference: referenceFrame.index + 1 })}
+                </p>
+              )}
             </fieldset>
           </div>
         )}

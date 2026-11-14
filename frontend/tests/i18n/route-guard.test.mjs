@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
-const I18N = new URL("../../i18n/", import.meta.url).pathname;
+const I18N = fileURLToPath(new URL("../../i18n/", import.meta.url));
 const out = mkdtempSync(join(tmpdir(), "i18n-guard-"));
 after(() => rmSync(out, { recursive: true, force: true }));
 for (const name of ["config", "paths"]) {

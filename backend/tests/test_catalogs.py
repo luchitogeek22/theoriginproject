@@ -13,7 +13,6 @@ from app.services.catalogs import CatalogUnavailable, gaia_position_at  # noqa: 
 from app.services.sequence import FrameInput, common_grid  # noqa: E402
 from app.services.sequence_extras import build_overlay, target_track  # noqa: E402
 from app.services.spherex_product import read_product  # noqa: E402
-from app.services.targets import propagate  # noqa: E402
 
 RA0, DEC0 = 150.0, 2.0
 SCALE = 6.15 / 3600.0
@@ -86,3 +85,59 @@ def test_known_targets_get_their_catalog_motion_without_the_client_sending_it():
     assert abs(track[1][0] - track[0][0]) * 3600 > 3.5
     free, moved_free = target_track({"ra_deg": 10.0, "dec_deg": 10.0}, [60800.0, 61000.0])
     assert moved_free is False and free[0] == free[1]
+
+
+ROWS = [{"source_id": 7, "ra": 10.0, "dec": 20.0, "pmra": 0.0, "pmdec": 0.0, "parallax": None,
+         "g_mag": 12.0, "variable": False}]
+
+
+def _forget_memory_cache():
+    from app.services import store
+
+    store._memory_cache.clear()
+
+
+def test_a_gaia_field_that_answered_once_survives_a_later_429(monkeypatch):
+    from app.services import catalogs
+
+    calls = []
+
+    def answer(*args):
+        calls.append(args)
+        return ROWS
+
+    monkeypatch.setattr(catalogs, "_gaia_query", answer)
+    assert catalogs.gaia_cone(10.0, 20.0, 0.075, 17.5, 300) == ROWS
+    assert catalogs.gaia_cone(10.0, 20.0, 0.075, 17.5, 300) == ROWS
+    assert len(calls) == 1
+
+    def too_many_requests(*args):
+        raise RuntimeError("HTTP Error 429: Too Many Requests")
+
+    _forget_memory_cache()
+    monkeypatch.setattr(catalogs, "_gaia_query", too_many_requests)
+    assert catalogs.gaia_cone(10.0, 20.0, 0.075, 17.5, 300) == ROWS
+
+
+def test_a_gaia_field_never_answered_still_reports_unavailable(monkeypatch):
+    from app.services import catalogs
+
+    def too_many_requests(*args):
+        raise RuntimeError("HTTP Error 429: Too Many Requests")
+
+    _forget_memory_cache()
+    monkeypatch.setattr(catalogs, "_gaia_query", too_many_requests)
+    with pytest.raises(CatalogUnavailable):
+        catalogs.gaia_cone(11.0, 21.0, 0.075, 17.5, 300)
+
+
+def test_gaia_fields_are_cached_for_a_long_time(monkeypatch):
+    from app.config import get_settings
+    from app.services import catalogs
+
+    ttls = []
+    monkeypatch.setattr(catalogs, "_gaia_query", lambda *a: ROWS)
+    monkeypatch.setattr(catalogs, "cache_set_json", lambda key, value, ttl: ttls.append(ttl))
+    catalogs.gaia_cone(12.0, 22.0, 0.075, 17.5, 300)
+    assert ttls == [get_settings().gaia_cache_ttl_seconds]
+    assert get_settings().gaia_cache_ttl_seconds >= 30 * 86400

@@ -17,7 +17,8 @@
     "sourceUnavailable": "{name}: no disponible — {detail}",
     "ongoingLabel": "Investigación en curso",
     "ongoingOpen": "Abrir diario",
-    "ongoingDismiss": "Descartar"
+    "ongoingDismiss": "Descartar",
+    "ongoingOpenExplorer": "Abrir en el explorador temporal"
   },
   "livingSkyPage": {
     "archiveQueryFailed": "La consulta al archivo falló",
@@ -78,33 +79,16 @@
     "sequenceLabel": "Secuencia de imágenes",
     "embedCredit": "Datos: NASA/IPAC IRSA, SPHEREx · THE ORIGIN PROJECT",
     "skyMap": "Mapa del cielo",
+    "neossat": "Otras misiones: NEOSSat (CSA)",
     "lightCurve": "Curva de luz",
     "shiftStack": "Apilado y búsqueda de un Planeta X (avanzado)",
     "manualCompare": "Comparación manual A/B y análisis diferencial (avanzado)",
-    "loadingExplorer": "Cargando el explorador temporal…"
+    "loadingExplorer": "Cargando el explorador temporal…",
+    "spectrum": "Espectro (todos los detectores)"
   },
   "spectralLabPage": {
-    "traceName": "perfil espacial",
-    "axisWavelength": "longitud de onda (µm)",
-    "axisRow": "fila del detector",
-    "axisFlux": "flujo ({unit})",
-    "extractFailed": "La extracción del perfil falló",
     "title": "Laboratorio espectral",
-    "subtitle": "perfil espacial de una exposición SPHEREx · no es un espectro completo",
-    "chooseCutout": "Elegir recorte",
-    "cutoutPlaceholder": "— recorte —",
-    "extract": "Extraer perfil espacial",
-    "csv": "CSV",
-    "noCutouts": "Prepara recortes (Explorador temporal, comparación manual) para extraer el perfil espacial de una exposición.",
-    "detector": "Detector",
-    "band": "Banda",
-    "date": "Fecha",
-    "samples": "Muestras",
-    "dataClass": "Clase",
-    "noSamples": "Sin muestras no hay curva. Ejecuta una extracción sobre un recorte real. El resultado es un perfil espacial de una sola exposición, no un espectro de 102 canales.",
-    "qualityTitle": "Calidad y limitaciones",
-    "noMolecules": "Este laboratorio no identifica moléculas: cualquier interpretación física requiere modelos y referencias apropiadas.",
-    "chooseTarget": "Elige un objetivo para medir su espectro al vuelo (espectrofotometría relativa, distinta del perfil espacial de arriba)."
+    "chooseTarget": "Elige un objetivo para medir su espectro al vuelo (espectrofotometría relativa entre detectores)."
   },
   "candidatesPage": {
     "kinds": {

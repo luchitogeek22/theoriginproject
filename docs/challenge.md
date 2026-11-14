@@ -182,10 +182,102 @@ aplicación funcionando con datos reales, no la existencia de un archivo.
 
 ## Recursos
 
-- Pestaña *Resources* del desafío en el sitio de Space Apps: **pendiente de
-  copiar aquí** (el enunciado avisa que puede crecer antes del hackathon).
+### Pestaña *Resources* del desafío (copiada el 2026-11-13, texto original)
+
+> NASA does not endorse any non-U.S. Government entity and is not responsible
+> for information contained on non-U.S. Government websites. For non-U.S.
+> Government websites, participants must comply with any data use parameters
+> of that specific website.
+>
+> **NASA Data & Resources**
+>
+> - **NASA/IPAC Infrared Science Archive: SPHEREx resources**
+> - **SPHEREx Tutorial Notebooks:** Example Jupyter notebooks for how to access
+>   the SPHEREx data via Python.
+> - **WiseView:** A similar tool made for viewing data from an earlier NASA
+>   mission called WISE. It's been used by the public to make hundreds of
+>   discoveries. Feel free to use it as a model or as inspiration!
+> - **Gaia Mission Data:** Be sure to use the latest data release (Data Release 3).
+>
+> **Space Agency Partner Resources — CSA (Canadian Space Agency)**
+>
+> - **NEOSSat: Observing Asteroids, Space Debris and Exoplanets:** Learn about
+>   NEOSSat, the world's first space telescope dedicated to detecting and
+>   tracking asteroids, comets, satellites, and space debris. This CSA resource
+>   highlights how Canada is helping protect our understanding of near-Earth
+>   space by contributing to international efforts to identify and monitor
+>   objects that could pose risks to Earth or spacecraft.
+> - **Canadian Astronomy Data Centre (CADC):** The CADC provides access to a vast
+>   collection of astronomical observations from Canadian and international
+>   telescopes and space missions. Through this resource, participants can
+>   explore real scientific data used by astronomers to study stars, galaxies,
+>   exoplanets, asteroids, and other celestial objects.
+> - **NEOSSat Data Tutorial:** This tutorial demonstrates how to use Python to
+>   visualize data from Canada's NEOSSat mission. Follow step-by-step
+>   instructions to access spacecraft observations, create visualizations, and
+>   explore data collected by Canada's space telescope.
+> - **NEOSSat Dataset:** This dataset contains observations collected by
+>   NEOSSat, Canada's Near-Earth Object Surveillance Satellite. The data
+>   supports the detection and tracking of asteroids, comets, satellites, and
+>   space debris. Explore real observations from Canada's space telescope and
+>   learn how objects are monitored in near-Earth space.
+
+### Relación de cada recurso con el producto
+
+Enlaces copiados de memoria: confirmarlos contra la pestaña *Resources* oficial.
+
+| Recurso | Enlace de referencia | Estado en el producto |
+|---|---|---|
+| IRSA: SPHEREx | https://irsa.ipac.caltech.edu/Missions/spherex.html | ✅ Núcleo. SIA2, TAP (`spherex.obscore`) y recortes sobre DR1 + QR3; DOI de DR1 `10.26131/IRSA678`. |
+| SPHEREx Tutorial Notebooks | https://caltech-ipac.github.io/irsa-tutorials/spherex/ | ✅ Intro y Cutouts (misma sintaxis y extensiones), ePSF (corrección de apertura por zona, `photometry.py`), HiPS (fondo del mapa Aladin). Source Discovery y Mosaic no aplican al flujo temporal. |
+| WiseView | http://byw.tools/wiseview | ✅ Parpadeo A/B, antes/después, contraste/brillo/invertir, coordenadas al hacer clic y vista de diferencia contra el cuadro A (naranja/azul, ruido < 3σ oculto). |
+| Gaia DR3 | https://www.cosmos.esa.int/web/gaia/dr3 | ✅ `catalogs.py` consulta `gaiadr3.gaia_source` y propaga desde J2016.0. |
+| CSA: NEOSSat | https://www.asc-csa.gc.ca/eng/satellites/neossat/ | ✅ Panel "Otras misiones: NEOSSat (CSA)" en el explorador temporal, con contexto de la misión. |
+| CADC | https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca | ✅ `GET /api/v1/sky/neossat` consulta el TAP de CADC (`argus`, CAOM2) por coordenada; 503 honesto si no responde. |
+| NEOSSat Data Tutorial / Dataset | https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/neossat | ✅ Cobertura por objetivo en vivo (r = 0,25°, 2026-11-13): Barnard 652, ε Indi B 2, WISE 0855 7, RW Aur 0, R Dra 8; enlace a la colección. Óptico y apuntado: épocas extra, no cuadros SPHEREx. |
+
+### Contraste con los notebooks de IRSA (2026-11-13)
+
+Verificado en vivo contra IRSA, no solo leído:
+
+- **Colecciones.** Los notebooks usan `spherex_dr1`, `spherex_dr1_deep`,
+  `spherex_qr3` y `spherex_qr3_deep`, y dicen que DR1 y QR3 reemplazan a QR2.
+  SIA ya no devuelve nada para `spherex_qr2`. DR1 cubre de 2025W19 a 2026W1x
+  (reprocesado, `l2b-v27`) y QR3 solo de 2026W3x en adelante; no comparten
+  ninguna exposición, así que no hay cuadros duplicados. Productos por objetivo
+  (DR1 / QR3): WISE 0855 261 / 0, Barnard 240 / 123, Epsilon Indi B 345 / 120,
+  RW Aurigae 226 / 109, R Draconis 413 / 126. **La app solo tenía QR2/QR3 en
+  la lista configurada: en vivo y sin caché, WISE 0855 no habría tenido ningún
+  cuadro.** Corregido en `config.py` y `.env.example`.
+- **Recorte.** `?center=RA,Dec&size=<grados>` devuelve HTTP 200 y un FITS
+  válido en unos 3 s sobre URL de DR1, igual con o sin la `d` final del
+  notebook. El HTTP 422 de WP-05 no se reproduce.
+- **Secuencias en vivo con DR1** (backend local, IRSA real, sin caché):
+  WISE 0855 12 cuadros D6 2025-05 a 2026-05 (46 épocas, desplazamiento previsto
+  8,3″, 114 s); Barnard 12 cuadros D6 2025-08 a 2026-09 mezclando DR1 y QR3
+  (93 s); R Draconis 7 cuadros D6 de DR1 y DR1 Deep (214 s).
+- **Resuelto (2026-11-13, tarde).** DOI de DR1 en `collection_dois.json`:
+  `10.26131/IRSA678` (DR1 Spectral Images, DataCite 2026-11-02; DR1 Deep usa el
+  mismo). El cubo todo-cielo tiene `10.26131/IRSA679`.
+- **Resuelto: mapa del cielo con SPHEREx.** La HiPS DR1 de IRSA
+  (`https://irsa.ipac.caltech.edu/data/hips/SPHEREx/spherex_allsky_cube`,
+  teselas PNG, 102 planos) es ahora el fondo de Aladin en lugar de 2MASS.
+  Observado en Chromium dentro de `/time-explorer` (16 teselas 200).
+- **Incidente CDS (2026-11-13).** `aladin.cds.unistra.fr/AladinLite/api/v3/*`
+  devuelve 404 para todas las versiones (también `latest`), SIMBAD da 404 y las
+  HiPS de alasky no responden. El mapa no cargaba. Aladin se carga ahora como
+  módulo ES desde `cdn.jsdelivr.net/npm/aladin-lite@3.6.5`. Las capas Gaia y
+  WISE siguen alojadas en CDS: fallarán con su aviso mientras dure la caída.
+- **Resuelto: ePSF.** Con DR1 (v7+) la fotometría divide por la energía
+  encerrada del ePSF de la zona más cercana (medido en WISE 0855 D6: 0,965,
+  +3,6 %; variación entre zonas ±0,6 %). Los productos sin `EPSF` no cambian.
+  Los notebooks no traen series temporales: la secuencia por épocas es aporte
+  propio.
+
+### Otras referencias
+
 - NASA/IPAC IRSA, archivo de datos SPHEREx: https://irsa.ipac.caltech.edu
-- Aladin Lite (CDS): https://aladin.cds.unistra.fr/AladinLite/
+- Aladin Lite (CDS): https://aladin.cds.unistra.fr/AladinLite/ (script servido desde npm/jsDelivr)
 - Astropy: https://www.astropy.org
 - Backyard Worlds: https://www.backyardworlds.org
 

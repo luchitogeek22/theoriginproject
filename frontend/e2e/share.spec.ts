@@ -31,7 +31,7 @@ test("the tool can be embedded in a page from another origin, the rest of the si
       contentType: "text/html",
       body:
         `<iframe id="ok" src="${baseURL}${linkFor(TARGETS[0], "&embed=1")}" width="900" height="700"></iframe>` +
-        `<iframe id="blocked" src="${baseURL}/candidates" width="400" height="300"></iframe>`,
+        `<iframe id="blocked" src="${baseURL}/observatory" width="400" height="300"></iframe>`,
     }),
   );
   await skipTutorial(page);
@@ -39,10 +39,10 @@ test("the tool can be embedded in a page from another origin, the rest of the si
   const ok = page.frameLocator("#ok");
   await expect(ok.locator(FRAME).first()).toBeVisible({ timeout: 90_000 });
   await expect(ok.getByText(/Data: NASA\/IPAC IRSA, SPHEREx/)).toBeVisible();
-  const blocked = page.frames().find((f) => f.url().includes("/candidates"));
+  const blocked = page.frames().find((f) => f.url().includes("/observatory"));
   expect(blocked).toBeUndefined();
 
-  const response = await page.request.get(`${baseURL}/candidates`);
+  const response = await page.request.get(`${baseURL}/observatory`);
   expect(response.headers()["x-frame-options"]).toBe("DENY");
   const framed = await page.request.get(`${baseURL}/time-explorer`);
   expect(framed.headers()["x-frame-options"]).toBeUndefined();

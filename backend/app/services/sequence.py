@@ -106,6 +106,14 @@ def choose_by_wavelength(wavelengths: list[float | None], tolerance_um: float) -
     return sorted(best)
 
 
+def spread_evenly(indices: list[int], n: int) -> list[int]:
+    """At most n of the (time-ordered) indices, evenly spaced so the first and last are kept."""
+    if len(indices) <= n:
+        return list(indices)
+    picks = np.unique(np.linspace(0, len(indices) - 1, n).round().astype(int))
+    return [indices[i] for i in picks]
+
+
 def _robust_sigma(values: np.ndarray) -> float:
     values = values[np.isfinite(values)]
     if values.size == 0:
