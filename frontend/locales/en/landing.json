@@ -15,7 +15,6 @@
       "epochs": "The universe is not static",
       "objects": "Objects worth exploring",
       "evidence": "From observation to evidence",
-      "platform": "Explore the origin",
       "question": "Every discovery begins with a question"
     },
     "hero": {
@@ -214,43 +213,6 @@
           "observations": "Observations",
           "notes": "Notes",
           "export": "Export"
-        }
-      }
-    },
-    "platform": {
-      "title": "Explore the origin",
-      "body": "{count, plural, =1 {One tool} =2 {Two tools} =6 {Six tools} other {# tools}}, one investigation. Each is a real part of the platform you can open right now.",
-      "tabsLabel": "Platform modules",
-      "start": "Start Your Exploration",
-      "science": "Explore the Science",
-      "loadPreview": "Load live preview",
-      "previewTitle": "Live preview of {name}",
-      "open": "Open {name}",
-      "previewNote": "The live preview loads the running application itself, not a mock-up.",
-      "modules": {
-        "observatory": {
-          "name": "Observatory",
-          "purpose": "Start here: a live sky, a search box and the real status of the data sources."
-        },
-        "livingSky": {
-          "name": "Living Sky",
-          "purpose": "Navigate the celestial sphere and see which archive exposures cover each region."
-        },
-        "timeExplorer": {
-          "name": "Time Explorer",
-          "purpose": "Step through real epochs, compare A/B frames and run aligned differences."
-        },
-        "spectralLab": {
-          "name": "Spectral Lab",
-          "purpose": "Measured spectral profiles only. No curve is drawn without real samples."
-        },
-        "discoveries": {
-          "name": "Discoveries",
-          "purpose": "Track possible candidates. Every row links back to its job and observations."
-        },
-        "journal": {
-          "name": "Journal",
-          "purpose": "Save reproducible investigations and export the evidence."
         }
       }
     },

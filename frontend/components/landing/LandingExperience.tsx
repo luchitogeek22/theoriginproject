@@ -13,7 +13,6 @@ import Mission from "./sections/Mission";
 import Epochs from "./sections/Epochs";
 import Objects from "./sections/Objects";
 import Pipeline from "./sections/Pipeline";
-import Platform from "./sections/Platform";
 import Finale from "./sections/Finale";
 
 const Experience = dynamic(() => import("./scene/Experience"), { ssr: false, loading: () => null });
@@ -51,7 +50,6 @@ export default function LandingExperience() {
         <Epochs />
         <Objects />
         <Pipeline />
-        <Platform />
         <Finale />
       </main>
     </div>

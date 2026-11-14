@@ -2,11 +2,9 @@
  * Non-text data of the landing. Every visible text lives in `locales/<locale>/landing.json`
  * under `landing.*` and is looked up by the stable ids below.
  */
-import { SHOW_EXTRA_PAGES, isExtraPage } from "@/lib/features";
-
 export const APP_ENTRY = "/observatory";
 
-export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "platform" | "question";
+export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "question";
 
 export interface Chapter {
   id: ChapterId;
@@ -19,7 +17,6 @@ export const CHAPTERS: Chapter[] = [
   { id: "epochs" },
   { id: "objects" },
   { id: "evidence" },
-  { id: "platform" },
   { id: "question" },
 ];
 
@@ -151,25 +148,6 @@ export const PIPELINE: PipelineStep[] = [
   { status: "validating", visual: "variation" },
   { status: "available", visual: "journal" },
 ];
-
-export type ModuleKey = "observatory" | "livingSky" | "timeExplorer" | "spectralLab" | "discoveries" | "journal";
-
-export interface ProductModule {
-  key: ModuleKey;
-  href: string;
-}
-
-const ALL_MODULES: ProductModule[] = [
-  { key: "observatory", href: "/" },
-  { key: "livingSky", href: "/living-sky" },
-  { key: "timeExplorer", href: "/time-explorer" },
-  { key: "spectralLab", href: "/spectral-lab" },
-  { key: "discoveries", href: "/discoveries" },
-  { key: "journal", href: "/journal" },
-];
-
-/** Modules shown on the landing; the extra pages only when `NEXT_PUBLIC_SHOW_EXTRA_PAGES` is on. */
-export const MODULES: ProductModule[] = ALL_MODULES.filter((m) => SHOW_EXTRA_PAGES || !isExtraPage(m.href));
 
 export type SourceKey = "irsa" | "jpl" | "spaceApps" | "docs";
 

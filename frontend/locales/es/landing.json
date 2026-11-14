@@ -15,7 +15,6 @@
       "epochs": "El universo no es estático",
       "objects": "Objetos que vale la pena explorar",
       "evidence": "De la observación a la evidencia",
-      "platform": "Explora el origen",
       "question": "Todo descubrimiento comienza con una pregunta"
     },
     "hero": {
@@ -214,43 +213,6 @@
           "observations": "Observaciones",
           "notes": "Notas",
           "export": "Exportar"
-        }
-      }
-    },
-    "platform": {
-      "title": "Explora el origen",
-      "body": "{count, plural, =1 {Una herramienta} =2 {Dos herramientas} =6 {Seis herramientas} other {# herramientas}}, una investigación. Cada una es una parte real de la plataforma que puedes abrir ahora mismo.",
-      "tabsLabel": "Módulos de la plataforma",
-      "start": "Comenzar tu exploración",
-      "science": "Explorar la ciencia",
-      "loadPreview": "Cargar vista previa en vivo",
-      "previewTitle": "Vista previa en vivo de {name}",
-      "open": "Abrir {name}",
-      "previewNote": "La vista previa en vivo carga la propia aplicación en ejecución, no una maqueta.",
-      "modules": {
-        "observatory": {
-          "name": "Observatorio",
-          "purpose": "Empieza aquí: un cielo en vivo, un buscador y el estado real de las fuentes de datos."
-        },
-        "livingSky": {
-          "name": "Cielo vivo",
-          "purpose": "Navega por la esfera celeste y descubre qué exposiciones del archivo cubren cada región."
-        },
-        "timeExplorer": {
-          "name": "Explorador temporal",
-          "purpose": "Recorre épocas reales, compara fotogramas A/B y calcula diferencias alineadas."
-        },
-        "spectralLab": {
-          "name": "Laboratorio espectral",
-          "purpose": "Solo perfiles espectrales medidos. No se dibuja ninguna curva sin muestras reales."
-        },
-        "discoveries": {
-          "name": "Descubrimientos",
-          "purpose": "Sigue posibles candidatos. Cada fila enlaza con su trabajo y sus observaciones."
-        },
-        "journal": {
-          "name": "Diario",
-          "purpose": "Guarda investigaciones reproducibles y exporta la evidencia."
         }
       }
     },

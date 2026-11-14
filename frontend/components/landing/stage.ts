@@ -32,7 +32,6 @@ export const KEYFRAMES: Keyframe[] = [
   { cam: [0, 0, -42], look: [0, 0, -60], planet: 0, sphereScale: 10, sphereOpacity: 0, scan: 1, telescope: 0, epochPanel: 1, light: [1, 0.45, 0.65] },
   { cam: [0, 0, 0], look: "target", planet: 0, sphereScale: 60, sphereOpacity: 1, scan: 1, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
   { cam: [30, 12, 150], look: [0, 0, 0], planet: 0, sphereScale: 60, sphereOpacity: 0.55, scan: 1, telescope: 0, epochPanel: 0, light: [1, 0.45, 0.65] },
-  { cam: [-45, -12, 175], look: [0, 0, 0], planet: 0, sphereScale: 60, sphereOpacity: 0.2, scan: 1, telescope: 0, epochPanel: 0, light: [0.75, 0.25, -0.45] },
   { cam: [-8.2, 2.4, -9.2], look: [1.2, -0.6, 3.2], planet: 1, sphereScale: 2.3, sphereOpacity: 0, scan: 1, telescope: 0, epochPanel: 0, light: [0.75, 0.25, -0.45] },
 ];
 
