@@ -1,37 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import { SHOW_EXTRA_PAGES } from "@/lib/features";
 import { sequenceUrl } from "@/lib/sequenceParams";
 import { VALIDATION_TARGETS } from "@/lib/targets";
-import { TARGETS, type ChallengeTarget } from "../content";
+import { TARGETS } from "../content";
 import { stage } from "../stage";
 
 export default function Objects() {
   const t = useTranslations("landing.objects");
-  const format = useFormatter();
   const [selected, setSelected] = useState(0);
   const target = TARGETS[selected];
   // With the living sky hidden, the call to action opens the target's own sequence.
   const validation = VALIDATION_TARGETS.find((vt) => vt.key === target.key);
   const ctaHref = SHOW_EXTRA_PAGES || !validation ? "/living-sky" : sequenceUrl(validation, undefined, validation.mode);
 
-  const exposures = (e: ChallengeTarget["exposures"]) => {
-    const count = format.number(e.count);
-    return e.approximate ? t("exposuresApprox", { count }) : t("exposures", { count });
-  };
-  const span = (s: ChallengeTarget["span"]) => {
-    if (s.kind === "days") {
-      const days = format.number(s.days);
-      return s.perDetector ? t("spanDaysPerDetector", { days }) : t("spanDays", { days });
-    }
-    const month = ([year, m]: [number, number]) =>
-      format.dateTime(new Date(Date.UTC(year, m - 1, 1)), { month: "short", year: "numeric", timeZone: "UTC" });
-    return t("spanMonths", { from: month(s.from), to: month(s.to) });
-  };
 
   useEffect(() => {
     stage.target = selected;
@@ -86,28 +72,7 @@ export default function Objects() {
                 <h3 className="mt-2 font-display text-2xl text-stellar">{target.name}</h3>
                 <p className="text-sm text-stellar/60">{t(`targets.${target.key}.kind`)}</p>
                 <p className="mt-4 text-sm leading-relaxed text-stellar/80">{t(`targets.${target.key}.summary`)}</p>
-                <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-[11px]">
-                  <div>
-                    <dt className="text-stellar/45">{t("ra")}</dt>
-                    <dd className="text-stellar/85">{target.ra}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-stellar/45">{t("dec")}</dt>
-                    <dd className="text-stellar/85">{target.dec}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-stellar/45">{t("archive")}</dt>
-                    <dd className="text-stellar/85">{exposures(target.exposures)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-stellar/45">{t("timeSpan")}</dt>
-                    <dd className="text-stellar/85">{span(target.span)}</dd>
-                  </div>
-                </dl>
-                <p className="mt-4 text-xs text-stellar/60">{t(`targets.${target.key}.note`)}</p>
-                <p className="mt-3 text-xs text-stellar/45">
-                  {t("auditNote")}
-                </p>
+                {target.key === "barnard" && <p className="mt-4 text-xs text-stellar/60">{t("targets.barnard.note")}</p>}
                 <Link href={ctaHref} className="landing-focus landing-button landing-button--primary mt-6">
                   {t("cta")}
                 </Link>

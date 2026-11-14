@@ -105,7 +105,7 @@
     },
     "objects": {
       "title": "Objetos que vale la pena explorar",
-      "body": "El desafío propone cinco objetivos de prueba: tres que se mueven por el cielo y dos cuya luz cambia. Elige uno para orientar el cielo hacia él.",
+      "body": "Cinco objetivos del desafío. Elige uno.",
       "tabsLabel": "Objetivos del desafío",
       "badge": {
         "motion": "se mueve",
@@ -115,42 +115,28 @@
         "motion": "Busca: movimiento",
         "brightness": "Busca: cambio de brillo"
       },
-      "ra": "RA (J2000)",
-      "dec": "Dec (J2000)",
-      "archive": "Archivo de SPHEREx",
-      "timeSpan": "Intervalo de tiempo",
-      "exposures": "{count} exposiciones",
-      "exposuresApprox": "≈ {count} exposiciones",
-      "spanMonths": "{from} – {to}",
-      "spanDays": "{days} días",
-      "spanDaysPerDetector": "{days} días por detector",
-      "auditNote": "Cobertura del archivo según la auditoría de datos del proyecto (11 nov 2026). La plataforma aún no ha medido ninguna variación; las secuencias de este objetivo se están validando.",
       "cta": "Explorar observaciones",
       "targets": {
         "barnard": {
           "kind": "Enana roja · alto movimiento propio",
-          "summary": "Una enana roja a unos 6 años luz, con el mayor movimiento propio de todas las estrellas conocidas.",
+          "summary": "Enana roja a 6 años luz, la estrella con mayor movimiento propio conocido.",
           "note": "Desplazamiento esperado en el intervalo: hasta 1.9 píxeles de SPHEREx."
         },
         "epsindi": {
           "kind": "Par de enanas marrones",
-          "summary": "Dos enanas marrones que orbitan entre sí, ambas ligadas a la estrella cercana Epsilon Indi A.",
-          "note": "Desplazamiento esperado en el intervalo: hasta 1.1 píxeles de SPHEREx."
+          "summary": "Dos enanas marrones que orbitan juntas cerca de Epsilon Indi A."
         },
         "wise0855": {
           "kind": "Enana marrón fría y de movimiento rápido",
-          "summary": "La enana marrón más fría que se conoce. Es tenue en el infrarrojo cercano, por lo que un solo fotograma podría no mostrarla.",
-          "note": "Desplazamiento esperado en el intervalo: hasta 1.35 píxeles de SPHEREx."
+          "summary": "La enana marrón más fría conocida; muy tenue en el infrarrojo cercano."
         },
         "rwaur": {
           "kind": "Estrella variable joven",
-          "summary": "Un sistema estelar joven todavía rodeado de gas y polvo, conocido por sus cambios irregulares de brillo.",
-          "note": "Comparar el brillo requiere una misma escala de intensidad en todos los fotogramas."
+          "summary": "Estrella joven rodeada de polvo, con cambios de brillo irregulares."
         },
         "rdra": {
           "kind": "Variable de período largo tipo Mira",
-          "summary": "Una gigante roja pulsante cuyo brillo sube y baja en un ciclo de meses.",
-          "note": "Está en el campo profundo de SPHEREx: aparece en las colecciones de amplio campo y profundas (dr1, dr1_deep, qr3)."
+          "summary": "Gigante roja que pulsa: su brillo sube y baja en meses."
         }
       }
     },

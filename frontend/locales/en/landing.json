@@ -105,7 +105,7 @@
     },
     "objects": {
       "title": "Objects worth exploring",
-      "body": "The challenge names five test targets: three that move across the sky and two whose light changes. Choose one to turn the sky towards it.",
+      "body": "Five challenge targets. Pick one.",
       "tabsLabel": "Challenge targets",
       "badge": {
         "motion": "moves",
@@ -115,42 +115,28 @@
         "motion": "Look for: motion",
         "brightness": "Look for: brightness change"
       },
-      "ra": "RA (J2000)",
-      "dec": "Dec (J2000)",
-      "archive": "SPHEREx archive",
-      "timeSpan": "Time span",
-      "exposures": "{count} exposures",
-      "exposuresApprox": "≈ {count} exposures",
-      "spanMonths": "{from} – {to}",
-      "spanDays": "{days} days",
-      "spanDaysPerDetector": "{days} days per detector",
-      "auditNote": "Archive coverage from the project's data audit (11 Nov 2026). No variation has been measured by the platform yet; sequences for this target are being validated.",
       "cta": "Explore observations",
       "targets": {
         "barnard": {
           "kind": "Red dwarf · high proper motion",
-          "summary": "A red dwarf about 6 light-years away, with the largest proper motion of any known star.",
+          "summary": "A red dwarf 6 light-years away, the star with the largest known proper motion.",
           "note": "Expected shift across the span: up to 1.9 SPHEREx pixels."
         },
         "epsindi": {
           "kind": "Pair of brown dwarfs",
-          "summary": "Two brown dwarfs orbiting each other, both bound to the nearby star Epsilon Indi A.",
-          "note": "Expected shift across the span: up to 1.1 SPHEREx pixels."
+          "summary": "Two brown dwarfs orbiting each other near Epsilon Indi A."
         },
         "wise0855": {
           "kind": "Cold, fast-moving brown dwarf",
-          "summary": "The coldest brown dwarf known. Faint in the near-infrared, so a single frame may not show it.",
-          "note": "Expected shift across the span: up to 1.35 SPHEREx pixels."
+          "summary": "The coldest known brown dwarf; very faint in the near infrared."
         },
         "rwaur": {
           "kind": "Young variable star",
-          "summary": "A young star system still surrounded by gas and dust, known for irregular changes in brightness.",
-          "note": "Brightness comparisons need one shared intensity scale across frames."
+          "summary": "A young star wrapped in dust, with irregular brightness changes."
         },
         "rdra": {
           "kind": "Mira-type long-period variable",
-          "summary": "A pulsating red giant whose brightness rises and falls over a cycle of months.",
-          "note": "Lies in the SPHEREx deep field: it appears in both the wide and deep collections (dr1, dr1_deep, qr3)."
+          "summary": "A pulsating red giant whose brightness rises and falls over months."
         }
       }
     },
