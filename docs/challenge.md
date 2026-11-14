@@ -228,13 +228,13 @@ Enlaces copiados de memoria: confirmarlos contra la pestaña *Resources* oficial
 
 | Recurso | Enlace de referencia | Estado en el producto |
 |---|---|---|
-| IRSA: SPHEREx | https://irsa.ipac.caltech.edu/Missions/spherex.html | Núcleo. SIA2, TAP (`spherex.obscore`) y servicio de recortes ya integrados. |
-| SPHEREx Tutorial Notebooks | https://caltech-ipac.github.io/irsa-tutorials/spherex/ | Contrastado el 2026-11-13 (ver abajo). Coinciden la sintaxis de recorte, las extensiones, que ZODI no viene restado, el WCS "W" para la longitud de onda y el nombre del detector. Cambió la colección: DR1 reemplaza a QR2. |
-| WiseView | http://byw.tools/wiseview | Ya es el modelo implícito (parpadeo A/B, secuencia por épocas). Faltan controles al estilo WiseView: contraste/estiramiento, diferencia visible, coordenadas al hacer clic. |
-| Gaia DR3 | https://www.cosmos.esa.int/web/gaia/dr3 | Cumple. `catalogs.py` consulta `gaiadr3.gaia_source` y propaga desde J2016.0. |
-| CSA: NEOSSat | https://www.asc-csa.gc.ca/eng/satellites/neossat/ | No usado. Contexto para el relato de objetos en movimiento. |
-| CADC | https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca | No usado. Tiene TAP (CAOM2) para buscar observaciones NEOSSat por coordenada. |
-| NEOSSat Data Tutorial / Dataset | (en la pestaña *Resources*) | No usado. Óptico, apuntado, sin cobertura de todo el cielo: posible segunda fuente de épocas para un objetivo concreto, no para cualquier coordenada. |
+| IRSA: SPHEREx | https://irsa.ipac.caltech.edu/Missions/spherex.html | ✅ Núcleo. SIA2, TAP (`spherex.obscore`) y recortes sobre DR1 + QR3; DOI de DR1 `10.26131/IRSA678`. |
+| SPHEREx Tutorial Notebooks | https://caltech-ipac.github.io/irsa-tutorials/spherex/ | ✅ Intro y Cutouts (misma sintaxis y extensiones), ePSF (corrección de apertura por zona, `photometry.py`), HiPS (fondo del mapa Aladin). Source Discovery y Mosaic no aplican al flujo temporal. |
+| WiseView | http://byw.tools/wiseview | ✅ Parpadeo A/B, antes/después, contraste/brillo/invertir, coordenadas al hacer clic y vista de diferencia contra el cuadro A (naranja/azul, ruido < 3σ oculto). |
+| Gaia DR3 | https://www.cosmos.esa.int/web/gaia/dr3 | ✅ `catalogs.py` consulta `gaiadr3.gaia_source` y propaga desde J2016.0. |
+| CSA: NEOSSat | https://www.asc-csa.gc.ca/eng/satellites/neossat/ | ✅ Panel "Otras misiones: NEOSSat (CSA)" en el explorador temporal, con contexto de la misión. |
+| CADC | https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca | ✅ `GET /api/v1/sky/neossat` consulta el TAP de CADC (`argus`, CAOM2) por coordenada; 503 honesto si no responde. |
+| NEOSSat Data Tutorial / Dataset | https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/neossat | ✅ Cobertura por objetivo en vivo (r = 0,25°, 2026-11-13): Barnard 652, ε Indi B 2, WISE 0855 7, RW Aur 0, R Dra 8; enlace a la colección. Óptico y apuntado: épocas extra, no cuadros SPHEREx. |
 
 ### Contraste con los notebooks de IRSA (2026-11-13)
 
@@ -268,10 +268,11 @@ Verificado en vivo contra IRSA, no solo leído:
   HiPS de alasky no responden. El mapa no cargaba. Aladin se carga ahora como
   módulo ES desde `cdn.jsdelivr.net/npm/aladin-lite@3.6.5`. Las capas Gaia y
   WISE siguen alojadas en CDS: fallarán con su aviso mientras dure la caída.
-- **Pendiente.** El ePSF (extensión `EPSF`, 21×21 zonas, sobremuestreo 5,
-  notebook `spherex-psf`) podría mejorar la fotometría de WISE 0855. Los
-  notebooks de IRSA no traen ninguno de series temporales: la secuencia por
-  épocas sigue siendo aporte propio.
+- **Resuelto: ePSF.** Con DR1 (v7+) la fotometría divide por la energía
+  encerrada del ePSF de la zona más cercana (medido en WISE 0855 D6: 0,965,
+  +3,6 %; variación entre zonas ±0,6 %). Los productos sin `EPSF` no cambian.
+  Los notebooks no traen series temporales: la secuencia por épocas es aporte
+  propio.
 
 ### Otras referencias
 
