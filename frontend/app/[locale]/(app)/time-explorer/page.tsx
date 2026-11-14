@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, TriangleAlert } from "lucide-react";
 import JobProgress from "@/components/JobProgress";
+import KnownMotionCard from "@/components/KnownMotionCard";
 import CutoutComparison from "@/components/CutoutComparison";
 import Explainer from "@/components/Explainer";
 import Glossary from "@/components/Glossary";
@@ -16,6 +17,7 @@ import ShiftStackPanel from "@/components/ShiftStackPanel";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { useErrorText } from "@/lib/errors";
+import { SHOW_EXTRA_PAGES } from "@/lib/features";
 import { useTranslateLimitation } from "@/lib/limitations";
 import {
   FOV_OPTIONS_ARCMIN,
@@ -29,6 +31,7 @@ import { useResearch } from "@/lib/store";
 import type { SequenceMode, SequenceRequest, SequenceResult } from "@/lib/types";
 import { useJob } from "@/lib/useJob";
 import NeossatPanel from "@/components/NeossatPanel";
+import SpectrumPanel from "@/components/SpectrumPanel";
 
 const AladinViewer = dynamic(() => import("@/components/AladinViewer"), {
   ssr: false,
@@ -63,6 +66,7 @@ function Explorer() {
   const [resolveError, setResolveError] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
   const [neossatOpen, setNeossatOpen] = useState(false);
+  const [spectrumOpen, setSpectrumOpen] = useState(false);
 
   useEffect(() => {
     if (!query) {
@@ -334,6 +338,10 @@ function Explorer() {
         )}
       </section>
 
+      {!embed && result && result.frames.length > 0 && result.mode === "motion" && (
+        <KnownMotionCard knownMotion={result.known_motion} />
+      )}
+
       {embed && (
         <p className="mt-2 text-center text-[10px] text-mutedstar">
           {t("embedCredit")}
@@ -361,6 +369,15 @@ function Explorer() {
               {neossatOpen && <NeossatPanel ra={params.ra} dec={params.dec} />}
             </section>
           </details>
+          <details
+            className="rounded border border-line bg-deep/60"
+            onToggle={(e) => setSpectrumOpen(e.currentTarget.open)}
+          >
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("spectrum")}</summary>
+            <section aria-label={t("spectrum")} className="border-t border-line px-3 pb-3">
+              {spectrumOpen && <SpectrumPanel ra={params.ra} dec={params.dec} />}
+            </section>
+          </details>
           {result && result.frames.length > 0 && (
             <>
               {result.lightcurve && (
@@ -384,14 +401,17 @@ function Explorer() {
             </>
           )}
           <Glossary />
-          <details className="rounded border border-line bg-deep/60">
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-              {t("manualCompare")}
-            </summary>
-            <div className="p-3">
-              <CutoutComparison />
-            </div>
-          </details>
+          {/* Manual comparison needs observations selected in the living sky. */}
+          {SHOW_EXTRA_PAGES && (
+            <details className="rounded border border-line bg-deep/60">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
+                {t("manualCompare")}
+              </summary>
+              <div className="p-3">
+                <CutoutComparison />
+              </div>
+            </details>
+          )}
         </div>
       )}
     </div>

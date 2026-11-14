@@ -1,6 +1,7 @@
 import createIntlMiddleware from "next-intl/middleware";
-import { NextRequest, type NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { routeOf } from "./i18n/paths";
+import { SHOW_EXTRA_PAGES, isExtraPage } from "./lib/features";
 import { routing } from "./i18n/routing";
 
 const intl = createIntlMiddleware(routing);
@@ -10,7 +11,9 @@ const isJournal = (pathname: string) => pathname === "/journal" || pathname.star
 /**
  * 1. Language: the URL prefix or the remembered `NEXT_LOCALE` cookie decide; the browser
  *    language is ignored on purpose so a first visit is always English.
- * 2. Route guard: only the journal needs a Supabase session; exploration and analysis stay public.
+ * 2. Hidden pages: with `NEXT_PUBLIC_SHOW_EXTRA_PAGES` off, the extra pages render the
+ *    localized 404 (rewritten to a path only the catch-all route matches).
+ * 3. Route guard: only the journal needs a Supabase session; exploration and analysis stay public.
  */
 export async function middleware(request: NextRequest) {
   const headers = new Headers(request.headers);
@@ -22,6 +25,11 @@ export async function middleware(request: NextRequest) {
 
   // Decoded like next-intl, so encoded variants such as `/%6Aournal` are guarded too.
   const { locale, pathname } = routeOf(request.nextUrl.pathname);
+  if (!SHOW_EXTRA_PAGES && isExtraPage(pathname)) {
+    const hidden = NextResponse.rewrite(new URL(`/${locale}/hidden-page`, request.url));
+    for (const cookie of response.cookies.getAll()) hidden.cookies.set(cookie);
+    return hidden;
+  }
   if (
     isJournal(pathname) &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

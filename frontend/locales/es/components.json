@@ -225,5 +225,25 @@
     "recheck": "Volver a comprobar",
     "sourceUp": "{name}: {latency} ms",
     "sourceDown": "{name}: {detail}"
+  },
+  "targetCurve": {
+    "caption": "Ilustración",
+    "description": "Forma ilustrativa, no son datos medidos."
+  },
+  "knownMotionCard": {
+    "title": "Comprobación del movimiento catalogado",
+    "measured": "Medido en estos fotogramas: {value} ± {error}″/año",
+    "measuredNoError": "Medido en estos fotogramas: {value}″/año",
+    "catalogue": "Catálogo ({source}): {value}″/año",
+    "agreement": "Diferencia con el catálogo: {sigma}σ",
+    "shift": "Desplazamiento en {days} días: {measured}″ medidos, {predicted}″ previstos por el catálogo",
+    "notMeasurable": "No se pudo medir el movimiento en estos fotogramas: {reason} Solo se muestra la detección por apilado.",
+    "detection": "Invisible en cada cuadro (SNR mediana {snr}) → aparece al apilar las {visits} visitas siguiendo su movimiento catalogado, p = {p}.",
+    "honesty": "Esto confirma un movimiento que ya está en el catálogo; no es un descubrimiento.",
+    "unavailable": "Comprobación del movimiento catalogado no disponible: {reason}",
+    "genericReason": "no se pudo calcular para este campo.",
+    "imageAlt": "Fotogramas apilados a lo largo del movimiento catalogado",
+    "detectionVisible": "Visible en cada cuadro (SNR mediana {snr}); al apilar las {visits} visitas siguiendo su movimiento catalogado, el pico queda en la posición prevista, p = {p}.",
+    "pFloor": "Es el valor p más pequeño que el test puede resolver con {nNull} posiciones al azar, así que el valor real puede ser menor."
   }
 }

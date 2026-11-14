@@ -12,8 +12,18 @@ for (const target of TARGETS) {
 
     const pause = page.getByRole("button", { name: "Pause" });
     const play = page.getByRole("button", { name: /Play/ });
-    if (await play.isVisible().catch(() => false)) await play.click();
-    await expect(pause).toBeVisible({ timeout: 30_000 });
+    // The player starts on its own once frames are preloaded, so a click can race with autoplay
+    // (and even pause it). Retry until it is playing instead of relying on the order of events.
+    await expect
+      .poll(
+        async () => {
+          if (await pause.isVisible().catch(() => false)) return true;
+          await play.click({ timeout: 1_000 }).catch(() => {});
+          return pause.isVisible().catch(() => false);
+        },
+        { timeout: 30_000 }
+      )
+      .toBe(true);
 
     const first = await page.locator(FRAME).first().getAttribute("src");
     await expect

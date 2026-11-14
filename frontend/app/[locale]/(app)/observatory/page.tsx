@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
 import { useResearch } from "@/lib/store";
 import { Link, useRouter } from "@/i18n/navigation";
+import { SHOW_EXTRA_PAGES } from "@/lib/features";
 import { VALIDATION_TARGETS, useTargetCopy, type ValidationTarget } from "@/lib/targets";
 
 export default function Home() {
@@ -74,18 +75,23 @@ export default function Home() {
             >
               <Play size={14} /> {t("demo")}
             </Link>
-            <button
-              onClick={() => router.push("/living-sky")}
-              className="flex items-center gap-1.5 rounded-full border border-pulse/60 bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
-            >
-              <Orbit size={14} /> {t("exploreSky")}
-            </button>
-            <button
-              onClick={() => router.push("/living-sky")}
-              className="flex items-center gap-1.5 rounded-full border border-line bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
-            >
-              <Crosshair size={14} /> {t("findObject")}
-            </button>
+            {/* The search bar above already finds an object; these lead to the living sky. */}
+            {SHOW_EXTRA_PAGES && (
+              <>
+                <button
+                  onClick={() => router.push("/living-sky")}
+                  className="flex items-center gap-1.5 rounded-full border border-pulse/60 bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
+                >
+                  <Orbit size={14} /> {t("exploreSky")}
+                </button>
+                <button
+                  onClick={() => router.push("/living-sky")}
+                  className="flex items-center gap-1.5 rounded-full border border-line bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
+                >
+                  <Crosshair size={14} /> {t("findObject")}
+                </button>
+              </>
+            )}
             <button
               onClick={() => router.push(target ? sequenceUrl(target) : "/time-explorer")}
               className="flex items-center gap-1.5 rounded-full border border-line bg-abyss/80 px-3.5 py-2 text-xs font-semibold text-starlight hover:border-pulse"
@@ -128,7 +134,10 @@ export default function Home() {
           {/* Archive status moved to the sidebar (components/ArchiveStatus.tsx). */}
           {target && (
             <div className="flex items-stretch overflow-hidden rounded-xl border border-pulse/30 bg-deep/70 text-[11px] backdrop-blur-md transition-colors hover:border-pulse/60">
-              <Link href="/journal" className="flex items-center gap-2.5 py-2 pl-3 pr-2 text-mutedstar hover:text-starlight">
+              <Link
+                href={SHOW_EXTRA_PAGES ? "/journal" : sequenceUrl(target)}
+                className="flex items-center gap-2.5 py-2 pl-3 pr-2 text-mutedstar hover:text-starlight"
+              >
                 <span className="relative flex h-2 w-2" aria-hidden="true">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pulse opacity-60 motion-reduce:animate-none" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-pulse" />
@@ -138,7 +147,7 @@ export default function Home() {
                   <span className="text-xs font-semibold text-starlight">{target.name}</span>
                 </span>
                 <span className="text-pulse" aria-hidden="true">→</span>
-                <span className="sr-only">{t("ongoingOpen")}</span>
+                <span className="sr-only">{SHOW_EXTRA_PAGES ? t("ongoingOpen") : t("ongoingOpenExplorer")}</span>
               </Link>
               <button
                 type="button"

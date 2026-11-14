@@ -10,6 +10,24 @@ test("from the home page to the video takes one interaction", async ({ page }) =
   await expect(page.locator(FRAME).first()).toBeVisible();
 });
 
+test("the target-card mini curves are labelled as illustrations", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/es/observatory");
+  const captions = page.getByTestId("target-curve-caption");
+  await expect(captions).toHaveCount(5);
+  await expect(captions.first()).toHaveText("Ilustración");
+  await expect(page.getByRole("link", { name: /WISE 0855/ }).first()).toContainText("no son datos medidos");
+});
+
+test("the measured spectrum opens inside the time explorer", async ({ page }) => {
+  await skipTutorial(page);
+  await page.goto("/time-explorer?ra=133.818908&dec=-7.247048&fov=6&mode=motion");
+  await waitForSequence(page);
+  const spectrum = page.getByTestId("advanced-panels").locator("summary", { hasText: "Spectrum" });
+  await spectrum.click();
+  await expect(page.getByRole("button", { name: "Measure the target's spectrum" })).toBeVisible();
+});
+
 test("a free-text coordinate in the URL is resolved and replaced by numbers", async ({ page }) => {
   await skipTutorial(page);
   await page.goto("/time-explorer?q=08h55m10.831s%20-7d14m42.53s&fov=6&mode=motion");

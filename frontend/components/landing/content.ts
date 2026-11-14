@@ -2,6 +2,8 @@
  * Non-text data of the landing. Every visible text lives in `locales/<locale>/landing.json`
  * under `landing.*` and is looked up by the stable ids below.
  */
+import { SHOW_EXTRA_PAGES, isExtraPage } from "@/lib/features";
+
 export const APP_ENTRY = "/observatory";
 
 export type ChapterId = "origin" | "explore" | "mission" | "epochs" | "objects" | "evidence" | "platform" | "question";
@@ -157,7 +159,7 @@ export interface ProductModule {
   href: string;
 }
 
-export const MODULES: ProductModule[] = [
+const ALL_MODULES: ProductModule[] = [
   { key: "observatory", href: "/" },
   { key: "livingSky", href: "/living-sky" },
   { key: "timeExplorer", href: "/time-explorer" },
@@ -165,6 +167,9 @@ export const MODULES: ProductModule[] = [
   { key: "discoveries", href: "/discoveries" },
   { key: "journal", href: "/journal" },
 ];
+
+/** Modules shown on the landing; the extra pages only when `NEXT_PUBLIC_SHOW_EXTRA_PAGES` is on. */
+export const MODULES: ProductModule[] = ALL_MODULES.filter((m) => SHOW_EXTRA_PAGES || !isExtraPage(m.href));
 
 export type SourceKey = "irsa" | "jpl" | "spaceApps" | "docs";
 

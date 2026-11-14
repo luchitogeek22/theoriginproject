@@ -12,8 +12,9 @@ import {
 import ArchiveStatus from "@/components/ArchiveStatus";
 import AuthButton from "@/components/AuthButton";
 import { Link, usePathname } from "@/i18n/navigation";
+import { SHOW_EXTRA_PAGES, isExtraPage } from "@/lib/features";
 
-const ITEMS = [
+const ALL_ITEMS = [
   { href: "/observatory", key: "observatory", icon: Telescope },
   { href: "/living-sky", key: "livingSky", icon: Orbit },
   { href: "/time-explorer", key: "timeExplorer", icon: Clock3 },
@@ -21,6 +22,8 @@ const ITEMS = [
   { href: "/candidates", key: "candidates", icon: Sparkles },
   { href: "/journal", key: "journal", icon: BookOpenText },
 ] as const;
+
+const ITEMS = ALL_ITEMS.filter((item) => SHOW_EXTRA_PAGES || !isExtraPage(item.href));
 
 /** Logo mark: a fixed "star" at the centre with a small point actually orbiting it, the
  * wrapper spins so the dot's own position sweeps the circle (not just a rotating gradient). */
@@ -91,9 +94,12 @@ export default function Sidebar() {
 
       <div className="mt-auto flex flex-col gap-2">
         <ArchiveStatus />
-        <div className="border-t border-line/60 pt-2">
-          <AuthButton />
-        </div>
+        {/* Sign-in only serves the journal, so it hides with the extra pages. */}
+        {SHOW_EXTRA_PAGES && (
+          <div className="border-t border-line/60 pt-2">
+            <AuthButton />
+          </div>
+        )}
         <div className="hidden px-2 text-[10px] leading-snug text-mutedstar/70 md:block">
           {t("nav.footer")}
         </div>

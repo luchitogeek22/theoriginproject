@@ -267,7 +267,50 @@ export interface SequenceResult {
   served_from_cache?: boolean;
   queried_at?: string;
   cache_label?: string;
+  /** Motion mode only; absent in results cached before it existed. */
+  known_motion?: KnownMotion;
 }
+
+/** Catalogued motion checked on the sequence frames (`result.known_motion`). */
+export interface KnownMotion {
+  ok: boolean;
+  /** English sentence from the science service when `ok` is false. */
+  reason: string | null;
+  reference?: {
+    source: string;
+    pm_ra_mas_yr: number;
+    pm_dec_mas_yr: number;
+    total_arcsec_yr: number;
+  } | null;
+  /** Stack along the catalogued motion: invisible per frame, visible when stacked. */
+  detection?: {
+    observed_sigma: number;
+    p_value: number;
+    sigma_equivalent: number;
+    offset_px: number;
+    n_visits: number;
+    /** Size of the null distribution; p cannot go below 1 / (n_null + 1). */
+    n_null?: number;
+    median_frame_snr?: number;
+  } | null;
+  measured?: KnownMotionMeasured | null;
+  stack_png_url?: string | null;
+  limitations?: string[];
+}
+
+export type KnownMotionMeasured =
+  | {
+      measurable: true;
+      baseline_days: number;
+      measured_arcsec: number;
+      predicted_arcsec: number;
+      measured_arcsec_yr: number;
+      predicted_arcsec_yr: number;
+      difference_arcsec: number;
+      uncertainty_arcsec: number;
+      agreement_sigma: number;
+    }
+  | { measurable: false; reason?: string | null };
 
 export interface Candidate {
   id: number;

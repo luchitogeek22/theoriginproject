@@ -25,7 +25,7 @@ export default function Platform() {
         <div className="landing-scrim md:col-span-4">
           <h2 id="platform-title" className="landing-h2">{t("title")}</h2>
           <p className="landing-body mt-4">
-            {t("body")}
+            {t("body", { count: MODULES.length })}
           </p>
           <div role="tablist" aria-label={t("tabsLabel")} className="mt-6 grid gap-1">
             {MODULES.map((m, i) => (

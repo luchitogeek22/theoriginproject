@@ -219,7 +219,7 @@
     },
     "platform": {
       "title": "Explore the origin",
-      "body": "Six tools, one investigation. Each is a real part of the platform you can open right now.",
+      "body": "{count, plural, =1 {One tool} =2 {Two tools} =6 {Six tools} other {# tools}}, one investigation. Each is a real part of the platform you can open right now.",
       "tabsLabel": "Platform modules",
       "start": "Start Your Exploration",
       "science": "Explore the Science",
