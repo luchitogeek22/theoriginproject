@@ -26,7 +26,7 @@ export function MotionSentence({ result }: { result: SequenceResult }) {
   if (!summary) return null;
   return (
     <div
-      className="mx-auto mb-2 max-w-[560px] rounded border border-pulse/50 bg-deep p-2.5"
+      className="mx-auto mb-2 max-w-[560px] border-l-2 border-pulse/50 pl-2.5"
       data-testid="motion-sentence"
     >
       <p className="text-sm font-semibold text-starlight">

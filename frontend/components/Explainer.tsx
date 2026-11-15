@@ -1,12 +1,12 @@
 import { useTranslations } from "next-intl";
+import Accordion from "@/components/Accordion";
 
 const ITEMS = ["frame", "colour", "zodiacal", "scale", "flags", "subpixel", "candidates"] as const;
 
 export default function Explainer() {
   const t = useTranslations("explainer");
   return (
-    <details className="rounded border border-line bg-deep" aria-label={t("title")}>
-      <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-starlight">{t("title")}</summary>
+    <Accordion title={t("title")}>
       <div className="flex flex-col gap-2 border-t border-line p-3 text-[11px] leading-snug text-mutedstar">
         {ITEMS.map((item) => (
           <div key={item}>
@@ -15,6 +15,6 @@ export default function Explainer() {
           </div>
         ))}
       </div>
-    </details>
+    </Accordion>
   );
 }

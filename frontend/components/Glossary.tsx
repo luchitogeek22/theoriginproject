@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import Accordion from "@/components/Accordion";
 
 const TERMS = [
   "spherex",
@@ -18,8 +19,7 @@ const TERMS = [
 export default function Glossary() {
   const t = useTranslations("glossary");
   return (
-    <details className="rounded border border-line bg-deep/60">
-      <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("title")}</summary>
+    <Accordion title={t("title")}>
       <dl className="grid gap-x-6 gap-y-1.5 p-3 text-[11px] text-mutedstar md:grid-cols-2">
         {TERMS.map((term) => (
           <div key={term}>
@@ -28,6 +28,6 @@ export default function Glossary() {
           </div>
         ))}
       </dl>
-    </details>
+    </Accordion>
   );
 }
