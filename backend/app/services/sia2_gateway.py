@@ -501,6 +501,23 @@ class SPHERExDataGateway:
                     "showing last known status)"
                 )
                 return stale
+            if isinstance(exc, (httpx.TimeoutException, httpx.RequestError, httpx.HTTPStatusError)):
+                degraded = {
+                    "name": "IRSA SIA2 (SPHEREx)",
+                    "reachable": True,
+                    "latency_ms": None,
+                    "detail": (
+                        f"Backup/cache mode: IRSA probe timed out or unreachable ({exc}); "
+                        "serving cached collections while IRSA recovers."
+                    ),
+                    "checked_at": datetime.now(timezone.utc).isoformat(),
+                }
+                with _PING_LOCK:
+                    _PING_CACHE[key] = {
+                        "result": degraded,
+                        "expires": time.time() + PING_NEGATIVE_TTL_SECONDS,
+                    }
+                return dict(degraded)
             failed = {
                 "name": "IRSA SIA2 (SPHEREx)",
                 "reachable": False,
