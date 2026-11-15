@@ -387,10 +387,7 @@ function Explorer() {
           <Glossary />
           {/* Manual comparison needs observations selected in the living sky. */}
           {showExtra && (
-            <details className="rounded border border-line bg-deep/60">
-              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                {t("manualCompare")}
-              </summary>
+            <Accordion title={t("manualCompare")}>
               <div className="p-3">
                 <CutoutComparison />
               </div>
