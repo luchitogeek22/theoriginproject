@@ -353,3 +353,104 @@ def test_a_request_never_waits_for_the_slow_discovery(fresh_discovery):
     assert info["source"] == "configured"
     assert gateway.search(1.0, 2.0, 10.0)["count"] == 1
     release.set()
+
+
+@pytest.fixture
+def fresh_ping():
+    from app.services.sia2_gateway import reset_ping_cache
+
+    reset_ping_cache()
+    yield
+    reset_ping_cache()
+
+
+def _freeze_gateway_time(monkeypatch):
+    import time as stdlib_time
+
+    import app.services.sia2_gateway as sia2
+
+    class Frozen:
+        def __init__(self):
+            self.now = stdlib_time.time()
+
+        def time(self):
+            return self.now
+
+        def monotonic(self):
+            return self.now
+
+    frozen = Frozen()
+    monkeypatch.setattr(sia2, "time", frozen)
+    return frozen
+
+
+def test_ping_identifies_the_client_with_a_short_timeout(fresh_ping):
+    from app.services.sia2_gateway import PING_TIMEOUT, PING_USER_AGENT
+
+    handler = Counter(ok)
+    gateway = make_gateway(handler)
+    result = gateway.ping()
+    assert result["reachable"] is True
+    assert PING_USER_AGENT == "TheOriginProject/1.0"
+    assert handler.requests[0].headers["user-agent"] == "TheOriginProject/1.0"
+    assert PING_TIMEOUT.connect == pytest.approx(4.0)
+    assert PING_TIMEOUT.read == pytest.approx(8.0)
+
+
+def test_ping_answers_from_cache_for_five_minutes(fresh_ping, monkeypatch):
+    frozen = _freeze_gateway_time(monkeypatch)
+    handler = Counter(ok)
+    gateway = make_gateway(handler)
+    first = gateway.ping()
+    assert gateway.ping()["checked_at"] == first["checked_at"]
+    assert len(handler.requests) == 1
+    frozen.now += 301
+    gateway.ping()
+    assert len(handler.requests) == 2
+
+
+def test_ping_timeout_serves_the_last_known_status(fresh_ping, monkeypatch):
+    frozen = _freeze_gateway_time(monkeypatch)
+
+    def flaky(request):
+        if not hasattr(flaky, "calls"):
+            flaky.calls = 0  # type: ignore[attr-defined]
+        flaky.calls += 1  # type: ignore[attr-defined]
+        if flaky.calls == 1:  # type: ignore[attr-defined]
+            return httpx.Response(200, text=csv_body(csv_row()))
+        raise httpx.ReadTimeout("The read operation timed out")
+
+    gateway = make_gateway(Counter(flaky))
+    first = gateway.ping()
+    assert first["reachable"] is True
+    frozen.now += 301
+    degraded = gateway.ping()
+    assert degraded["reachable"] is True
+    assert degraded["checked_at"] == first["checked_at"]
+    assert "last known" in degraded["detail"].lower()
+
+
+def test_ping_failure_without_known_status_reports_unreachable(fresh_ping):
+    def down(request):
+        raise httpx.ReadTimeout("The read operation timed out")
+
+    result = make_gateway(Counter(down)).ping()
+    assert result["reachable"] is False
+    assert result["latency_ms"] is None
+    assert "timed out" in result["detail"].lower()
+
+
+def test_ping_failure_is_cached_briefly(fresh_ping, monkeypatch):
+    frozen = _freeze_gateway_time(monkeypatch)
+
+    def down(request):
+        raise httpx.ReadTimeout("The read operation timed out")
+
+    handler = Counter(down)
+    gateway = make_gateway(handler)
+    gateway.ping()
+    gateway.ping()
+    assert len(handler.requests) == 1
+    frozen.now += 61
+    gateway.ping()
+    assert len(handler.requests) == 2

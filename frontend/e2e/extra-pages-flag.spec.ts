@@ -36,3 +36,31 @@ test.describe("extra pages hidden by default", () => {
     }
   });
 });
+
+test.describe("investigate mode reveals the extra pages", () => {
+  test.beforeEach(async ({ page }) => {
+    await skipTutorial(page);
+  });
+
+  test("switching to Investigar shows the full menu and unlocks the routes", async ({ page }) => {
+    await page.goto("/es/observatory");
+    await page.getByRole("tab", { name: "Investigar" }).click();
+    const nav = page.getByRole("navigation", { name: "Principal" });
+    await expect(nav.getByRole("link", { name: "Cielo vivo" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Candidatos" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Diario" })).toBeVisible();
+    const response = await page.goto("/es/living-sky");
+    expect(response?.status()).toBe(200);
+  });
+
+  test("switching back to Explorar hides the extra pages again", async ({ page }) => {
+    await page.goto("/es/observatory");
+    await page.getByRole("tab", { name: "Investigar" }).click();
+    const nav = page.getByRole("navigation", { name: "Principal" });
+    await expect(nav.getByRole("link", { name: "Cielo vivo" })).toBeVisible();
+    await page.getByRole("tab", { name: "Explorar" }).click();
+    await expect(nav.getByRole("link", { name: "Cielo vivo" })).toHaveCount(0);
+    const response = await page.goto("/es/living-sky");
+    expect(response?.status()).toBe(404);
+  });
+});

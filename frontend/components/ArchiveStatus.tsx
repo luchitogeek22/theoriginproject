@@ -38,7 +38,7 @@ export default function ArchiveStatus() {
     onKeyDown: (e: React.KeyboardEvent) => e.key === "Escape" && setOpen(false),
   };
 
-  const online = !loading && !error && !!sources?.length && sources.every((s) => s.reachable);
+  const online = !loading && !error && !!sources?.length && sources.some((s) => s.reachable);
   const state = loading ? "checking" : online ? "online" : "offline";
   const dot = loading ? "bg-gold" : online ? "bg-pulse" : "bg-red-400";
   const latency = sources?.find((s) => s.latency_ms != null)?.latency_ms;
