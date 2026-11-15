@@ -11,9 +11,8 @@ import SkyBackdrop from "@/components/SkyBackdrop";
 import TargetCurve from "@/components/TargetCurve";
 import { api } from "@/lib/api";
 import { sequenceUrl, targetSequenceRequest } from "@/lib/sequenceParams";
-import { useResearch } from "@/lib/store";
+import { useResearch, useShowExtraPages } from "@/lib/store";
 import { Link, useRouter } from "@/i18n/navigation";
-import { SHOW_EXTRA_PAGES } from "@/lib/features";
 import { VALIDATION_TARGETS, useTargetCopy, type ValidationTarget } from "@/lib/targets";
 
 export default function Home() {
@@ -22,6 +21,7 @@ export default function Home() {
   const targetCopy = useTargetCopy();
   const router = useRouter();
   const { target, reset } = useResearch();
+  const showExtra = useShowExtraPages();
   const prefetched = useRef(new Set<string>());
   const [leaving, setLeaving] = useState(false);
 
@@ -76,7 +76,7 @@ export default function Home() {
               <Play size={14} /> {t("demo")}
             </Link>
             {/* The search bar above already finds an object; these lead to the living sky. */}
-            {SHOW_EXTRA_PAGES && (
+            {showExtra && (
               <>
                 <button
                   onClick={() => router.push("/living-sky")}
@@ -135,7 +135,7 @@ export default function Home() {
           {target && (
             <div className="flex items-stretch overflow-hidden rounded-xl border border-pulse/30 bg-deep/70 text-[11px] backdrop-blur-md transition-colors hover:border-pulse/60">
               <Link
-                href={SHOW_EXTRA_PAGES ? "/journal" : sequenceUrl(target)}
+                href={showExtra ? "/journal" : sequenceUrl(target)}
                 className="flex items-center gap-2.5 py-2 pl-3 pr-2 text-mutedstar hover:text-starlight"
               >
                 <span className="relative flex h-2 w-2" aria-hidden="true">
@@ -147,7 +147,7 @@ export default function Home() {
                   <span className="text-xs font-semibold text-starlight">{target.name}</span>
                 </span>
                 <span className="text-pulse" aria-hidden="true">→</span>
-                <span className="sr-only">{SHOW_EXTRA_PAGES ? t("ongoingOpen") : t("ongoingOpenExplorer")}</span>
+                <span className="sr-only">{showExtra ? t("ongoingOpen") : t("ongoingOpenExplorer")}</span>
               </Link>
               <button
                 type="button"

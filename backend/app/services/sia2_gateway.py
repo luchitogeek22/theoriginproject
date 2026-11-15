@@ -184,6 +184,20 @@ def reset_discovery() -> None:
         _DISCOVERY.clear()
 
 
+PING_USER_AGENT = "TheOriginProject/1.0"
+PING_TIMEOUT = httpx.Timeout(8.0, connect=4.0)
+PING_CACHE_TTL_SECONDS = 300
+PING_NEGATIVE_TTL_SECONDS = 60
+
+_PING_CACHE: dict[str, Any] = {}
+_PING_LOCK = threading.Lock()
+
+
+def reset_ping_cache() -> None:
+    with _PING_LOCK:
+        _PING_CACHE.clear()
+
+
 class ArchiveUnavailableError(RuntimeError):
     pass
 
@@ -464,30 +478,67 @@ class SPHERExDataGateway:
         return rows
 
     def ping(self) -> dict[str, Any]:
-        """Lightweight availability probe: MAXREC=1 over a fixed test position."""
-        started = time.monotonic()
-        checked_at = datetime.now(timezone.utc).isoformat()
+        """Lightweight availability probe: MAXREC=1 over a fixed test position.
+
+        Answered from a 5-minute in-memory cache so reloads never hammer IRSA.
+        A failed probe serves the last known status (dated, flagged as stale)
+        instead of flipping the UI to offline on a transient timeout; only with
+        no known status at all is the source reported unreachable. Failures are
+        cached briefly so a struggling archive is not re-probed on every reload.
+        """
+        key = self.settings.irsa_sia2_url
+        with _PING_LOCK:
+            entry = _PING_CACHE.get(key)
+            if entry is not None and time.time() < entry["expires"]:
+                return dict(entry["result"])
         try:
-            params = build_sia2_params(10.0, 10.0, 0.05, "spherex_qr3", 1)
-            with self._client(10.0) as client:
-                response = client.get(self.settings.irsa_sia2_url, params=params)
-                response.raise_for_status()
-            latency = int((time.monotonic() - started) * 1000)
-            return {
-                "name": "IRSA SIA2 (SPHEREx)",
-                "reachable": True,
-                "latency_ms": latency,
-                "detail": f"HTTP {response.status_code}",
-                "checked_at": checked_at,
-            }
+            result = self._probe()
         except Exception as exc:  # noqa: BLE001 - probe must never raise
-            return {
+            if entry is not None and entry["result"].get("reachable"):
+                stale = dict(entry["result"])
+                stale["detail"] = (
+                    f"{stale['detail']} (live check failed: {exc}; "
+                    "showing last known status)"
+                )
+                return stale
+            failed = {
                 "name": "IRSA SIA2 (SPHEREx)",
                 "reachable": False,
                 "latency_ms": None,
                 "detail": str(exc),
-                "checked_at": checked_at,
+                "checked_at": datetime.now(timezone.utc).isoformat(),
             }
+            with _PING_LOCK:
+                _PING_CACHE[key] = {
+                    "result": failed,
+                    "expires": time.time() + PING_NEGATIVE_TTL_SECONDS,
+                }
+            return dict(failed)
+        with _PING_LOCK:
+            _PING_CACHE[key] = {
+                "result": result, "expires": time.time() + PING_CACHE_TTL_SECONDS,
+            }
+        return dict(result)
+
+    def _probe(self) -> dict[str, Any]:
+        started = time.monotonic()
+        checked_at = datetime.now(timezone.utc).isoformat()
+        params = build_sia2_params(10.0, 10.0, 0.05, "spherex_qr3", 1)
+        with self._client(PING_TIMEOUT) as client:
+            response = client.get(
+                self.settings.irsa_sia2_url,
+                params=params,
+                headers={"User-Agent": PING_USER_AGENT},
+            )
+            response.raise_for_status()
+        latency = int((time.monotonic() - started) * 1000)
+        return {
+            "name": "IRSA SIA2 (SPHEREx)",
+            "reachable": True,
+            "latency_ms": latency,
+            "detail": f"HTTP {response.status_code}",
+            "checked_at": checked_at,
+        }
 
     def download(self, url: str, dest_hint: str = "") -> tuple[bytes, str]:
         """Download a file or cutout under a size cap, paced, retrying transient failures."""

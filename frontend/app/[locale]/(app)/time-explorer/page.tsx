@@ -17,7 +17,6 @@ import ShiftStackPanel from "@/components/ShiftStackPanel";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { useErrorText } from "@/lib/errors";
-import { SHOW_EXTRA_PAGES } from "@/lib/features";
 import { useTranslateLimitation } from "@/lib/limitations";
 import {
   FOV_OPTIONS_ARCMIN,
@@ -27,7 +26,7 @@ import {
   sequenceJobKey,
   sequenceStateUrl,
 } from "@/lib/sequenceParams";
-import { useResearch } from "@/lib/store";
+import { useResearch, useShowExtraPages } from "@/lib/store";
 import type { SequenceMode, SequenceRequest, SequenceResult } from "@/lib/types";
 import { useJob } from "@/lib/useJob";
 import NeossatPanel from "@/components/NeossatPanel";
@@ -55,6 +54,7 @@ function Explorer() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { target, setTarget } = useResearch();
+  const showExtra = useShowExtraPages();
   const embed = searchParams.get("embed") === "1";
   const query = useMemo(() => freeTextQuery(new URLSearchParams(searchParams.toString())), [searchParams]);
   const params = useMemo(
@@ -402,7 +402,7 @@ function Explorer() {
           )}
           <Glossary />
           {/* Manual comparison needs observations selected in the living sky. */}
-          {SHOW_EXTRA_PAGES && (
+          {showExtra && (
             <details className="rounded border border-line bg-deep/60">
               <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
                 {t("manualCompare")}

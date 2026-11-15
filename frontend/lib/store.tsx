@@ -6,6 +6,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { INVESTIGATE_MODE, MODE_COOKIE, SHOW_EXTRA_PAGES } from "./features";
 import type { Candidate, Cutout, Mode, Observation, SearchResult, Target } from "./types";
 
 interface ResearchState {
@@ -41,6 +42,29 @@ function load(): Partial<{ mode: Mode; target: Target | null; search: SearchResu
   }
 }
 
+/** Mirror the mode into a plain cookie so the middleware can unlock the extra pages. */
+function writeModeCookie(mode: Mode): void {
+  try {
+    document.cookie = `${MODE_COOKIE}=${mode}; path=/; max-age=31536000; samesite=lax`;
+  } catch {
+    /* cookies blocked: the middleware falls back to the feature flag */
+  }
+}
+
+function readModeCookie(): Mode | null {
+  try {
+    for (const part of document.cookie.split(";")) {
+      const [key, value] = part.trim().split("=");
+      if (key === MODE_COOKIE && (value === "explore" || value === INVESTIGATE_MODE)) {
+        return value;
+      }
+    }
+  } catch {
+    /* cookies blocked: fall through to the default */
+  }
+  return null;
+}
+
 export function ResearchProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<Mode>("explore");
   const [target, setTarget] = useState<Target | null>(null);
@@ -55,6 +79,10 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = load();
     if (saved.mode) setMode(saved.mode);
+    else {
+      const cookie = readModeCookie();
+      if (cookie) setMode(cookie);
+    }
     if (saved.target) setTarget(saved.target);
     if (saved.search) setSearch(saved.search);
     setHydrated(true);
@@ -72,7 +100,10 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ResearchState>(
     () => ({
       mode,
-      setMode,
+      setMode: (m) => {
+        setMode(m);
+        writeModeCookie(m);
+      },
       target,
       setTarget: (t) => {
         setTarget(t);
@@ -117,4 +148,14 @@ export function useResearch(): ResearchState {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useResearch must be used within ResearchProvider");
   return ctx;
+}
+
+/**
+ * True when the extra pages (living sky, candidates, journal, …) are visible: either the
+ * build flag is on or the user switched to investigate mode. Never depends on the archive
+ * status or on having a session, so the menu cannot be blocked by either.
+ */
+export function useShowExtraPages(): boolean {
+  const { mode } = useResearch();
+  return SHOW_EXTRA_PAGES || mode === INVESTIGATE_MODE;
 }

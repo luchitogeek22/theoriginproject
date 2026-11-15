@@ -12,7 +12,8 @@ import {
 import ArchiveStatus from "@/components/ArchiveStatus";
 import AuthButton from "@/components/AuthButton";
 import { Link, usePathname } from "@/i18n/navigation";
-import { SHOW_EXTRA_PAGES, isExtraPage } from "@/lib/features";
+import { isExtraPage } from "@/lib/features";
+import { useShowExtraPages } from "@/lib/store";
 
 const ALL_ITEMS = [
   { href: "/observatory", key: "observatory", icon: Telescope },
@@ -22,8 +23,6 @@ const ALL_ITEMS = [
   { href: "/candidates", key: "candidates", icon: Sparkles },
   { href: "/journal", key: "journal", icon: BookOpenText },
 ] as const;
-
-const ITEMS = ALL_ITEMS.filter((item) => SHOW_EXTRA_PAGES || !isExtraPage(item.href));
 
 /** Logo mark: a fixed "star" at the centre with a small point actually orbiting it, the
  * wrapper spins so the dot's own position sweeps the circle (not just a rotating gradient). */
@@ -45,6 +44,8 @@ function Mark() {
 export default function Sidebar() {
   const path = usePathname();
   const t = useTranslations();
+  const showExtra = useShowExtraPages();
+  const items = ALL_ITEMS.filter((item) => showExtra || !isExtraPage(item.href));
   return (
     <nav
       className="flex w-14 flex-col gap-1 border-r border-line/70 bg-deep/70 py-3 backdrop-blur-xl md:w-56 md:px-2"
@@ -58,7 +59,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {ITEMS.map(({ href, key, icon: Icon }) => {
+      {items.map(({ href, key, icon: Icon }) => {
         const label = t(`nav.${key}`);
         const active = path === href || path.startsWith(`${href}/`);
         return (
@@ -95,7 +96,7 @@ export default function Sidebar() {
       <div className="mt-auto flex flex-col gap-2">
         <ArchiveStatus />
         {/* Sign-in only serves the journal, so it hides with the extra pages. */}
-        {SHOW_EXTRA_PAGES && (
+        {showExtra && (
           <div className="border-t border-line/60 pt-2">
             <AuthButton />
           </div>
