@@ -51,9 +51,21 @@ exigen sesión y cada investigación/candidato guarda el `user_id` del token
 JWT (extraído en servidor, nunca desde el cliente). Sin configurar, la app
 funciona en modo anónimo e indica que no hay login disponible.
 
+## Datos de la NASA utilizados
+
+* Imágenes espectrales calibradas de SPHEREx (FITS, Nivel 2), obtenidas del NASA/IPAC Infrared Science Archive (IRSA). Colecciones públicas: spherex_dr1, spherex_dr1_deep, spherex_qr3 y spherex_qr3_deep.
+* Catálogo de observaciones de SPHEREx, consultado mediante los protocolos IVOA SIA2 y TAP (tabla spherex.obscore) del IRSA: coordenadas celestes, fecha de observación, detector, banda espectral y enlace de descarga (access_url). DOIs: DR1, 10.26131/IRSA678; QR3, 10.26131/IRSA662.
+* Mosaicos de referencia WISE/AllWISE (FITS): coadds del AllWISE Atlas en las bandas W1 y W2, descargados del IRSA Image Server (IBE), usados como capa de referencia espacial.
+* Índice de mosaicos WISE/AllWISE: coadd_id, bandas infrarrojas y tiempo medio de observación (mid_obs), obtenidos vía IBE.
+
+## Datos de agencias socias y otras fuentes abiertas (no NASA)
+
+* Cobertura de NEOSSat (Agencia Espacial Canadiense), consultada por el servicio TAP del CADC (CAOM2).
+* SIMBAD para resolver nombres de objetos a coordenadas.
+
 ## Regla de datos
 
-La aplicación solo muestra observaciones reales de NASA/IPAC IRSA (SPHEREx).
+La aplicación solo muestra datos reales de archivos públicos: observaciones de SPHEREx y mosaicos WISE/AllWISE del NASA/IPAC IRSA, y cobertura de NEOSSat del CADC.
 Si el archivo no responde o no hay cobertura, la interfaz lo comunica
 explícitamente. Nunca se inventan observaciones, espectros ni detecciones.
 
