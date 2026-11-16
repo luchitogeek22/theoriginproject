@@ -66,7 +66,7 @@
     "searchPrompt": "Busca un objetivo o elige uno de prueba para ver cómo cambia su campo entre exposiciones de SPHEREx.",
     "embedSummary": "<b>{title}</b> · campo de {fov}′ · exposiciones reales de SPHEREx",
     "openInApp": "Abrir en THE ORIGIN PROJECT",
-    "fieldSorted": "campo de {fov}′ · exposiciones reales de SPHEREx ordenadas por fecha",
+    "fieldSorted": "campo de {fov}′, exposiciones reales de SPHEREx ordenadas por fecha",
     "fov": "Campo de visión",
     "mode": "Modo",
     "referenceHelp": "Pide además un cuadro de WISE de otra época, solo como contexto visual.",

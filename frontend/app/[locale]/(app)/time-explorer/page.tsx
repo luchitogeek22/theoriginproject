@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, TriangleAlert } from "lucide-react";
+import Accordion from "@/components/Accordion";
 import JobProgress from "@/components/JobProgress";
 import KnownMotionCard from "@/components/KnownMotionCard";
 import CutoutComparison from "@/components/CutoutComparison";
@@ -217,10 +218,11 @@ function Explorer() {
           <h1 className="text-lg font-bold text-starlight">
             {t("title")} <span className="text-sm font-normal text-mutedstar">— {title}</span>
           </h1>
-          <p className="text-[11px] text-mutedstar">
+          <p className="font-mono text-[11px] text-starlight/80">
             {params.ra.toFixed(5)}°, {params.dec >= 0 ? "+" : ""}
-            {params.dec.toFixed(5)}° · {t("fieldSorted", { fov: params.fov })}
+            {params.dec.toFixed(5)}°
           </p>
+          <p className="text-[11px] text-mutedstar">{t("fieldSorted", { fov: params.fov })}</p>
         </div>
         <div className="flex flex-wrap items-end gap-3 text-[11px] text-mutedstar">
           <label className="flex flex-col gap-0.5">
@@ -248,7 +250,7 @@ function Explorer() {
                   aria-pressed={params.mode === m}
                   title={t(`modes.${m}.help`)}
                   onClick={() => update({ mode: m })}
-                  className={`rounded px-2.5 py-1 text-xs ${
+                  className={`rounded px-2 py-1 text-xs ${
                     params.mode === m ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
                   }`}
                 >
@@ -284,7 +286,7 @@ function Explorer() {
             <button
               type="button"
               onClick={job.retry}
-              className="mt-2 rounded bg-pulse px-3 py-1 font-bold text-starlight hover:brightness-110"
+              className="mt-2 rounded bg-pulse px-3 py-1.5 font-bold text-starlight hover:brightness-110"
             >
               {t("requestAgain")}
             </button>
@@ -300,7 +302,7 @@ function Explorer() {
             <button
               type="button"
               onClick={job.retry}
-              className="mt-2 rounded border border-line px-3 py-1 text-starlight hover:border-pulse"
+              className="mt-2 rounded border border-line px-2 py-1 text-starlight hover:border-pulse"
             >
               {tc("retry")}
             </button>
@@ -351,66 +353,45 @@ function Explorer() {
       {!embed && (
         <div className="mt-4 flex flex-col gap-2" data-testid="advanced-panels">
           <Explainer />
-          <details
-            className="rounded border border-line bg-deep/60"
-            onToggle={(e) => setMapOpen(e.currentTarget.open)}
-          >
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("skyMap")}</summary>
+          <Accordion title={t("skyMap")} onOpenChange={setMapOpen}>
             <section aria-label={t("skyMap")} className="h-[360px] overflow-hidden border-t border-line">
               {mapOpen && <AladinViewer ra={params.ra} dec={params.dec} fovArcmin={params.fov} marker={marker} />}
             </section>
-          </details>
-          <details
-            className="rounded border border-line bg-deep/60"
-            onToggle={(e) => setNeossatOpen(e.currentTarget.open)}
-          >
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("neossat")}</summary>
+          </Accordion>
+          <Accordion title={t("neossat")} onOpenChange={setNeossatOpen}>
             <section aria-label={t("neossat")} className="border-t border-line">
               {neossatOpen && <NeossatPanel ra={params.ra} dec={params.dec} />}
             </section>
-          </details>
-          <details
-            className="rounded border border-line bg-deep/60"
-            onToggle={(e) => setSpectrumOpen(e.currentTarget.open)}
-          >
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">{t("spectrum")}</summary>
+          </Accordion>
+          <Accordion title={t("spectrum")} onOpenChange={setSpectrumOpen}>
             <section aria-label={t("spectrum")} className="border-t border-line px-3 pb-3">
               {spectrumOpen && <SpectrumPanel ra={params.ra} dec={params.dec} />}
             </section>
-          </details>
+          </Accordion>
           {result && result.frames.length > 0 && (
             <>
               {result.lightcurve && (
-                <details className="rounded border border-line bg-deep/60" open={params.mode === "brightness"}>
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                    {t("lightCurve")}
-                  </summary>
+                <Accordion title={t("lightCurve")} defaultOpen={params.mode === "brightness"}>
                   <div className="p-3">
                     <LightCurve curve={result.lightcurve} />
                   </div>
-                </details>
+                </Accordion>
               )}
-              <details className="rounded border border-line bg-deep/60">
-                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                  {t("shiftStack")}
-                </summary>
+              <Accordion title={t("shiftStack")}>
                 <div className="p-3">
                   <ShiftStackPanel ra={params.ra} dec={params.dec} detector={params.detector} />
                 </div>
-              </details>
+              </Accordion>
             </>
           )}
           <Glossary />
           {/* Manual comparison needs observations selected in the living sky. */}
           {showExtra && (
-            <details className="rounded border border-line bg-deep/60">
-              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-mutedstar">
-                {t("manualCompare")}
-              </summary>
+            <Accordion title={t("manualCompare")}>
               <div className="p-3">
                 <CutoutComparison />
               </div>
-            </details>
+            </Accordion>
           )}
         </div>
       )}

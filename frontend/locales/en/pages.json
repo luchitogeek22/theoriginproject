@@ -66,7 +66,7 @@
     "searchPrompt": "Search for a target or pick a test one to see how its field changes between SPHEREx exposures.",
     "embedSummary": "<b>{title}</b> · {fov}′ field · real SPHEREx exposures",
     "openInApp": "Open in THE ORIGIN PROJECT",
-    "fieldSorted": "{fov}′ field · real SPHEREx exposures sorted by date",
+    "fieldSorted": "{fov}′ field, real SPHEREx exposures sorted by date",
     "fov": "Field of view",
     "mode": "Mode",
     "referenceHelp": "Also requests a WISE frame from another epoch, only as visual context.",

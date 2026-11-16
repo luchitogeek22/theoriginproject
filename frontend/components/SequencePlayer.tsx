@@ -346,9 +346,6 @@ export default function SequencePlayer({
             {t("cache.notice", { notice: cacheNotice() })}
           </p>
         )}
-        <div className="mx-auto mb-1 max-w-[560px]">
-          <ResultBadge kind="observation" />
-        </div>
         {total > 1 && (
           <div className="mx-auto mb-2 flex max-w-[560px] flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-mutedstar">
             <div className="flex rounded border border-line bg-deep p-0.5" role="group" aria-label={t("view.label")}>
@@ -367,7 +364,7 @@ export default function SequencePlayer({
                     setView(value);
                     if (value === "compare") setPlaying(false);
                   }}
-                  className={`rounded px-2.5 py-1 text-xs ${
+                  className={`rounded px-2 py-1 text-xs ${
                     view === value ? "bg-panel text-pulse" : "text-mutedstar hover:text-starlight"
                   }`}
                 >
@@ -597,7 +594,7 @@ export default function SequencePlayer({
                   <button
                     type="button"
                     onClick={() => onFovChange(biggerFov)}
-                    className="ml-2 rounded border border-gold/60 px-2 py-0.5 text-starlight hover:border-pulse"
+                    className="ml-2 rounded border border-gold/60 px-2 py-1 text-starlight hover:border-pulse"
                   >
                     {t("useFov", { fov: biggerFov })}
                   </button>
@@ -621,14 +618,14 @@ export default function SequencePlayer({
                   href={simbadUrl(probe.ra, probe.dec)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded border border-line px-2 py-0.5 text-starlight hover:border-pulse"
+                  className="rounded border border-line px-2 py-1 text-starlight hover:border-pulse"
                 >
                   {t("probe.simbad")}
                 </a>
                 <button
                   type="button"
                   onClick={() => void copyProbe()}
-                  className="rounded border border-line px-2 py-0.5 text-starlight hover:border-pulse"
+                  className="rounded border border-line px-2 py-1 text-starlight hover:border-pulse"
                 >
                   {t("probe.copy")}
                 </button>
@@ -638,7 +635,7 @@ export default function SequencePlayer({
                     setProbe(null);
                     setProbeMessage("");
                   }}
-                  className="rounded border border-line px-2 py-0.5 hover:text-starlight"
+                  className="rounded border border-line px-2 py-1 hover:text-starlight"
                 >
                   {t("probe.clear")}
                 </button>
@@ -695,7 +692,7 @@ export default function SequencePlayer({
               type="button"
               onClick={() => setDisplay(DISPLAY_DEFAULT)}
               disabled={!displayChanged}
-              className="rounded border border-line px-2 py-0.5 hover:text-starlight disabled:opacity-40"
+              className="rounded border border-line px-2 py-1 hover:text-starlight disabled:opacity-40"
             >
               {t("display.reset")}
             </button>
@@ -896,46 +893,71 @@ export default function SequencePlayer({
 
       <aside className="flex flex-col gap-2 text-[11px]" aria-label={t("meta.label")}>
         <div className="rounded border border-line bg-deep p-2">
-          <p className="text-xs font-semibold text-starlight">{t("meta.frame", { number: shownIndex + 1, total })}</p>
-          <dl className="mt-1 flex flex-col gap-1.5 text-mutedstar">
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.date")}</dt>
-              <dd>{frame.date_iso}</dd>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-starlight">
+            {t("meta.frame", { number: shownIndex + 1, total })}
+            <ResultBadge kind="observation" />
+          </p>
+          <dl className="mt-1.5 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar">{t("meta.date")}</dt>
+              <dd className="shrink-0 font-mono text-starlight">{frame.date_iso}</dd>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.detector")}</dt>
-              <dd>{frame.detector}</dd>
-              <HelpText>{t("fieldHelp.detector")}</HelpText>
+
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar" title={t("fieldHelp.detector")}>
+                {t("meta.detector")}
+              </dt>
+              <dd className="shrink-0 font-mono text-starlight" title={t("fieldHelp.detector")}>
+                {frame.detector}
+              </dd>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.wavelength")}</dt>
-              <dd>
+
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar" title={t("fieldHelp.wavelength")}>
+                {t("meta.wavelength")}
+              </dt>
+              <dd className="shrink-0 font-mono text-starlight" title={t("fieldHelp.wavelength")}>
                 {frame.wavelength_um === null
                   ? t("reference.notAvailable")
                   : t("meta.wavelengthValue", {
                       value: format.number(frame.wavelength_um, { minimumFractionDigits: 3, maximumFractionDigits: 3 }),
                     })}
               </dd>
-              <HelpText>{t("fieldHelp.wavelength")}</HelpText>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.flagged")}</dt>
-              <dd className={flaggedHigh ? "font-semibold text-gold" : ""}>{pct(frame.flagged_fraction)}</dd>
-              <HelpText>{t("fieldHelp.flagged")}</HelpText>
+
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar" title={t("fieldHelp.flagged")}>
+                {t("meta.flagged")}
+              </dt>
+              <dd
+                className={`shrink-0 font-mono ${flaggedHigh ? "font-semibold text-gold" : "text-starlight"}`}
+                title={t("fieldHelp.flagged")}
+              >
+                {pct(frame.flagged_fraction)}
+              </dd>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.coverage")}</dt>
-              <dd>{pct(frame.coverage_fraction)}</dd>
-              <HelpText>{t("fieldHelp.coverage")}</HelpText>
+
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar" title={t("fieldHelp.coverage")}>
+                {t("meta.coverage")}
+              </dt>
+              <dd className="shrink-0 font-mono text-starlight" title={t("fieldHelp.coverage")}>
+                {pct(frame.coverage_fraction)}
+              </dd>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.collection")}</dt>
-              <dd>{frame.collection}</dd>
-              <HelpText>{t("fieldHelp.collection")}</HelpText>
+
+            <div className="flex items-center justify-between gap-2 border-b border-line/30 pb-1.5">
+              <dt className="text-mutedstar" title={t("fieldHelp.collection")}>
+                {t("meta.collection")}
+              </dt>
+              <dd className="shrink-0 font-mono text-starlight" title={t("fieldHelp.collection")}>
+                {frame.collection}
+              </dd>
             </div>
-            <div>
-              <dt className="font-semibold text-starlight">{t("meta.identifier")}</dt>
-              <dd className="break-all">{frame.obs_id}</dd>
+
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-mutedstar">{t("meta.identifier")}</dt>
+              <dd className="break-all font-mono text-starlight">{frame.obs_id}</dd>
             </div>
           </dl>
           {flaggedHigh && (

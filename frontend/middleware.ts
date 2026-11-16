@@ -27,6 +27,11 @@ export async function middleware(request: NextRequest) {
   // Decoded like next-intl, so encoded variants such as `/%6Aournal` are guarded too.
   const { locale, pathname } = routeOf(request.nextUrl.pathname);
   const investigate = request.cookies.get(MODE_COOKIE)?.value === INVESTIGATE_MODE;
+  if (!SHOW_EXTRA_PAGES && !investigate && isExtraPage(pathname)) {
+    const hidden = NextResponse.rewrite(new URL(`/${locale}/hidden-page`, request.url));
+    for (const cookie of response.cookies.getAll()) hidden.cookies.set(cookie);
+    return hidden;
+  }
   if (
     isJournal(pathname) &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
