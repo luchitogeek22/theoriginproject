@@ -325,7 +325,7 @@ def test_unknown_collections_are_still_rejected_with_discovery_on(fresh_discover
 def test_dois_come_from_a_data_table_and_unknown_releases_have_a_neutral_text():
     from app.services.evidence import SPHEREX_DOIS, build_report
 
-    assert SPHEREX_DOIS["spherex_qr3"] == "10.26131/IRSA805"
+    assert SPHEREX_DOIS["spherex_qr3"] == "10.26131/IRSA662"
     # DR1 Spectral Images (DataCite, 2026-11-02); the deep-field frames belong to the same release.
     assert SPHEREX_DOIS["spherex_dr1"] == "10.26131/IRSA678"
     assert SPHEREX_DOIS["spherex_dr1_deep"] == "10.26131/IRSA678"
