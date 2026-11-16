@@ -12,6 +12,8 @@ import {
 import ArchiveStatus from "@/components/ArchiveStatus";
 import AuthButton from "@/components/AuthButton";
 import { Link, usePathname } from "@/i18n/navigation";
+import { isExtraPage } from "@/lib/features";
+import { useShowExtraPages } from "@/lib/store";
 
 const ALL_ITEMS = [
   { href: "/observatory", key: "observatory", icon: Telescope },
@@ -42,7 +44,8 @@ function Mark() {
 export default function Sidebar() {
   const path = usePathname();
   const t = useTranslations();
-  const items = ALL_ITEMS;
+  const showExtra = useShowExtraPages();
+  const items = ALL_ITEMS.filter((item) => showExtra || !isExtraPage(item.href));
   return (
     <nav
       className="flex w-14 flex-col gap-1 border-r border-line/70 bg-deep/70 py-3 backdrop-blur-xl md:w-56 md:px-2"
@@ -92,9 +95,12 @@ export default function Sidebar() {
 
       <div className="mt-auto flex flex-col gap-2">
         <ArchiveStatus />
-        <div className="border-t border-line/60 pt-2">
-          <AuthButton />
-        </div>
+        {/* Sign-in only serves the journal, so it hides with the extra pages. */}
+        {showExtra && (
+          <div className="border-t border-line/60 pt-2">
+            <AuthButton />
+          </div>
+        )}
         <div className="hidden px-2 text-[10px] leading-snug text-mutedstar/70 md:block">
           {t("nav.footer")}
         </div>
